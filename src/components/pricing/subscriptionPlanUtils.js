@@ -1,0 +1,486 @@
+import React, { useEffect, useState } from 'react';
+import {
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Paper,
+    Stack,
+    Typography,
+} from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import Swal from 'sweetalert2';
+import MainApi from '@/util/MainApi';
+
+// CORRECT ENDPOINT - Make sure this matches your API
+export const SUBSCRIPTION_PLANS_ENDPOINT = '/api/v1/vendor/subscription-plans';
+const SUBSCRIPTION_PURCHASE_ENDPOINT = '/api/v1/vendor/subscriptions';
+
+// Helper functions (add these to your subscriptionPlanUtils or keep here)
+export function extractSubscriptionPlans(data) {
+    if (!data) return [];
+    // Check if data has items array (from your API response)
+    if (data.data?.items) {
+        return data.data.items;
+    }
+    // Check if data is directly an array
+    if (Array.isArray(data)) {
+        return data;
+    }
+    // Check if data has data property that is an array
+    if (data.data && Array.isArray(data.data)) {
+        return data.data;
+    }
+    return [];
+}
+
+export function mapSubscriptionPlan(apiPlan) {
+    return {
+        id: apiPlan.id,
+        name: apiPlan.name,
+        slug: apiPlan.slug,
+        description: apiPlan.description,
+        price: formatPrice(apiPlan.offerPriceInPaise || apiPlan.salePriceInPaise),
+        regularPrice: formatPrice(apiPlan.salePriceInPaise),
+        billingLabel: getBillingLabel(apiPlan.billingCycle),
+        credits: `${apiPlan.includedCredits} Credits`,
+        maxPackages: apiPlan.maxPackages === -1 ? 'Unlimited' : apiPlan.maxPackages,
+        summary: apiPlan.description,
+        badge: apiPlan.displayContent?.badgeText || null,
+        ribbonText: apiPlan.displayContent?.ribbonText || null,
+        accent: apiPlan.displayContent?.themeColor || '#3446f1',
+        bg: `${apiPlan.displayContent?.themeColor || '#3446f1'}15`,
+        featured: apiPlan.isFeatured || false,
+        features: apiPlan.displayContent?.features || [],
+        ctaButtonText: apiPlan.displayContent?.ctaButtonText || `Choose ${apiPlan.name}`,
+        iconUrl: apiPlan.displayContent?.iconUrl || null,
+        isCurrentPlan: apiPlan.isCurrentPlan || false, // IMPORTANT: Map this field
+        action: apiPlan.action || null,
+        originalData: apiPlan
+    };
+}
+
+function formatPrice(priceInPaise) {
+    if (!priceInPaise) return '0';
+    const priceInRupees = priceInPaise / 100;
+    return priceInRupees.toLocaleString('en-IN');
+}
+
+function getBillingLabel(billingCycle) {
+    switch (billingCycle) {
+        case 'MONTHLY': return '/month';
+        case 'YEARLY': return '/year';
+        case 'LIFETIME': return '/lifetime';
+        default: return '';
+    }
+}
+
+export function sortSubscriptionPlans(plans) {
+    return plans.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+}
+
+function getApiErrorMessage(error, fallback) {
+    if (error.response) {
+        return error.response.data?.message || error.response.data?.error || error.response.statusText || fallback;
+    } else if (error.request) {
+        return 'No response from server. Please check your network connection.';
+    } else {
+        return error.message || fallback;
+    }
+}
+
+async function purchaseSubscriptionPlan(planId) {
+    try {
+        const response = await MainApi.post(SUBSCRIPTION_PURCHASE_ENDPOINT, { planId });
+        return response.data;
+    } catch (error) {
+        console.error('Subscription purchase error:', error);
+        throw error;
+    }
+}
+
+export default function AgentPlansPricing() {
+    const [plans, setPlans] = useState([]);
+    const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+    const [purchasingPlanId, setPurchasingPlanId] = useState(null);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadSubscriptionPlans = async () => {
+            setIsLoadingPlans(true);
+            setError(null);
+
+            try {
+                console.log('Fetching plans from:', SUBSCRIPTION_PLANS_ENDPOINT);
+                
+                // Direct API call to see what's happening
+                const response = await MainApi.get(SUBSCRIPTION_PLANS_ENDPOINT);
+                
+                console.log('Full API Response:', response);
+                console.log('Response data:', response.data);
+                console.log('Response status:', response.status);
+                
+                // Extract plans from the response
+                const extractedPlans = extractSubscriptionPlans(response?.data);
+                console.log('Extracted plans:', extractedPlans);
+                
+                // Map the plans
+                const mappedPlans = extractedPlans.map(mapSubscriptionPlan);
+                console.log('Mapped plans with isCurrentPlan:', mappedPlans.map(p => ({
+                    name: p.name,
+                    isCurrentPlan: p.isCurrentPlan,
+                    action: p.action
+                })));
+                
+                // Sort the plans
+                const sortedPlans = sortSubscriptionPlans(mappedPlans);
+                
+                if (isMounted) {
+                    setPlans(sortedPlans);
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    response: error.response,
+                    request: error.request,
+                    config: error.config
+                });
+                
+                if (isMounted) {
+                    setError(error.message || 'Failed to load subscription plans');
+                    setPlans([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoadingPlans(false);
+                }
+            }
+        };
+
+        loadSubscriptionPlans();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const handleBuyPlan = async (plan) => {
+        if (!plan?.id || purchasingPlanId) return;
+
+        setPurchasingPlanId(plan.id);
+
+        try {
+            const response = await purchaseSubscriptionPlan(plan.id);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Subscription activated',
+                text: response?.message || `You have successfully subscribed to ${plan.name}.`,
+                confirmButtonText: 'OK',
+            });
+            
+            // Refresh plans to update the current plan status
+            const refreshResponse = await MainApi.get(SUBSCRIPTION_PLANS_ENDPOINT);
+            const refreshedPlans = extractSubscriptionPlans(refreshResponse?.data)
+                .map(mapSubscriptionPlan)
+                .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            setPlans(refreshedPlans);
+            
+        } catch (error) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Purchase failed',
+                text: getApiErrorMessage(error, 'Failed to purchase the selected plan.'),
+                confirmButtonText: 'OK',
+            });
+        } finally {
+            setPurchasingPlanId(null);
+        }
+    };
+
+    return (
+        <Box sx={{ width: '100%', minHeight: 'calc(100dvh - 112px)', bgcolor: '#f6f7fb', p: 0 }}>
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: 2,
+                    border: '1px solid #e6eaf0',
+                    boxShadow: '0 2px 8px rgba(31,45,61,0.06)',
+                    bgcolor: '#fff',
+                    p: { xs: 1.25, md: 1.5 },
+                }}
+            >
+                <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" spacing={1.25} sx={{ mb: 2, width: '100%' }}>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ color: '#172b4d', fontSize: { xs: 18, md: 20 }, fontWeight: 600, lineHeight: 1.2 }}>
+                            Pricing Plans
+                        </Typography>
+                        <Typography sx={{ color: '#667085', fontSize: 13, mt: 0.5 }}>
+                            Choose a package credit plan that helps you create and promote packages on the marketplace.
+                        </Typography>
+                    </Box>
+                    <Chip label="Packages Credits" sx={{ alignSelf: 'flex-end', ml: { md: 'auto' }, bgcolor: '#eef0ff', color: '#3446f1', fontWeight: 700 }} />
+                </Stack>
+
+                {error && (
+                    <Paper sx={{ p: 2, mb: 2, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 1 }}>
+                        <Typography sx={{ color: '#dc2626', fontSize: 14 }}>
+                            Error loading plans: {error}
+                        </Typography>
+                        <Button 
+                            size="small" 
+                            onClick={() => window.location.reload()}
+                            sx={{ mt: 1 }}
+                        >
+                            Retry
+                        </Button>
+                    </Paper>
+                )}
+
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+                        gap: { xs: 1.25, md: 1.5 },
+                        alignItems: { xs: 'stretch', md: 'center' },
+                        pt: { xs: 1, md: 2 },
+                    }}
+                >
+                    {isLoadingPlans && (
+                        <Paper elevation={0} sx={{ gridColumn: '1 / -1', p: { xs: 3, md: 4 }, borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fff' }}>
+                            <Stack spacing={1.25} alignItems="center" justifyContent="center">
+                                <CircularProgress size={34} thickness={4} sx={{ color: '#3446f1' }} />
+                                <Typography sx={{ color: '#667085', fontSize: 14, fontWeight: 700 }}>
+                                    Loading subscription plans...
+                                </Typography>
+                            </Stack>
+                        </Paper>
+                    )}
+                    
+                    {!isLoadingPlans && !plans.length && !error && (
+                        <Paper elevation={0} sx={{ gridColumn: '1 / -1', p: { xs: 3, md: 4 }, borderRadius: 2, border: '1px dashed #d0d5dd', bgcolor: '#fff', textAlign: 'center' }}>
+                            <Typography sx={{ color: '#667085', fontSize: 14, fontWeight: 700 }}>
+                                No subscription plans available.
+                            </Typography>
+                        </Paper>
+                    )}
+                    
+                    {!isLoadingPlans && plans.map((plan) => {
+                        const isPurchasingThisPlan = purchasingPlanId === plan.id;
+                        const isAnyPurchaseInProgress = Boolean(purchasingPlanId);
+                        const isCurrentPlan = plan.isCurrentPlan === true;
+
+                        return (
+                            <Paper
+                                key={plan.id}
+                                elevation={0}
+                                sx={{
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    borderRadius: 2,
+                                    border: isCurrentPlan 
+                                        ? `2px solid #1f9d55` 
+                                        : (plan.featured ? `2px solid ${plan.accent}` : '1px solid #e6eaf0'),
+                                    bgcolor: isCurrentPlan ? '#f0faf5' : (plan.featured ? '#f9fafb' : '#fff'),
+                                    minHeight: plan.featured ? { xs: 385, md: 410 } : { xs: 360, md: 382 },
+                                    transform: { xs: 'none', md: plan.featured ? 'translateY(-10px)' : 'none' },
+                                    boxShadow: isCurrentPlan 
+                                        ? '0 0 0 1px #1f9d55, 0 8px 24px rgba(31,157,85,0.15)'
+                                        : (plan.featured ? '0 22px 48px rgba(31,45,61,0.18)' : '0 8px 20px rgba(31,45,61,0.06)'),
+                                    transition: 'all 0.3s ease',
+                                }}
+                            >
+                                <Box sx={{ 
+                                    height: plan.featured ? 8 : 6, 
+                                    bgcolor: isCurrentPlan ? '#1f9d55' : plan.accent 
+                                }} />
+                                
+                                {isCurrentPlan && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 16,
+                                            right: 16,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            bgcolor: '#1f9d55',
+                                            color: '#fff',
+                                            borderRadius: '100px',
+                                            fontSize: 11,
+                                            fontWeight: 700,
+                                            zIndex: 10,
+                                            boxShadow: '0 2px 8px rgba(31,157,85,0.3)',
+                                            letterSpacing: 0.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 0.5,
+                                        }}
+                                    >
+                                        <Box 
+                                            component="span" 
+                                            sx={{ 
+                                                display: 'inline-block', 
+                                                width: 6, 
+                                                height: 6, 
+                                                borderRadius: '50%', 
+                                                bgcolor: '#fff',
+                                                animation: 'pulse 2s infinite',
+                                                '@keyframes pulse': {
+                                                    '0%': { opacity: 1 },
+                                                    '50%': { opacity: 0.4 },
+                                                    '100%': { opacity: 1 },
+                                                }
+                                            }} 
+                                        />
+                                        ACTIVE
+                                    </Box>
+                                )}
+                                
+                                {plan.featured && plan.ribbonText && !isCurrentPlan && (
+                                    <Box sx={{ position: 'absolute', top: 14, right: -36, width: 140, py: 0.45, bgcolor: plan.accent, color: '#fff', textAlign: 'center', transform: 'rotate(35deg)', fontSize: 11, fontWeight: 800 }}>
+                                        {plan.ribbonText}
+                                    </Box>
+                                )}
+                                
+                                <Stack spacing={1.35} sx={{ p: { xs: 1.6, md: plan.featured ? 1.9 : 1.65 }, height: '100%' }}>
+                                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1.25}>
+                                        <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+                                            <Box sx={{ 
+                                                width: 44, 
+                                                height: 44, 
+                                                borderRadius: '50%', 
+                                                bgcolor: isCurrentPlan ? '#e6f7ec' : plan.bg, 
+                                                color: isCurrentPlan ? '#1f9d55' : plan.accent, 
+                                                display: 'inline-flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                flexShrink: 0, 
+                                                boxShadow: `inset 0 0 0 1px ${isCurrentPlan ? '#1f9d55' : plan.accent}22` 
+                                            }}>
+                                                {plan.iconUrl ? (
+                                                    <Box component="img" src={plan.iconUrl} alt={`${plan.name} icon`} sx={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <WorkspacePremiumIcon sx={{ fontSize: 24 }} />
+                                                )}
+                                            </Box>
+                                            <Box sx={{ minWidth: 0 }}>
+                                                <Typography sx={{ color: '#172b4d', fontSize: { xs: 16, md: 17 }, fontWeight: 700, lineHeight: 1.2 }}>
+                                                    {plan.name}
+                                                </Typography>
+                                                <Typography sx={{ color: '#667085', fontSize: 12 }}>{plan.credits}</Typography>
+                                            </Box>
+                                        </Stack>
+                                        {plan.badge && !isCurrentPlan && (
+                                            <Chip 
+                                                label={plan.badge} 
+                                                size="small" 
+                                                sx={{ height: 22, bgcolor: plan.bg, color: plan.accent, fontSize: 11, fontWeight: 700, flexShrink: 0 }} 
+                                            />
+                                        )}
+                                        {isCurrentPlan && (
+                                            <Chip 
+                                                label="Current Plan" 
+                                                size="small" 
+                                                sx={{ 
+                                                    height: 22, 
+                                                    bgcolor: '#e6f7ec', 
+                                                    color: '#1f9d55', 
+                                                    fontSize: 11, 
+                                                    fontWeight: 700, 
+                                                    flexShrink: 0,
+                                                    border: '1px solid #b8e6cc'
+                                                }} 
+                                            />
+                                        )}
+                                    </Stack>
+
+                                    <Typography sx={{ color: '#667085', fontSize: 13, lineHeight: 1.45, minHeight: 38 }}>
+                                        {plan.summary}
+                                    </Typography>
+
+                                    <Box sx={{ 
+                                        py: { xs: 1.1, md: plan.featured ? 1.35 : 1.2 }, 
+                                        px: 1.25, 
+                                        borderRadius: 1.5, 
+                                        bgcolor: isCurrentPlan ? '#f0faf5' : (plan.featured ? '#fff' : '#f8fafc'), 
+                                        border: `1px solid ${isCurrentPlan ? '#b8e6cc' : (plan.featured ? `${plan.accent}33` : '#eef1f4')}` 
+                                    }}>
+                                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 0.7 }}>
+                                            <Typography sx={{ color: '#667085', fontSize: 12, fontWeight: 600 }}>Sale price</Typography>
+                                            <Typography sx={{ color: '#98a2b3', fontSize: 13, fontWeight: 700, textDecoration: 'line-through' }}>
+                                                Rs. {plan.regularPrice}
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" spacing={1}>
+                                            <Typography sx={{ color: '#667085', fontSize: 12, fontWeight: 600, pb: 0.35 }}>Offer price</Typography>
+                                            <Box sx={{ display: 'inline-flex', alignItems: 'baseline', gap: 0.5 }}>
+                                                <Typography sx={{ color: '#111827', fontSize: { xs: 22, md: plan.featured ? 27 : 25 }, fontWeight: 700, lineHeight: 1 }}>
+                                                    Rs. {plan.price}
+                                                </Typography>
+                                                <Typography sx={{ color: '#667085', fontSize: 12, fontWeight: 600 }}>{plan.billingLabel}</Typography>
+                                            </Box>
+                                        </Stack>
+                                    </Box>
+
+                                    <Stack spacing={1.15} sx={{ flex: 1 }}>
+                                        {plan.features.map((feature) => (
+                                            <Stack key={feature.text} direction="row" spacing={1} alignItems="center">
+                                                <CheckCircleIcon sx={{ 
+                                                    color: feature.included 
+                                                        ? (isCurrentPlan ? '#1f9d55' : plan.accent) 
+                                                        : '#98a2b3', 
+                                                    fontSize: 18, 
+                                                    flexShrink: 0 
+                                                }} />
+                                                <Typography sx={{ 
+                                                    color: feature.included ? '#344054' : '#98a2b3', 
+                                                    fontSize: 13, 
+                                                    fontWeight: 500, 
+                                                    textDecoration: feature.included ? 'none' : 'line-through' 
+                                                }}>
+                                                    {feature.text}
+                                                </Typography>
+                                            </Stack>
+                                        ))}
+                                    </Stack>
+
+                                    <Button
+                                        fullWidth
+                                        variant={isCurrentPlan ? 'outlined' : (plan.featured ? 'contained' : 'outlined')}
+                                        disabled={isAnyPurchaseInProgress || isCurrentPlan}
+                                        onClick={() => handleBuyPlan(plan)}
+                                        startIcon={isPurchasingThisPlan ? <CircularProgress size={16} color="inherit" /> : null}
+                                        sx={{
+                                            mt: 'auto',
+                                            height: 42,
+                                            borderColor: isCurrentPlan ? '#b8e6cc' : plan.accent,
+                                            bgcolor: isCurrentPlan ? '#f5f6f8' : (plan.featured ? plan.accent : '#fff'),
+                                            color: isCurrentPlan ? '#98a2b3' : (plan.featured ? '#fff' : plan.accent),
+                                            textTransform: 'none',
+                                            fontWeight: 700,
+                                            cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
+                                            opacity: isCurrentPlan ? 0.8 : 1,
+                                            '&:hover': {
+                                                borderColor: isCurrentPlan ? '#b8e6cc' : plan.accent,
+                                                bgcolor: isCurrentPlan ? '#f5f6f8' : (plan.featured ? plan.accent : plan.bg),
+                                            },
+                                        }}
+                                    >
+                                        {isPurchasingThisPlan
+                                            ? 'Processing...'
+                                            : isCurrentPlan
+                                                ? '✓ Current Plan'
+                                                : plan.ctaButtonText || `Buy ${plan.name.replace(' Plan', '')}`}
+                                    </Button>
+                                </Stack>
+                            </Paper>
+                        );
+                    })}
+                </Box>
+            </Paper>
+        </Box>
+    );
+}
