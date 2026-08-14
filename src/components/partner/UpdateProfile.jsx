@@ -28,7 +28,7 @@ import {
   mapStoredUserToProfileForm,
   persistStoredUser,
   readStoredUserFromStorage,
-} from '../../pages/util/profileHelpers';
+} from '@/util/profileHelpers';
 
 const accent = '#f79f03';
 const deepText = '#24313f';
