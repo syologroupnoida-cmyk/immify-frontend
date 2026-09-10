@@ -53,6 +53,7 @@ import {
     Help as HelpIcon,
     AccountBalanceWallet as WalletIcon,
     Campaign as CampaignIcon,
+    Work as WorkIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import SidebarLogo from '@/images/sidebar-logo.png';
@@ -64,13 +65,18 @@ const AGENT_WALLET_BALANCE_ENDPOINTS = ['/api/v1/vendor/wallet'];
 
 const menuItems = [
     { name: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/agent' },
-    // {
-    //     name: 'Leads', icon: <SupportIcon />, children: [
-    //         { name: 'Package Leads', path: '/agent/lead-list' },
-    //         { name: 'Globel Leads', path: '/agent/globel-lead-list' },
-    //         { name: 'Purchased Leads', path: '/agent/purchase-lead-list' },
-    //     ]
-    // },
+    {
+        name: 'Services', icon: <SupportIcon />, children: [
+            { name: 'Add Service', path: '/service/add-service-listing' },
+            { name: 'Service List', path: '/agent/service-list' },
+        ]
+    },
+    {
+        name: 'Jobs', icon: <WorkIcon />, children: [
+            { name: 'Add Job', path: '/agent/add-job' },
+            { name: 'Job List', path: '/agent/job-list' },
+        ]
+    },
     // {
     //     name: 'Packages', icon: <PackagesIcon />, children: [
     //         { name: 'Add Package', path: '/marketplace/add-package' },

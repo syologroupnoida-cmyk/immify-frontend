@@ -10,7 +10,35 @@ export const ROLE_DASHBOARD_PATHS = {
     super_admin: '/dashboard/superadmin',
 };
 
-const KYC_COMPLETE_STATUSES = ['approved', 'completed', 'verified', 'submitted', 'true'];
+const KYC_COMPLETE_STATUSES = [
+    'approved',
+    'approved_by_admin',
+    'completed',
+    'complete',
+    'verified',
+    'submitted',
+    'in_review',
+    'under_review',
+    'awaiting_approval',
+    'true',
+];
+
+const KYC_INCOMPLETE_STATUSES = [
+    'pending',
+    'incomplete',
+    'not_started',
+    'not_submitted',
+    'rejected',
+    'false',
+];
+
+const KYC_INCOMPLETE_STEPS = [
+    'complete_kyc',
+    'kyc',
+    'start_kyc',
+    'submit_kyc',
+    'resubmit_kyc',
+];
 
 export function normalizeRole(role) {
     if (!role) return '';
@@ -40,6 +68,15 @@ export function normalizeVendorType(vendorType) {
 
 function firstValue(...values) {
     return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
+function isTruthyKycFlag(value) {
+    if (value === true || value === 1) return true;
+    if (value === false || value === 0 || value === undefined || value === null || value === '') return false;
+
+    return ['true', 'yes', 'y', '1', 'completed', 'complete', 'submitted', 'verified', 'approved'].includes(
+        String(value).trim().toLowerCase()
+    );
 }
 
 export function getVendorType(userOrAuthData) {
@@ -74,6 +111,7 @@ export function isVendorRole(role, vendorType = '') {
     return normalizedRole === 'agent' ||
         normalizedRole === 'vendor' ||
         normalizedRole === 'partner' ||
+        normalizedVendorType === 'CONSULTANCY' ||
         normalizedVendorType === 'TRAVEL_AGENT' ||
         normalizedVendorType === 'PROPERTY_OWNER';
 }
@@ -141,7 +179,7 @@ export function getDashboardPath(role, payload = {}) {
         return '/dashboard/partner';
     }
 
-    if (vendorType === 'TRAVEL_AGENT') {
+    if (vendorType === 'TRAVEL_AGENT' || vendorType === 'CONSULTANCY') {
         return '/dashboard/agent';
     }
 
@@ -176,7 +214,7 @@ export function getLoginPath(role = '', payload = {}) {
         return '/partner/login';
     }
 
-    if (vendorType === 'TRAVEL_AGENT' || normalizedRole === 'agent' || normalizedRole === 'vendor') {
+    if (vendorType === 'TRAVEL_AGENT' || vendorType === 'CONSULTANCY' || normalizedRole === 'agent' || normalizedRole === 'vendor') {
         return '/agent/login';
     }
 
@@ -249,20 +287,42 @@ export function shouldUseDefaultLayout(Component, pathname = '') {
 export function getKycStatus(payload = {}, userOverride = {}) {
     const data = payload?.data || {};
     const user = userOverride || payload?.user || data?.user || {};
+    const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
+    const kyc = user?.kyc || user?.kycDetails || user?.kycProfile || user?.vendorKyc || vendorProfile?.kyc || vendorProfile?.kycDetails || data?.kyc || data?.kycDetails || data?.vendorKyc || payload?.kyc || payload?.kycDetails || payload?.vendorKyc || {};
 
     return firstValue(
         user?.kycStatus,
         user?.kyc_status,
+        user?.kycState,
+        user?.kyc_state,
         user?.vendorProfile?.kycStatus,
         user?.vendorProfile?.kyc_status,
+        vendorProfile?.kycStatus,
+        vendorProfile?.kyc_status,
+        vendorProfile?.kycState,
+        vendorProfile?.kyc_state,
+        kyc?.status,
+        kyc?.kycStatus,
+        kyc?.kyc_status,
+        kyc?.state,
+        kyc?.verificationStatus,
+        kyc?.verification_status,
         data?.kycStatus,
         data?.kyc_status,
+        data?.kycState,
+        data?.kyc_state,
         data?.user?.kycStatus,
         data?.user?.kyc_status,
+        data?.user?.kycState,
+        data?.user?.kyc_state,
         data?.user?.vendorProfile?.kycStatus,
         data?.user?.vendorProfile?.kyc_status,
+        data?.user?.vendorProfile?.kycState,
+        data?.user?.vendorProfile?.kyc_state,
         payload?.kycStatus,
-        payload?.kyc_status
+        payload?.kyc_status,
+        payload?.kycState,
+        payload?.kyc_state
     ) || '';
 }
 
@@ -289,10 +349,52 @@ export function getNextStep(payload = {}, userOverride = {}) {
 export function isKycComplete(payload = {}, userOverride = {}) {
     const data = payload?.data || {};
     const user = userOverride || payload?.user || data?.user || {};
+    const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
+    const kyc = user?.kyc || user?.kycDetails || user?.kycProfile || user?.vendorKyc || vendorProfile?.kyc || vendorProfile?.kycDetails || data?.kyc || data?.kycDetails || data?.vendorKyc || payload?.kyc || payload?.kycDetails || payload?.vendorKyc || {};
     const status = String(getKycStatus(payload, user)).toLowerCase();
+    const nextStep = String(getNextStep(payload, user)).toLowerCase();
+
+    if (KYC_INCOMPLETE_STEPS.includes(nextStep) || KYC_INCOMPLETE_STATUSES.includes(status)) {
+        return false;
+    }
 
     return KYC_COMPLETE_STATUSES.includes(status) ||
-        Boolean(user?.kycCompleted || user?.isKycCompleted || data?.kycCompleted || data?.isKycCompleted);
+        [
+            user?.kycCompleted,
+            user?.isKycCompleted,
+            user?.kycVerified,
+            user?.isKycVerified,
+            user?.hasCompletedKyc,
+            user?.kycSubmitted,
+            user?.isKycSubmitted,
+            vendorProfile?.kycCompleted,
+            vendorProfile?.isKycCompleted,
+            vendorProfile?.kycVerified,
+            vendorProfile?.isKycVerified,
+            vendorProfile?.hasCompletedKyc,
+            vendorProfile?.kycSubmitted,
+            vendorProfile?.isKycSubmitted,
+            kyc?.completed,
+            kyc?.isCompleted,
+            kyc?.verified,
+            kyc?.isVerified,
+            kyc?.submitted,
+            kyc?.isSubmitted,
+            data?.kycCompleted,
+            data?.isKycCompleted,
+            data?.kycVerified,
+            data?.isKycVerified,
+            data?.hasCompletedKyc,
+            data?.kycSubmitted,
+            data?.isKycSubmitted,
+            payload?.kycCompleted,
+            payload?.isKycCompleted,
+            payload?.kycVerified,
+            payload?.isKycVerified,
+            payload?.hasCompletedKyc,
+            payload?.kycSubmitted,
+            payload?.isKycSubmitted
+        ].some(isTruthyKycFlag);
 }
 
 export function isAwaitingApproval(payload = {}, user = {}) {

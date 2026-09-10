@@ -61,14 +61,14 @@ import { getDisplayRoleLabel, getPasswordRoute, getProfileRoute } from '@/util/a
 const menuItems = [
     { name: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/partner' },
 
-    // {
-    //     name: 'Properties', icon: <PackagesIcon />, children: [
-    //         { name: 'Add Property', path: '/partner/add-property' },
-    //         { name: 'Property List', path: '/partner/property-list' },
-    //         // { name: 'Property Report', path: '/dashboard/partner?view=property-report' },
+    {
+        name: 'Services', icon: <PackagesIcon />, children: [
+            { name: 'Add Service', path: '/service/add-service' },
+            { name: 'Service List', path: '/service/service-list' },
+            // { name: 'Property Report', path: '/dashboard/partner?view=property-report' },
 
-    //     ]
-    // },
+        ]
+    },
     // {
     //     name: 'Bookings', icon: <SupportIcon />, children: [
     //         { name: 'Booking List', path: '/partner/booking-list' },

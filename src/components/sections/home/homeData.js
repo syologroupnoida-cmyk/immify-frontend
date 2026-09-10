@@ -3,22 +3,29 @@ export const heroSlides = [
     title: "Your Global Move Starts Here",
     subtitle:
       "From visas and study abroad guidance to relocation and documentation, Immify helps you plan every step with confidence.",
-    image: "/images/hero-slider-img1.png",
+    image: "/images/home/home-hero-immigration.png",
     badge: "Trusted by aspiring global movers",
   },
   {
     title: "Immigration Guidance Made Simple",
     subtitle:
       "Explore PR pathways, skilled migration options, family sponsorship, and immigration consultations in one place.",
-    image: "/images/hero-slider-img2.png",
+    image: "/images/home/home-hero-documentation.png",
     badge: "Expert-led support",
   },
   {
     title: "Study Abroad, Work Abroad, Settle Abroad",
     subtitle:
       "Get help with admissions, test prep, relocation, and documentation for a smoother transition abroad.",
-    image: "/images/hero-slider-img3.png",
+    image: "/images/home/home-hero-study.png",
     badge: "End-to-end assistance",
+  },
+  {
+    title: "Build Your Career Beyond Borders",
+    subtitle:
+      "Connect with trusted experts for work visas, global opportunities, and smooth relocation support.",
+    image: "/images/home/home-hero-work.png",
+    badge: "Career migration support",
   },
 ];
 

@@ -2,9 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 import SiteLogo from "@/images/site-logo.png";
 import { marketplaceTabs } from "../sections/home/homeData";
+import LeadGenerationButton from "./LeadGenerationButton";
 
 const importantLinks = [
-  { label: "Marketplace", href: "/marketplace" },
+  { label: "Marketplace", href: "/services/immigration-services" },
   { label: "Categories", href: "#categories" },
   { label: "Services", href: "#services" },
   { label: "Premium Services", href: "/premium-services" },
@@ -24,9 +25,19 @@ const aboutCompanyLinks = [
   { label: "Terms & Conditions", href: "#about" },
 ];
 
+const serviceDetailSlugMap = {
+  "test-prepation": "test-preparation",
+  "international-services": "career-employment-services",
+  "document-attention-services": "documentation-services",
+  "business-setup-services-and-immigration": "business-setup-immigration",
+  "helth-insurance": "healthcare-insurance",
+  "forex-services": "financial-services",
+  "legal-and-complance": "legal-compliance-services",
+};
+
 export default function Footer() {
   const serviceGroups = marketplaceTabs.map((tab) => ({
-    slug: tab.slug,
+    slug: serviceDetailSlugMap[tab.slug] || tab.slug,
     heading: tab.name,
     services: tab.services,
   }));
@@ -36,12 +47,15 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr] xl:gap-14">
           <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <Image src={SiteLogo} alt="Immify" width={56} height={56} className="h-14 w-14 object-contain" priority />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-white/70">
+              <Image src={SiteLogo} alt="Immify" width={76} height={76} className="h-[76px] w-[76px] object-contain" priority />
             </div>
             <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
               We connect aspiring movers with trusted consultants, practical guidance, and end-to-end planning for visas, education, and relocation.
             </p>
+            <div className="mt-6">
+              <LeadGenerationButton label="Get Quote" variant="light" />
+            </div>
           </div>
 
           <div className="min-w-0">
@@ -86,18 +100,14 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-8">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-white">Our Services</h3>
-          <div className="mt-5 grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid items-start gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {serviceGroups.map((group) => (
               <div key={group.heading} className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-white/90">{group.heading}</p>
                 <ul className="mt-3 space-y-1 text-xs leading-6 text-white/70">
                   {group.services.map((service) => (
                     <li key={`${group.heading}-${service}`}>
-                      <Link
-                        href={{ pathname: "/marketplace", query: { category: group.slug, service } }}
-                        className="transition hover:text-white"
-                      >
+                      <Link href={`/services/${group.slug}`} className="transition hover:text-white">
                         {service}
                       </Link>
                     </li>
@@ -108,13 +118,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 border-t border-white/10 pt-6 text-center text-sm text-white/70">
           <p>© 2026 Immify. All rights reserved.</p>
-          <div className="flex flex-wrap gap-4">
-            <span>Trusted by global movers</span>
-            <span>•</span>
-            <span>Fast response support</span>
-          </div>
         </div>
       </div>
     </footer>

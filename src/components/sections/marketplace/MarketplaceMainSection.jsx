@@ -242,15 +242,23 @@ export default function MarketplaceMainSection() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f6f8ff] px-4 pb-8 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pt-24">
-      <div className="mx-auto max-w-[1440px]">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-slate-900">Marketplace</h1>
+    <main className="min-h-screen bg-[#f6f8ff] px-4 pb-8 pt-16 sm:px-6 lg:px-8">
+      <section className="relative -mx-4 mb-8 min-h-[260px] overflow-hidden sm:-mx-6 lg:-mx-8">
+        <img
+          src="/images/marketplace-banner.png"
+          alt="Marketplace"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="relative mx-auto flex min-h-[260px] max-w-7xl flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-8">
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Marketplace</h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-white/90 sm:text-lg">
+            Explore trusted services, products, and opportunities all in one place.
+          </p>
         </div>
-        <p className="mb-6 text-sm text-slate-600 sm:text-base">
-          Explore trusted services, products, and opportunities all in one place.
-        </p>
+      </section>
 
+      <div className="mx-auto max-w-[1440px]">
         <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
           <aside
             className="market-sidebar sticky top-16 flex h-[calc(140vh-20px)] flex-col overflow-hidden rounded-2xl bg-white p-3"
@@ -463,6 +471,7 @@ export default function MarketplaceMainSection() {
                 </button>
               </div>
             )}
+
           </section>
         </div>
       </div>

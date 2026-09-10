@@ -7,49 +7,109 @@ import {
     Paper,
     Stack,
     Typography,
-} from '@mui/material';
+} from '@mui/material'; 
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import Swal from 'sweetalert2';
 import MainApi from '@/util/MainApi';
 
-const SUBSCRIPTION_PLANS_ENDPOINT = '/api/v1/vendor/subscription-plans';
-const SUBSCRIPTION_PURCHASE_ENDPOINT = '/api/v1/vendor/subscriptions';
+const VENDOR_SUBSCRIPTION_PLANS_ENDPOINT = '/vendor/subscriptions/plans';
+const VENDOR_SUBSCRIPTION_CHECKOUT_ENDPOINT = '/vendor/subscriptions/checkout';
 
 function extractSubscriptionPlans(data) {
     if (!data) return [];
+    if (data.data?.subscriptions) return data.data.subscriptions;
+    if (data.data?.vendorSubscriptions) return data.data.vendorSubscriptions;
     if (data.data?.items) return data.data.items;
     if (Array.isArray(data)) return data;
     if (data.data && Array.isArray(data.data)) return data.data;
     return [];
 }
 
+function parseJsonObject(value) {
+    if (!value || typeof value !== 'string') return value;
+
+    try {
+        const parsedValue = JSON.parse(value);
+        return parsedValue && typeof parsedValue === 'object' ? parsedValue : {};
+    } catch {
+        return {};
+    }
+}
+
+function getVendorSubscriptionId(apiPlan) {
+    return apiPlan.vendorSubscriptionId
+        || apiPlan.vendor_subscription_id
+        || apiPlan.subscriptionId
+        || apiPlan.subscription_id
+        || apiPlan.id
+        || apiPlan._id;
+}
+
+function getPlanDetails(apiPlan) {
+    return apiPlan.subscriptionPlan
+        || apiPlan.subscription_plan
+        || apiPlan.plan
+        || apiPlan.planDetails
+        || apiPlan.plan_details
+        || apiPlan;
+}
+
 function mapSubscriptionPlan(apiPlan) {
+    const planDetails = getPlanDetails(apiPlan);
+    const displayContent = parseJsonObject(planDetails.displayContent || planDetails.display_content) || {};
+    const vendorSubscriptionId = getVendorSubscriptionId(apiPlan);
+    const isCurrentPlan = apiPlan.isCurrentPlan === true || apiPlan.is_current_plan === true;
+
     return {
-        id: apiPlan.id,
-        name: apiPlan.name,
-        slug: apiPlan.slug,
-        description: apiPlan.description,
-        price: formatPrice(apiPlan.offerPriceInPaise || apiPlan.salePriceInPaise),
-        regularPrice: formatPrice(apiPlan.salePriceInPaise),
-        billingLabel: getBillingLabel(apiPlan.billingCycle),
-        credits: `${apiPlan.includedCredits} Credits`,
-        maxPackages: apiPlan.maxPackages === -1 ? 'Unlimited' : apiPlan.maxPackages,
-        summary: apiPlan.description,
-        badge: apiPlan.displayContent?.badgeText || null,
-        ribbonText: apiPlan.displayContent?.ribbonText || null,
-        accent: apiPlan.displayContent?.themeColor || '#3446f1',
-        bg: `${apiPlan.displayContent?.themeColor || '#3446f1'}15`,
-        featured: apiPlan.isFeatured || false,
-        features: apiPlan.displayContent?.features || [],
-        ctaButtonText: apiPlan.displayContent?.ctaButtonText || `Choose ${apiPlan.name}`,
-        iconUrl: apiPlan.displayContent?.iconUrl || null,
-        displayOrder: apiPlan.displayOrder || 0,
-        // This is the single source of truth for "is this the vendor's active plan".
-        isCurrentPlan: apiPlan.isCurrentPlan === true,
-        action: apiPlan.action || null,
+        id: vendorSubscriptionId,
+        vendorSubscriptionId,
+        planId: planDetails.id || planDetails._id || planDetails.planId || planDetails.plan_id,
+        name: planDetails.name,
+        slug: planDetails.slug,
+        description: planDetails.description,
+        price: formatPrice(planDetails.offerPriceInPaise ?? planDetails.offer_price_in_paise ?? planDetails.salePriceInPaise ?? planDetails.sale_price_in_paise),
+        regularPrice: formatPrice(planDetails.salePriceInPaise ?? planDetails.sale_price_in_paise),
+        billingLabel: getBillingLabel(planDetails.billingCycle || planDetails.billing_cycle),
+        credits: `${planDetails.includedCredits ?? planDetails.included_credits ?? 0} Credits`,
+        maxPackages: (planDetails.maxPackages ?? planDetails.max_packages) === -1 ? 'Unlimited' : planDetails.maxPackages ?? planDetails.max_packages,
+        summary: planDetails.description,
+        badge: displayContent.badgeText || displayContent.badge_text || null,
+        ribbonText: displayContent.ribbonText || displayContent.ribbon_text || null,
+        accent: displayContent.themeColor || displayContent.theme_color || '#3446f1',
+        bg: `${displayContent.themeColor || displayContent.theme_color || '#3446f1'}15`,
+        featured: planDetails.isFeatured || planDetails.is_featured || false,
+        features: displayContent.features || planDetails.features || [],
+        ctaButtonText: displayContent.ctaButtonText || displayContent.cta_button_text || `Choose ${planDetails.name}`,
+        buttonLabel: apiPlan.buttonLabel || apiPlan.button_label || displayContent.buttonLabel || displayContent.button_label || null,
+        iconUrl: displayContent.iconUrl || displayContent.icon_url || null,
+        displayOrder: planDetails.displayOrder ?? planDetails.display_order ?? 0,
+        isCurrentPlan,
+        action: apiPlan.action || apiPlan.subscriptionAction || apiPlan.subscription_action || null,
         originalData: apiPlan,
     };
+}
+
+function getPlanActionLabel(plan) {
+    if (plan.buttonLabel) return plan.buttonLabel;
+    if (plan.isCurrentPlan) return 'Active Plan';
+
+    switch (String(plan.action || '').toUpperCase()) {
+        case 'BUY':
+            return 'Buy';
+        case 'UPGRADE':
+            return 'Upgrade';
+        case 'DOWNGRADE':
+            return 'Downgrade';
+        case 'RENEW':
+            return 'Renew';
+        default:
+            return plan.ctaButtonText || `Buy ${plan.name.replace(' Plan', '')}`;
+    }
+}
+
+function canPurchasePlan(plan) {
+    return plan.isCurrentPlan !== true;
 }
 
 function formatPrice(priceInPaise) {
@@ -83,14 +143,17 @@ function getApiErrorMessage(error, fallback) {
 // Single place that calls the plans endpoint and returns ready-to-render plans.
 // isCurrentPlan on each mapped plan comes straight from the API's isCurrentPlan field.
 async function fetchSubscriptionPlans() {
-    const response = await MainApi.get(SUBSCRIPTION_PLANS_ENDPOINT);
+    const response = await MainApi.get(VENDOR_SUBSCRIPTION_PLANS_ENDPOINT);
     const extractedPlans = extractSubscriptionPlans(response?.data);
     const mappedPlans = extractedPlans.map(mapSubscriptionPlan);
     return sortSubscriptionPlans(mappedPlans);
 }
 
 async function purchaseSubscriptionPlan(planId) {
-    const response = await MainApi.post(SUBSCRIPTION_PURCHASE_ENDPOINT, { planId });
+    const response = await MainApi.post(VENDOR_SUBSCRIPTION_CHECKOUT_ENDPOINT, {
+        planId,
+        autoRenew: false,
+    });
     return response.data;
 }
 
@@ -125,13 +188,13 @@ export default function AgentPlansPricing() {
     }, []);
 
     const handleBuyPlan = async (plan) => {
-        // Guard against double-clicks and against buying the plan that's already active.
-        if (!plan?.id || purchasingPlanId || plan.isCurrentPlan) return;
+        const checkoutPlanId = plan?.planId || plan?.id;
+        if (!checkoutPlanId || purchasingPlanId || !canPurchasePlan(plan)) return;
 
         setPurchasingPlanId(plan.id);
 
         try {
-            const response = await purchaseSubscriptionPlan(plan.id);
+            const response = await purchaseSubscriptionPlan(checkoutPlanId);
             await Swal.fire({
                 icon: 'success',
                 title: 'Subscription activated',
@@ -219,8 +282,9 @@ export default function AgentPlansPricing() {
 
                     {!isLoadingPlans && plans.map((plan) => {
                         const isPurchasingThisPlan = purchasingPlanId === plan.id;
-                        const isAnyPurchaseInProgress = Boolean(purchasingPlanId);
                         const isCurrentPlan = plan.isCurrentPlan;
+                        const canBuyThisPlan = canPurchasePlan(plan);
+                        const isButtonDisabled = isCurrentPlan || isPurchasingThisPlan;
 
                         return (
                             <Paper
@@ -350,7 +414,7 @@ export default function AgentPlansPricing() {
                                     <Button
                                         fullWidth
                                         variant={isCurrentPlan ? 'outlined' : (plan.featured ? 'contained' : 'outlined')}
-                                        disabled={isAnyPurchaseInProgress || isCurrentPlan}
+                                        disabled={isButtonDisabled}
                                         onClick={() => handleBuyPlan(plan)}
                                         startIcon={isPurchasingThisPlan ? <CircularProgress size={16} color="inherit" /> : null}
                                         sx={{
@@ -361,9 +425,8 @@ export default function AgentPlansPricing() {
                                             color: isCurrentPlan ? '#98a2b3' : (plan.featured ? '#fff' : plan.accent),
                                             textTransform: 'none',
                                             fontWeight: 700,
-                                            cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
-                                            opacity: isCurrentPlan ? 0.8 : 1,
-                                            pointerEvents: isCurrentPlan ? 'none' : 'auto',
+                                            cursor: canBuyThisPlan ? 'pointer' : 'not-allowed',
+                                            opacity: canBuyThisPlan ? 1 : 0.8,
                                             '&:hover': {
                                                 borderColor: isCurrentPlan ? '#b8e6cc' : plan.accent,
                                                 bgcolor: isCurrentPlan ? '#f5f6f8' : (plan.featured ? plan.accent : plan.bg),
@@ -372,9 +435,7 @@ export default function AgentPlansPricing() {
                                     >
                                         {isPurchasingThisPlan
                                             ? 'Processing...'
-                                            : isCurrentPlan
-                                                ? 'Active Plan'
-                                                : plan.ctaButtonText || `Buy ${plan.name.replace(' Plan', '')}`}
+                                            : getPlanActionLabel(plan)}
                                     </Button>
                                 </Stack>
                             </Paper>

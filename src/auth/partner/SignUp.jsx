@@ -50,7 +50,7 @@ const SignUp = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [captchaCode, setCaptchaCode] = useState('X7K9P');
+  const [captchaCode, setCaptchaCode] = useState('X7K9P4');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,7 +81,7 @@ const SignUp = () => {
   const refreshCaptcha = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let newCode = '';
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       newCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setCaptchaCode(newCode);
@@ -292,14 +292,6 @@ const SignUp = () => {
                   onChange={handleChange}
                   size="small"
                   error={!!errors.firstName}
-                  helperText={errors.firstName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
                 <TextField
                   fullWidth
@@ -309,14 +301,6 @@ const SignUp = () => {
                   onChange={handleChange}
                   size="small"
                   error={!!errors.lastName}
-                  helperText={errors.lastName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
               </Box>
 
@@ -330,14 +314,6 @@ const SignUp = () => {
                   onChange={handleChange}
                   size="small"
                   error={!!errors.email}
-                  helperText={errors.email}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
                 <TextField
                   fullWidth
@@ -348,17 +324,7 @@ const SignUp = () => {
                   size="small"
                   error={!!errors.phone}
                   helperText={errors.phone}
-                  inputProps={{
-                    maxLength: 10,        // hard limit
-                    inputMode: 'numeric',
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PhoneOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
+
                 />
               </Box>
 
@@ -373,28 +339,21 @@ const SignUp = () => {
                   onChange={handleChange}
                   size="small"
                   error={!!errors.password}
-                  helperText={errors.password}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            onClick={() => setShowPassword((value) => !value)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
                 <TextField
@@ -406,37 +365,29 @@ const SignUp = () => {
                   onChange={handleChange}
                   size="small"
                   error={!!errors.confirmPassword}
-                  helperText={errors.confirmPassword}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          edge="end"
-                        >
-                          {showConfirmPassword ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                            onClick={() => setShowConfirmPassword((value) => !value)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Box>
 
               {/* Captcha */}
-              <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2, mb: 3, alignItems: 'flex-start' }}>
                 <Box
                   sx={{
-                    flex: 1,
                     position: 'relative',
                     height: 40,
                     display: 'flex',
@@ -445,17 +396,20 @@ const SignUp = () => {
                     bgcolor: '#f1f5f9',
                     border: '1px solid #cbd5e1',
                     borderRadius: 1,
-                    letterSpacing: 4,
+                    letterSpacing: 5,
                     fontWeight: 700,
-                    fontSize: '1.1rem',
+                    fontSize: '1.16rem',
                     color: '#1e293b',
                     userSelect: 'none',
                     fontFamily: 'monospace',
+                    minWidth: 180,
+                    px: 2,
+                    pr: 5,
                   }}
                 >
                   {captchaCode}
-                  <IconButton
-                    size="small"
+                    <IconButton
+                      size="small"
                     onClick={refreshCaptcha}
                     sx={{
                       position: 'absolute',
@@ -482,14 +436,6 @@ const SignUp = () => {
                   size="small"
                   error={!!errors.captcha}
                   helperText={errors.captcha}
-                  sx={{ flex: 1 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Security color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
               </Box>
 

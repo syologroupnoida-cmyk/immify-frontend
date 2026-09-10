@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,12 @@ import {
   Link,
   Paper,
   IconButton,
+  Alert,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   EmailOutlined,
@@ -22,8 +28,12 @@ import {
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/user-sign-up.png';
+import MainApi from '@/util/MainApi';
+import { getApiErrorMessage } from '@/util/profileHelpers';
 
 const theme = createTheme({
   palette: {
@@ -37,6 +47,7 @@ const theme = createTheme({
 });
 
 const SignUp = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -48,9 +59,28 @@ const SignUp = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [captchaCode, setCaptchaCode] = useState('X7K9P');
+  const [captchaCode, setCaptchaCode] = useState('X7K9P4');
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [isOtpOpen, setIsOtpOpen] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!isOtpOpen || resendSeconds <= 0) return undefined;
+
+    const timerId = window.setInterval(() => {
+      setResendSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [isOtpOpen, resendSeconds]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,12 +106,16 @@ const SignUp = () => {
         [name]: '',
       }));
     }
+
+    if (submitError) {
+      setSubmitError('');
+    }
   };
 
   const refreshCaptcha = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let newCode = '';
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       newCode += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setCaptchaCode(newCode);
@@ -102,6 +136,11 @@ const SignUp = () => {
     } else if (formData.phone.length !== 10) {
       newErrors.phone = 'Phone Number must be 10 digits';
     }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Confirm Password is required';
     } else if (formData.password !== formData.confirmPassword) {
@@ -117,10 +156,112 @@ const SignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      console.log('Form Submitted Successfully', formData);
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const email = formData.email.trim();
+
+      await MainApi.post('/auth/register', {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email,
+        phone: formData.phone.trim(),
+        password: formData.password,
+        role: 'CLIENT',
+      }, { skipAuth: true });
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'OTP sent',
+        text: `OTP sent to ${email}. Please verify your email.`,
+        timer: 1800,
+        showConfirmButton: false,
+        confirmButtonColor: '#1a56db',
+      });
+      setRegisteredEmail(email);
+      setOtp('');
+      setOtpError('');
+      setResendSeconds(300);
+      setIsOtpOpen(true);
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Sign up failed. Please try again.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!registeredEmail) {
+      setOtpError('Email address is missing. Please sign up again.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(otp.trim())) {
+      setOtpError('Enter the 6 digit OTP sent to your email.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setOtpError('');
+
+    try {
+      await MainApi.post('/auth/verify-email', {
+        email: registeredEmail,
+        otp: otp.trim(),
+      }, { skipAuth: true });
+
+      setIsOtpOpen(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Email verified',
+        text: 'Please login to continue.',
+        confirmButtonText: 'Login',
+        confirmButtonColor: '#1a56db',
+      });
+      await router.push('/user/login');
+    } catch (error) {
+      setOtpError(getApiErrorMessage(error, 'OTP verification failed. Please try again.'));
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!registeredEmail || resendSeconds > 0) return;
+
+    setIsResendingOtp(true);
+    setOtpError('');
+
+    try {
+      await MainApi.post('/auth/resend-otp', {
+        email: registeredEmail,
+      }, { skipAuth: true });
+
+      setOtp('');
+      setResendSeconds(300);
+      await Swal.fire({
+        icon: 'success',
+        title: 'OTP resent',
+        text: `A new OTP has been sent to ${registeredEmail}.`,
+        timer: 1500,
+        showConfirmButton: false,
+        didOpen: () => {
+          const container = Swal.getContainer();
+          if (container) container.style.zIndex = '2000';
+        },
+      });
+    } catch (error) {
+      setOtpError(getApiErrorMessage(error, 'Failed to resend OTP. Please try again.'));
+    } finally {
+      setIsResendingOtp(false);
     }
   };
 
@@ -282,6 +423,12 @@ const SignUp = () => {
             </Box>
 
             <form onSubmit={handleSubmit}>
+              {submitError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {submitError}
+                </Alert>
+              )}
+
               {/* First Name & Last Name */}
               <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
                 <TextField
@@ -291,15 +438,8 @@ const SignUp = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.firstName}
-                  helperText={errors.firstName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
                 <TextField
                   fullWidth
@@ -308,15 +448,8 @@ const SignUp = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.lastName}
-                  helperText={errors.lastName}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
               </Box>
 
@@ -329,15 +462,8 @@ const SignUp = () => {
                   value={formData.email}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.email}
-                  helperText={errors.email}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
                 <TextField
                   fullWidth
@@ -346,19 +472,10 @@ const SignUp = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.phone}
                   helperText={errors.phone}
-                  inputProps={{
-                    maxLength: 10,        // hard limit
-                    inputMode: 'numeric',
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PhoneOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
+
                 />
               </Box>
 
@@ -372,29 +489,23 @@ const SignUp = () => {
                   value={formData.password}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.password}
-                  helperText={errors.password}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            onClick={() => setShowPassword((value) => !value)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
                 <TextField
@@ -405,38 +516,31 @@ const SignUp = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.confirmPassword}
-                  helperText={errors.confirmPassword}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlined color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          edge="end"
-                        >
-                          {showConfirmPassword ? (
-                            <VisibilityOff fontSize="small" />
-                          ) : (
-                            <Visibility fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                            onClick={() => setShowConfirmPassword((value) => !value)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Box>
 
               {/* Captcha */}
-              <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2, mb: 3, alignItems: 'flex-start' }}>
                 <Box
                   sx={{
-                    flex: 1,
                     position: 'relative',
                     height: 40,
                     display: 'flex',
@@ -445,18 +549,22 @@ const SignUp = () => {
                     bgcolor: '#f1f5f9',
                     border: '1px solid #cbd5e1',
                     borderRadius: 1,
-                    letterSpacing: 4,
+                    letterSpacing: 5,
                     fontWeight: 700,
-                    fontSize: '1.1rem',
+                    fontSize: '1.16rem',
                     color: '#1e293b',
                     userSelect: 'none',
                     fontFamily: 'monospace',
+                    minWidth: 180,
+                    px: 2,
+                    pr: 5,
                   }}
                 >
                   {captchaCode}
-                  <IconButton
-                    size="small"
+                    <IconButton
+                      size="small"
                     onClick={refreshCaptcha}
+                    disabled={isSubmitting}
                     sx={{
                       position: 'absolute',
                       right: 4,
@@ -480,16 +588,9 @@ const SignUp = () => {
                   value={formData.captcha}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting}
                   error={!!errors.captcha}
                   helperText={errors.captcha}
-                  sx={{ flex: 1 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Security color="action" fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
                 />
               </Box>
 
@@ -498,6 +599,8 @@ const SignUp = () => {
                 <Button
                   type="submit"
                   variant="contained"
+                  disabled={isSubmitting}
+                  startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
                   sx={{
                     py: 1,
                     height: 42,
@@ -508,7 +611,7 @@ const SignUp = () => {
                     fontSize: '0.95rem',
                   }}
                 >
-                  Sign Up →
+                  {isSubmitting ? 'Signing up...' : 'Sign Up'}
                 </Button>
               </Box>
             </form>
@@ -555,6 +658,71 @@ const SignUp = () => {
           </Box>
         </Paper>
       </Box>
+
+      <Dialog open={isOtpOpen} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, color: '#0f172a', py: 1, px: 2.5 }}>
+          Verify Email
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, pb: 0.75 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Enter the 6 digit OTP sent to {registeredEmail}.
+          </Typography>
+
+          {otpError && (
+            <Alert severity="error" sx={{ mt: 2, mb: 1.5 }}>
+              {otpError}
+            </Alert>
+          )}
+
+          <TextField
+            fullWidth
+            autoFocus
+            label="OTP"
+            value={otp}
+            onChange={(event) => {
+              setOtp(event.target.value.replace(/[^0-9]/g, '').slice(0, 6));
+              if (otpError) setOtpError('');
+            }}
+            size="small"
+            disabled={isVerifyingOtp}
+          />
+
+          <Box sx={{ mt: 1.25, textAlign: 'center' }}>
+            {resendSeconds > 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Resend OTP in {Math.floor(resendSeconds / 60)}:
+                {String(resendSeconds % 60).padStart(2, '0')}
+              </Typography>
+            ) : (
+              <Button
+                variant="text"
+                onClick={handleResendOtp}
+                disabled={isResendingOtp || isVerifyingOtp}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                {isResendingOtp ? 'Resending...' : 'Resend OTP'}
+              </Button>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pt: 0, pb: 2 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleVerifyOtp}
+            disabled={isVerifyingOtp || otp.length !== 6}
+            startIcon={isVerifyingOtp ? <CircularProgress size={18} color="inherit" /> : null}
+            sx={{
+              height: 42,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {isVerifyingOtp ? 'Verifying...' : 'Verify OTP'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
 };

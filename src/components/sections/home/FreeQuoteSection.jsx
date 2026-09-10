@@ -1,10 +1,11 @@
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
-import InputAdornment from "@mui/material/InputAdornment";
 import MessageRoundedIcon from "@mui/icons-material/MessageRounded";
-import LanguageRoundedIcon from "@mui/icons-material/LanguageRounded";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import Swal from "sweetalert2";
+import MainApi from "@/util/MainApi";
+import { getLeadDocumentPayload, leadDocumentTypeOptions, uploadLeadDocument } from "@/util/leadDocuments";
 
 const inquiryTopics = [
   "Visa Services",
@@ -15,16 +16,33 @@ const inquiryTopics = [
   "Documentation",
 ]
 
+const initialFormState = {
+  name: "",
+  email: "",
+  phone: "",
+  topic: "Visa Services",
+  destination: "",
+  message: "",
+}
+
+const initialLeadDocument = {
+  file: null,
+  name: "Resume",
+}
+
+function splitName(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" ") || parts[0] || "",
+  }
+}
+
 export default function FreeQuoteSection() {
-  const [formState, setFormState] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    topic: "Visa Services",
-    destination: "",
-    message: "",
-  })
+  const [formState, setFormState] = useState(initialFormState)
+  const [leadDocument, setLeadDocument] = useState(initialLeadDocument)
   const [formErrors, setFormErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -38,6 +56,14 @@ export default function FreeQuoteSection() {
 
     setFormState((current) => ({ ...current, [name]: value }))
     setFormErrors((current) => ({ ...current, [name]: "" }))
+  }
+
+  const handleDocumentChange = (event) => {
+    const { name, value, files } = event.target
+    setLeadDocument((current) => ({
+      ...current,
+      [name]: name === "file" ? files?.[0] || null : value,
+    }))
   }
 
   const handleSubmit = async (event) => {
@@ -71,41 +97,57 @@ export default function FreeQuoteSection() {
       return
     }
 
+    setSubmitting(true)
+
     try {
-      const response = await fetch("/api/free-quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
-      })
+      const { firstName, lastName } = splitName(formState.name)
+      const documentUrl = await uploadLeadDocument(leadDocument.file, leadDocument.name)
+      const documentPayload = getLeadDocumentPayload(leadDocument.name, documentUrl)
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to submit quote request")
+      const payload = {
+        firstName,
+        lastName,
+        email: formState.email.trim(),
+        phone: formState.phone.trim(),
+        country: "India",
+        state: "N/A",
+        city: "N/A",
+        servicesRequired: [formState.topic.trim()],
+        destinationCountries: [formState.destination.trim()],
+        message: formState.message.trim(),
+        additionalInformation: formState.message.trim(),
+        ...documentPayload,
+        metadata: {
+          source: "website-free-quote",
+          serviceType: formState.topic.trim(),
+          destination: formState.destination.trim(),
+          ...(documentUrl ? { documentName: leadDocument.name } : {}),
+        },
       }
+
+      const response = await MainApi.post("/leads", payload, {
+        skipAuth: true,
+        suppressAuthRedirect: true,
+      })
 
       await Swal.fire({
         icon: "success",
         title: "Request sent",
-        text: result?.message || "We have received your quote request.",
+        text: response?.data?.message || "We have received your quote request.",
         confirmButtonColor: "#1f2a77",
       })
 
-      setFormState({
-        name: "",
-        email: "",
-        phone: "",
-        topic: "Visa Services",
-        destination: "",
-        message: "",
-      })
+      setFormState(initialFormState)
+      setLeadDocument(initialLeadDocument)
     } catch (error) {
       await Swal.fire({
         icon: "error",
         title: "Something went wrong",
-        text: error instanceof Error ? error.message : "Please try again.",
+        text: error?.response?.data?.message || (error instanceof Error ? error.message : "Please try again."),
         confirmButtonColor: "#1f2a77",
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -171,7 +213,6 @@ export default function FreeQuoteSection() {
               size="small"
               error={Boolean(formErrors.name)}
               helperText={formErrors.name}
-              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             />
 
@@ -187,7 +228,6 @@ export default function FreeQuoteSection() {
               size="small"
               error={Boolean(formErrors.email)}
               helperText={formErrors.email}
-              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             />
 
@@ -197,21 +237,14 @@ export default function FreeQuoteSection() {
               value={formState.phone}
               onChange={handleChange}
               placeholder="Enter your phone"
-              inputProps={{ inputMode: "numeric", maxLength: 10 }}
               fullWidth
               variant="outlined"
               size="small"
               error={Boolean(formErrors.phone)}
               helperText={formErrors.phone}
-              InputLabelProps={{ shrink: true }}
+
               sx={fieldSx}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LanguageRoundedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
+
             />
 
             <TextField
@@ -225,24 +258,8 @@ export default function FreeQuoteSection() {
               size="small"
               error={Boolean(formErrors.topic)}
               helperText={formErrors.topic}
-              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
-              SelectProps={{
-                MenuProps: {
-                  disableScrollLock: true,
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 220,
-                      overflowY: "auto",
-                      scrollbarWidth: "none",
-                      msOverflowStyle: "none",
-                      "&::-webkit-scrollbar": {
-                        display: "none",
-                      },
-                    },
-                  },
-                },
-              }}
+
             >
               {inquiryTopics.map((topic) => (
                 <MenuItem key={topic} value={topic}>
@@ -263,7 +280,6 @@ export default function FreeQuoteSection() {
               error={Boolean(formErrors.destination)}
               helperText={formErrors.destination}
               className="sm:col-span-2"
-              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             />
 
@@ -281,9 +297,42 @@ export default function FreeQuoteSection() {
               error={Boolean(formErrors.message)}
               helperText={formErrors.message}
               className="sm:col-span-2"
-              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             />
+
+            <TextField
+              select
+              label="Document Name"
+              name="name"
+              value={leadDocument.name}
+              onChange={handleDocumentChange}
+              fullWidth
+              variant="outlined"
+              size="small"
+              sx={fieldSx}
+            >
+              {leadDocumentTypeOptions.map((documentName) => (
+                <MenuItem key={documentName} value={documentName}>
+                  {documentName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <button
+              type="button"
+              className="inline-flex h-10 cursor-pointer items-center justify-start gap-2 rounded-[5px] border border-slate-300 bg-white px-3 text-sm font-medium text-[#1f2a77] transition hover:border-[#1f2a77]"
+              onClick={(event) => event.currentTarget.querySelector("input")?.click()}
+            >
+              <CloudUploadOutlinedIcon className="h-4 w-4" />
+              <span className="truncate">{leadDocument.file ? leadDocument.file.name : "Upload Document"}</span>
+              <input
+                hidden
+                type="file"
+                name="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onChange={handleDocumentChange}
+              />
+            </button>
           </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -292,10 +341,11 @@ export default function FreeQuoteSection() {
             </p>
             <button
               type="submit"
-              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-[rgb(31,42,119)] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(24,33,95)]"
+              disabled={submitting}
+              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-[rgb(31,42,119)] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(24,33,95)] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <MessageRoundedIcon className="h-4 w-4" />
-              Get Free Quote
+              {submitting ? "Submitting..." : "Get Free Quote"}
             </button>
           </div>
         </form>

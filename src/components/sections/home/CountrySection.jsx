@@ -1,30 +1,42 @@
 import Link from "next/link";
 import { topCountries } from "./homeData";
 
+const mbbsBenefits = [
+  { title: "NMC Approved Options", text: "Compare medical universities with recognized programs and clear eligibility guidance." },
+  { title: "Affordable Fee Planning", text: "Review tuition, hostel, living cost, and travel budget before choosing a destination." },
+  { title: "English Medium Courses", text: "Find MBBS programs designed for international students with English-medium teaching." },
+];
+
+const admissionSupport = [
+  "NEET score and eligibility review",
+  "University shortlisting",
+  "Admission letter assistance",
+  "Visa documentation support",
+];
+
 export default function CountrySection() {
   const countriesToShow = topCountries.slice(0, 10);
 
   return (
-    <section id="countries" className="relative w-full overflow-hidden bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-      <div className="pointer-events-none absolute -left-10 top-20 h-24 w-24 rounded-full border border-sky-100" />
-      <div className="pointer-events-none absolute -right-12 top-28 h-36 w-36 rounded-full border border-amber-200" />
-
-      <div className="mx-auto max-w-7xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.26em] text-amber-500">Explore Opportunities</p>
-        <h2 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Explore Top Countries</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-lg leading-8 text-slate-600">
-          Choose your dream destination and let us guide you towards a better future.
-        </p>
+    <section id="countries" className="w-full bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 text-center">
+        <div className="max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#1f2a77]">Medical Education</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">MBBS Study Abroad</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Compare popular MBBS destinations, admission support, visa guidance, and trusted study abroad experts.
+          </p>
+        </div>
       </div>
 
-      <div className="mx-auto mt-12 grid max-w-7xl grid-cols-2 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mx-auto mt-7 grid max-w-7xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {countriesToShow.map((country) => (
           <Link
             key={country.slug}
             href={`/countries/${country.slug}`}
-            className="group mx-auto flex max-w-[190px] flex-col items-center text-center transition duration-300 hover:-translate-y-1"
+            className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 transition hover:border-[#1f2a77]/30 hover:bg-white hover:shadow-sm"
           >
-            <div className="aspect-square h-24 w-24 overflow-hidden rounded-full border-[4px] border-white shadow-[0_10px_20px_rgba(15,23,42,0.16)] sm:h-28 sm:w-28">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white">
               <img
                 src={country.image}
                 alt={country.name}
@@ -34,11 +46,46 @@ export default function CountrySection() {
                 }}
               />
             </div>
-            <h3 className="mt-4 text-2xl font-semibold text-slate-800">{country.name}</h3>
-            <div className="mt-2 h-1 w-10 rounded-full bg-amber-400" />
-            <p className="mt-3 text-sm leading-7 text-slate-600">{country.summary}</p>
+            <div className="min-w-0">
+              <h3 className="truncate text-sm font-semibold text-slate-900">{country.flag} {country.name}</h3>
+              <p className="mt-1 truncate text-xs text-slate-500">{country.programs?.[0] || "Study abroad support"}</p>
+            </div>
           </Link>
         ))}
+      </div>
+
+      <div className="mx-auto mt-10 grid max-w-7xl gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <h3 className="text-lg font-semibold text-slate-900">Why Choose MBBS Abroad</h3>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {mbbsBenefits.map((item) => (
+              <div key={item.title} className="rounded-xl bg-white p-4">
+                <h4 className="text-sm font-semibold text-slate-900">{item.title}</h4>
+                <p className="mt-2 text-xs leading-6 text-slate-600">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-[#1f2a77] p-5 text-white">
+          <h3 className="text-lg font-semibold">Admission Support</h3>
+          <div className="mt-4 grid gap-2">
+            {admissionSupport.map((item) => (
+              <div key={item} className="rounded-xl bg-white/10 px-3 py-2 text-sm font-medium text-white/90">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex justify-center">
+        <Link
+          href="/mbbs-study-abroad"
+          className="rounded-xl border border-blue-300 px-8 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"
+        >
+          View More
+        </Link>
       </div>
     </section>
   );

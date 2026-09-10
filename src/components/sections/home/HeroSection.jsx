@@ -1,56 +1,74 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { heroSlides } from "./homeData";
-import HeroImage1 from "@/images/hero-slider-img1.png";
-import HeroImage2 from "@/images/hero-slider-img2.png";
-import HeroImage3 from "@/images/hero-slider-img3.png";
-
-const slideImages = [HeroImage1, HeroImage2, HeroImage3];
 
 export default function HeroSection() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [currentImage, setCurrentImage] = useState(slideImages[0]);
+  const [visibleCharacterCount, setVisibleCharacterCount] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      setVisibleCharacterCount(0);
       setActiveSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
 
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    setCurrentImage(slideImages[activeSlide] || HeroImage3);
-    setIsImageLoaded(false);
-  }, [activeSlide]);
-
   const slide = heroSlides[activeSlide];
+  const typedTitle = slide.title.slice(0, visibleCharacterCount);
+
+  useEffect(() => {
+    if (visibleCharacterCount >= slide.title.length) return undefined;
+
+    const typingTimer = window.setTimeout(() => {
+      setVisibleCharacterCount((currentCount) => Math.min(currentCount + 1, slide.title.length));
+    }, 42);
+
+    return () => window.clearTimeout(typingTimer);
+  }, [slide.title, visibleCharacterCount]);
 
   return (
-    <section className="w-full overflow-hidden bg-white px-4 pt-24 pb-6 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32 lg:pb-10">
-      <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="flex flex-col justify-center">
-          <span className="mb-4 inline-flex w-fit rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">
+    <section className="relative min-h-[680px] w-full overflow-hidden bg-slate-950 px-4 pt-28 pb-10 sm:px-6 sm:pt-32 lg:px-8">
+      {heroSlides.map((item, index) => (
+        <Image
+          key={item.image}
+          src={item.image}
+          alt={item.title}
+          fill
+          priority={index === 0}
+          sizes="100vw"
+          className={`object-cover object-center transition-opacity duration-[1400ms] ease-in-out ${
+            index === activeSlide ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/55 to-slate-950/10" />
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white to-transparent" />
+
+      <div className="relative z-10 mx-auto flex min-h-[540px] max-w-7xl items-center">
+        <div className="max-w-2xl">
+          <span className="mb-4 inline-flex w-fit rounded-full bg-white/15 px-3 py-1 text-sm font-medium text-white backdrop-blur">
             {slide.badge}
           </span>
-          <h1 className="max-w-2xl text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-            {slide.title}
+          <h1 className="min-h-[7.5rem] max-w-2xl text-4xl font-semibold leading-tight text-white sm:min-h-[7rem] sm:text-5xl lg:text-6xl">
+            {typedTitle}
+            <span className="ml-1 inline-block h-9 w-0.5 translate-y-1 animate-pulse bg-sky-200 sm:h-12" />
           </h1>
-          <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
+          <p className="mt-4 max-w-xl text-lg leading-8 text-white/85">
             {slide.subtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href="#services"
-              className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
             >
               Explore Services
             </a>
             <a
               href="#categories"
-              className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="rounded-full border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
             >
               Browse Categories
             </a>
@@ -63,28 +81,11 @@ export default function HeroSection() {
               { label: "Relocation", value: "24/7" },
             ].map((item) => (
               <div key={item.label} className="rounded-2xl border border-slate-200 p-3">
-                <p className="text-2xl font-semibold text-slate-900">{item.value}</p>
-                <p className="text-sm text-slate-600">{item.label}</p>
+                <p className="text-2xl font-semibold text-white">{item.value}</p>
+                <p className="text-sm text-white/75">{item.label}</p>
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="relative h-[430px] overflow-hidden bg-transparent shadow-none">
-          <Image
-            key={`${slide.title}-${currentImage}`}
-            src={currentImage}
-            alt={slide.title}
-            className={`h-full w-full object-contain object-center transition-opacity duration-300 ${
-              isImageLoaded ? "opacity-100" : "opacity-0"
-            }`}
-            onLoad={() => setIsImageLoaded(true)}
-          />
-          {!isImageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200">
-              <div className="h-12 w-12 animate-pulse rounded-full bg-white/70" />
-            </div>
-          )}
         </div>
       </div>
     </section>

@@ -1,16 +1,43 @@
 import { getLoginPath, normalizeRole } from '@/util/authRouting';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.trip-z.in';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.immify.in/api/v1';
 const REFRESH_ENDPOINTS = ['/api/v1/auth/refresh'];
 let authRedirectStarted = false;
 
 function buildUrl(path) {
     if (!path) return API_BASE_URL;
     if (/^https?:\/\//i.test(path)) return path;
+    if (path.startsWith('/api/')) return path;
 
     const normalizedBase = API_BASE_URL.replace(/\/$/, '');
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     return `${normalizedBase}${normalizedPath}`;
+}
+
+function buildUrlWithParams(path, params) {
+    const url = buildUrl(path);
+
+    if (!params || typeof params !== 'object') return url;
+
+    const query = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+
+        if (Array.isArray(value)) {
+            value.forEach((item) => {
+                if (item !== undefined && item !== null && item !== '') query.append(key, String(item));
+            });
+            return;
+        }
+
+        query.append(key, String(value));
+    });
+
+    const queryString = query.toString();
+    if (!queryString) return url;
+
+    return `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
 }
 
 function isRequestForEndpoint(url, endpoints) {
@@ -184,8 +211,8 @@ function makeHttpError(response, data) {
     return error;
 }
 
-async function request(path, { method = 'GET', body, headers = {}, skipAuth = false, _retry = false, ...restOptions } = {}) {
-    const url = buildUrl(path);
+async function request(path, { method = 'GET', body, headers = {}, params, skipAuth = false, suppressAuthRedirect = false, _retry = false, ...restOptions } = {}) {
+    const url = buildUrlWithParams(path, params);
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
     const isRefreshRequest = isRequestForEndpoint(url, REFRESH_ENDPOINTS);
     let accessToken = getStoredAccessToken();
@@ -218,10 +245,14 @@ async function request(path, { method = 'GET', body, headers = {}, skipAuth = fa
     });
     const data = await parseResponseBody(response);
 
+    if ((response.status === 401 || response.status === 403) && suppressAuthRedirect) {
+        throw makeHttpError(response, data);
+    }
+
     if ((response.status === 401 || response.status === 403) && !_retry && !skipAuth && !isRefreshRequest) {
         try {
             await refreshAccessToken();
-            return request(path, { method, body, headers, skipAuth, _retry: true, ...restOptions });
+            return request(path, { method, body, headers, params, skipAuth, suppressAuthRedirect, _retry: true, ...restOptions });
         } catch (refreshError) {
             handleAuthSessionExpired();
             throw refreshError;

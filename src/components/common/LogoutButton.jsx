@@ -3,8 +3,13 @@ import { Box, ListItem, ListItemButton, ListItemIcon, ListItemText, MenuItem } f
 import { Logout } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
-// import MainApi from '@/util/MainApi';
-// import { getVendorType, normalizeRole } from '@/util/authRouting';
+import MainApi from '@/util/MainApi';
+import { getVendorType, normalizeRole } from '@/util/authRouting';
+
+function getStoredRefreshToken() {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('refreshToken') || '';
+}
 
 function clearAuthSession() {
     localStorage.removeItem('isAuthenticated');
@@ -58,7 +63,7 @@ function getLogoutRedirectPath() {
         return '/admin/login';
     }
 
-    if (vendorType === 'TRAVEL_AGENT' || role === 'agent') {
+    if (vendorType === 'TRAVEL_AGENT' || vendorType === 'CONSULTANCY' || role === 'agent' || role === 'vendor') {
         return '/agent/login';
     }
 
@@ -93,7 +98,12 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
 
         if (!result.isConfirmed) return;
 
-        MainApi.post('/api/v1/auth/logout').catch(() => {});
+        const refreshToken = getStoredRefreshToken();
+
+        if (refreshToken) {
+            MainApi.post('/auth/logout', { refreshToken }, { keepalive: true }).catch(() => {});
+        }
+
         clearAuthSession();
         showLogoutRedirectLoader();
         await router.push(redirectPath);

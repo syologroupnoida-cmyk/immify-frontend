@@ -10,11 +10,6 @@ import {
     Divider,
     Stack,
     CircularProgress,
-    InputAdornment,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
     Chip,
     IconButton,
 } from '@mui/material';
@@ -24,10 +19,10 @@ import {
     Cancel as CancelIcon,
     Add as AddIcon,
     Close as CloseIcon,
-    Build as BuildIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Swal from 'sweetalert2';
+import MainApi from '@/util/MainApi';
 
 // Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -47,86 +42,61 @@ const SectionHeader = ({ title }) => {
     );
 };
 
-const fieldIconSx = { fontSize: 18, color: '#94a3b8' };
-
-// API function
-const addServicesApi = async (payload) => {
-    try {
-        const response = await fetch('/api/v1/add-services', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-            let errorMessage = 'Failed to add services';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (e) {
-                errorMessage = response.statusText || `Server error (${response.status})`;
-            }
-            throw new Error(errorMessage);
-        }
-
-        return await response.json();
-    } catch (error) {
-        if (error.message === 'Failed to fetch') {
-            throw new Error('Network error. Please check your connection.');
-        }
-        throw error;
-    }
-};
+const createServiceCategoryApi = (payload) => MainApi.post('/super-admin/service-categories', payload);
 
 // Main Component
 const AddServices = ({
     onSubmit,
     onCancel,
-    initialData = { category: '', services: [] },
+    initialData = { name: '', description: '', services: [] },
     isLoading = false,
     error = null,
 }) => {
     const [formData, setFormData] = useState({
-        category: initialData.category || '',
-        services: initialData.services || [],
+        name: initialData.name || '',
+        description: initialData.description || '',
+        services: initialData.services?.map((service) => typeof service === 'string' ? service : service.name).filter(Boolean) || [],
     });
 
     const [newService, setNewService] = useState('');
     const [errors, setErrors] = useState({
-        category: '',
+        name: '',
+        description: '',
         services: '',
     });
 
     const [touched, setTouched] = useState({
-        category: false,
+        name: false,
+        description: false,
         services: false,
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Mock category data - replace with actual API call
-    const categories = [
-        { id: 1, name: 'Web Development' },
-        { id: 2, name: 'Mobile Development' },
-        { id: 3, name: 'IT Services' },
-        { id: 4, name: 'Design Services' },
-        { id: 5, name: 'Digital Marketing' },
-        { id: 6, name: 'Cloud Services' },
-    ];
+    const [apiError, setApiError] = useState(null);
 
     // Validation functions
     const validateField = (name, value) => {
         switch (name) {
-            case 'category':
-                if (!value) {
-                    return 'Category is required';
+            case 'name':
+                if (!value.trim()) {
+                    return 'Category name is required';
+                }
+                if (value.trim().length < 3) {
+                    return 'Category name must be at least 3 characters';
+                }
+                if (value.trim().length > 80) {
+                    return 'Category name must be less than 80 characters';
+                }
+                return '';
+
+            case 'description':
+                if (value.trim().length > 500) {
+                    return 'Description must be less than 500 characters';
                 }
                 return '';
 
             case 'services':
-                if (formData.services.length === 0) {
+                if (value.length === 0) {
                     return 'At least one service is required';
                 }
                 return '';
@@ -226,18 +196,22 @@ const AddServices = ({
         }).then((result) => {
             if (result.isConfirmed) {
                 setFormData({
-                    category: '',
+                    name: '',
+                    description: '',
                     services: [],
                 });
                 setNewService('');
                 setErrors({
-                    category: '',
+                    name: '',
+                    description: '',
                     services: '',
                 });
                 setTouched({
-                    category: false,
+                    name: false,
+                    description: false,
                     services: false,
                 });
+                setApiError(null);
 
                 Swal.fire({
                     icon: 'info',
@@ -252,16 +226,19 @@ const AddServices = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setApiError(null);
 
         // Validate all fields
         const newErrors = {
-            category: validateField('category', formData.category),
+            name: validateField('name', formData.name),
+            description: validateField('description', formData.description),
             services: validateField('services', formData.services),
         };
 
         setErrors(newErrors);
         setTouched({
-            category: true,
+            name: true,
+            description: true,
             services: true,
         });
 
@@ -273,26 +250,20 @@ const AddServices = ({
             try {
                 // Prepare payload
                 const payload = {
-                    category: formData.category,
-                    services: formData.services.map(name => ({ name })),
+                    name: formData.name.trim(),
+                    description: formData.description.trim(),
+                    services: formData.services.map((name) => ({ name })),
                 };
 
                 // Call actual API
-                const response = await addServicesApi(payload);
+                const response = await createServiceCategoryApi(payload);
+                const successMessage = response?.data?.message || 'Services created successfully.';
 
                 // Show success SweetAlert with OK button
                 await Swal.fire({
                     icon: 'success',
-                    title: 'Services Created Successfully!',
-                    html: `
-                        <div style="text-align: left;">
-                            <p><strong>Category:</strong> ${formData.category}</p>
-                            <p><strong>Services Added (${formData.services.length}):</strong></p>
-                            <ul style="text-align: left; margin: 10px 0;">
-                                ${formData.services.map(s => `<li>${s}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `,
+                    title: 'Success!',
+                    text: successMessage,
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#f79f03',
                 });
@@ -304,20 +275,26 @@ const AddServices = ({
 
                 // Clear form after successful submission
                 setFormData({
-                    category: '',
+                    name: '',
+                    description: '',
                     services: [],
                 });
                 setNewService('');
                 setErrors({
-                    category: '',
+                    name: '',
+                    description: '',
                     services: '',
                 });
                 setTouched({
-                    category: false,
+                    name: false,
+                    description: false,
                     services: false,
                 });
+                setApiError(null);
 
             } catch (err) {
+                setApiError(err.message);
+
                 // Show error SweetAlert with OK button
                 await Swal.fire({
                     icon: 'error',
@@ -373,7 +350,6 @@ const AddServices = ({
                             <Divider />
                         </Box>
 
-                        {/* Two columns layout with equal width */}
                         <Box
                             sx={{
                                 display: 'grid',
@@ -383,40 +359,48 @@ const AddServices = ({
                                 width: '100%',
                             }}
                         >
-                            {/* Category Dropdown */}
                             <Box sx={{ minWidth: 0 }}>
-                                <FormControl
+                                <TextField
                                     fullWidth
+                                    type="text"
                                     size="small"
-                                    error={!!errors.category && touched.category}
-                                >
-                                    <InputLabel>Category</InputLabel>
-                                    <Select
-                                        name="category"
-                                        value={formData.category}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        label="Category"
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select a category</em>
-                                        </MenuItem>
-                                        {categories.map((category) => (
-                                            <MenuItem key={category.id} value={category.name}>
-                                                {category.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {touched.category && errors.category && (
-                                        <Typography color="error" variant="caption" sx={{ mt: 0.5 }}>
-                                            {errors.category}
-                                        </Typography>
-                                    )}
-                                </FormControl>
+                                    label="Category Name"
+                                    name="name"
+                                    placeholder="e.g., Immigration Services"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={!!errors.name && touched.name}
+                                    helperText={
+                                        touched.name && errors.name
+                                            ? errors.name
+                                            : `${formData.name.length}/80 characters`
+                                    }
+                                />
+                            </Box>
+
+                            <Box sx={{ minWidth: 0 }}>
+                                <TextField
+                                    fullWidth
+                                    type="text"
+                                    size="small"
+                                    label="Description"
+                                    name="description"
+                                    placeholder="e.g., PR, Express Entry, Citizenship, Residency"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={!!errors.description && touched.description}
+                                    helperText={
+                                        touched.description && errors.description
+                                            ? errors.description
+                                            : `${formData.description.length}/500 characters (optional)`
+                                    }
+                                />
                             </Box>
 
                             {/* Services Section */}
-                            <Box sx={{ minWidth: 0 }}>
+                            <Box sx={{ minWidth: 0, gridColumn: { xs: '1', md: '1 / -1' } }}>
                                 <Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <TextField
@@ -426,13 +410,6 @@ const AddServices = ({
                                             value={newService}
                                             onChange={(e) => setNewService(e.target.value)}
                                             onKeyPress={handleKeyPress}
-                                            InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <BuildIcon sx={fieldIconSx} />
-                                                    </InputAdornment>
-                                                ),
-                                            }}
                                         />
                                         <IconButton
                                             onClick={handleAddService}
@@ -493,6 +470,14 @@ const AddServices = ({
                                 </Box>
                             </Box>
                         </Box>
+
+                        {(error || apiError) && (
+                            <Box sx={{ mt: 2 }}>
+                                <Typography color="error" variant="body2">
+                                    {error || apiError}
+                                </Typography>
+                            </Box>
+                        )}
 
                         {/* Submit Buttons */}
                         <Box sx={{ mt: 3 }}>

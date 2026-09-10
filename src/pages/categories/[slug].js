@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LeadGenerationButton from "../../components/common/LeadGenerationButton";
 import { vendorCategories } from "../../components/sections/home/homeData";
 
 export async function getStaticPaths() {
@@ -26,9 +27,9 @@ function CategoryDetailPage({ category }) {
           ← Back to home
         </Link>
 
-        <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
-            <div>
+            <div className="p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">Category detail</p>
               <h1 className="mt-3 text-4xl font-semibold text-slate-900">{category.title}</h1>
               <p className="mt-5 text-lg leading-8 text-slate-600">{category.summary}</p>
@@ -40,18 +41,12 @@ function CategoryDetailPage({ category }) {
                   </div>
                 ))}
               </div>
-
-              <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
-                <h2 className="text-2xl font-semibold text-slate-900">What this category covers</h2>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  Discover top suppliers, services, and solutions tied to this category. This page helps buyers explore relevant options, compare benefits, and connect with reliable vendors.
-                </p>
-              </div>
+              <LeadGenerationButton label="Get Quote" className="mt-8" />
             </div>
 
-            <aside className="space-y-6">
-              <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Popular tags</p>
+            <aside className="h-full bg-[#f7f9ff] p-8">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#1f2a77]">Popular tags</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {category.tags.map((tag) => (
                     <span key={tag} className="rounded-full bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
@@ -59,16 +54,6 @@ function CategoryDetailPage({ category }) {
                     </span>
                   ))}
                 </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Get started</h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Post your requirement and connect with trusted vendors in this category.
-                </p>
-                <button className="mt-6 w-full rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Post your requirement
-                </button>
               </div>
             </aside>
           </div>

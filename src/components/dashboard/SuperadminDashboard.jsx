@@ -52,6 +52,7 @@ import {
     BarChart as ChartIcon,
     Assessment as AssessmentIcon,
     LocalOffer as LocalOfferIcon,
+    Work as WorkIcon,
 } from '@mui/icons-material';
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import { useRouter } from 'next/router';
@@ -66,8 +67,9 @@ const menuItems = [
         name: 'Services',
         icon: <PackagesIcon />,
         children: [
-            { name: 'Add Service Category', path: '/service/add-category' },
             { name: 'Add Services', path: '/service/add-services' },
+            { name: 'Service Listings', path: '/service/service-list' },
+
         ],
     },
     {
@@ -75,16 +77,24 @@ const menuItems = [
         icon: <TicketIcon />,
         children: [
             { name: 'Add Plan', path: '/admin/add-subscription-plan' },
-            
+
         ],
     },
-    // {
-    //     name: 'Lead Management',
-    //     icon: <PackagesIcon />,
-    //     children: [
-    //         { name: 'Lead List', path: '/leads/lead-list' },
-    //     ],
-    // },
+    {
+        name: 'Lead Management',
+        icon: <PackagesIcon />,
+        children: [
+            { name: 'Lead List', path: '/leads/lead-list' },
+        ],
+    },
+    {
+        name: 'Jobs Management',
+        icon: <WorkIcon />,
+        children: [
+            { name: 'Job List', path: '/admin/job-list' },
+            { name: 'Add Job', path: '/admin/add-job' },
+        ],
+    },
     // {
     //     name: 'Add Story',
     //     icon: <MoneyIcon />,
@@ -93,20 +103,20 @@ const menuItems = [
     //         { name: 'Story List', path: '/blog/story-list' },
     //     ],
     // },
-    // {
-    //     name: 'Agent Management',
-    //     icon: <PeopleIcon />,
-    //     children: [
-    //         { name: 'Agent List', path: '/agent/agent-list' },
-    //         { name: 'Agent Wallet Recharge', path: '/agent/wallet-recharge' },
-    //     ],
-    // },
+    {
+        name: 'Agent Management',
+        icon: <PeopleIcon />,
+        children: [
+            { name: 'Agent List', path: '/agent/agent-list' },
+            // { name: 'Agent Wallet Recharge', path: '/agent/wallet-recharge' },
+        ],
+    },
     // {
     //     name: 'Property Booking',
     //     icon: <ApartmentIcon />,
     //     children: [
     //         { name: 'Booking List', path: '/admin/booking-list' },
-            
+
     //     ],
     // },
     // {
@@ -496,7 +506,7 @@ const DashboardLayout = ({ children }) => {
                                 alignItems: 'center',
                             }}
                         >
-                            Superadmin Dashboard
+                            Super-admin Dashboard
                         </Typography>
                     </Stack>
 

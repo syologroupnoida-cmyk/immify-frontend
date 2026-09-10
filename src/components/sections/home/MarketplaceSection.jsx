@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
@@ -17,6 +17,7 @@ import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import { marketplaceTabs } from "./homeData";
+import { fetchHolidayPackages, getHolidayPackageFallbackImage, normalizeHolidayPackage } from "@/util/holidayPackages";
 
 const listingImages = [
   "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=1200&q=80",
@@ -66,24 +67,53 @@ const tabIconMap = {
   "legal-and-complance": GavelOutlinedIcon,
 };
 
-function ServiceListingCard({ tabName, categorySlug, serviceName, image, index }) {
-  const meta = listingMeta[index % listingMeta.length];
+const fallbackPackages = marketplaceTabs
+  .flatMap((tab) =>
+    tab.services.slice(0, 2).map((service, serviceIndex) => ({
+      title: service,
+      holidayTheme: tab.name,
+      destination: listingMeta[serviceIndex % listingMeta.length].city,
+      price: 24999 + serviceIndex * 9000,
+      currency: "INR",
+      imageUrl: getServiceImage(serviceIndex),
+      rating: 4.7 + serviceIndex * 0.1,
+      votes: 80 + serviceIndex * 24,
+    }))
+  )
+  .map(normalizeHolidayPackage);
+
+function ServiceListingCard({ item, index }) {
+  const meta = {
+    ...listingMeta[index % listingMeta.length],
+    category: item.categoryLabel,
+    price: item.priceLabel,
+    city: item.city,
+    rating: item.rating,
+    votes: item.votes,
+  };
 
   return (
     <Link
       href={{
         pathname: "/marketplace",
         query: {
-          category: categorySlug,
-          service: serviceName,
+          package: item.id,
+          theme: item.holidayTheme,
         },
       }}
       className="block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)]"
     >
       <div className="relative h-52 w-full overflow-hidden">
-        <img src={image} alt={serviceName} className="h-full w-full object-cover" />
-        <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white ${meta.badgeClass}`}>
-          {meta.badge}
+        <img
+          src={item.image || getHolidayPackageFallbackImage(index)}
+          alt={item.service}
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.src = getHolidayPackageFallbackImage(index);
+          }}
+        />
+        <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white ${item.badgeClass || meta.badgeClass}`}>
+          {item.badgeLabel || meta.badge}
         </span>
         <span
           aria-hidden="true"
@@ -95,9 +125,9 @@ function ServiceListingCard({ tabName, categorySlug, serviceName, image, index }
 
       <div className="space-y-2 p-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-sky-700">{meta.category}</p>
-        <h3 className="line-clamp-1 text-lg font-semibold leading-tight text-slate-900">{serviceName}</h3>
+        <h3 className="line-clamp-1 text-lg font-semibold leading-tight text-slate-900">{item.service}</h3>
         <p className="line-clamp-2 text-sm leading-6 text-slate-600">
-          Complete assistance for {tabName.toLowerCase()} with verified providers and transparent process guidance.
+          Complete assistance for {item.categoryName.toLowerCase()} with verified providers and transparent process guidance.
         </p>
 
         <div className="flex items-end justify-between gap-2 pt-2">
@@ -121,15 +151,94 @@ function ServiceListingCard({ tabName, categorySlug, serviceName, image, index }
 }
 
 export default function MarketplaceSection() {
-  const [activeTab, setActiveTab] = useState(marketplaceTabs[0].slug);
+  const [activeTab, setActiveTab] = useState("all");
+  const [allPackages, setAllPackages] = useState(fallbackPackages);
+  const [visiblePackages, setVisiblePackages] = useState(fallbackPackages);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(false);
   const tabsRailRef = useRef(null);
 
-  const currentTab = useMemo(
-    () => marketplaceTabs.find((tab) => tab.slug === activeTab) || marketplaceTabs[0],
-    [activeTab]
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPackages() {
+      setIsLoadingPackages(true);
+
+      try {
+        const fetchedPackages = await fetchHolidayPackages({ take: 100, skip: 0 });
+
+        if (isMounted && fetchedPackages.length) {
+          setAllPackages(fetchedPackages);
+          setVisiblePackages(fetchedPackages.slice(0, 4));
+        }
+      } catch {
+        if (isMounted) {
+          setAllPackages(fallbackPackages);
+          setVisiblePackages(fallbackPackages.slice(0, 4));
+        }
+      } finally {
+        if (isMounted) setIsLoadingPackages(false);
+      }
+    }
+
+    queueMicrotask(loadPackages);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const holidayThemeTabs = useMemo(
+    () => [
+      { slug: "all", name: "All Holiday" },
+      ...Array.from(new Set(allPackages.map((item) => item.holidayTheme).filter(Boolean))).map((theme) => ({
+        slug: theme.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
+        name: theme,
+      })),
+    ],
+    [allPackages]
   );
 
-  const displayServices = currentTab.services.slice(0, 4);
+  useEffect(() => {
+    let isMounted = true;
+    const selectedTheme = holidayThemeTabs.find((tab) => tab.slug === activeTab)?.name;
+
+    async function loadPackagesByTheme() {
+      if (activeTab === "all" || !selectedTheme) {
+        setVisiblePackages(allPackages.slice(0, 4));
+        return;
+      }
+
+      setIsLoadingPackages(true);
+
+      try {
+        const fetchedPackages = await fetchHolidayPackages({
+          take: 12,
+          skip: 0,
+          type: selectedTheme,
+        });
+        const matchingPackages = fetchedPackages.filter((item) => item.holidayTheme === selectedTheme);
+        const nextPackages = matchingPackages.length
+          ? matchingPackages
+          : allPackages.filter((item) => item.holidayTheme === selectedTheme);
+
+        if (isMounted) {
+          setVisiblePackages(nextPackages.slice(0, 4));
+        }
+      } catch {
+        if (isMounted) {
+          setVisiblePackages(allPackages.filter((item) => item.holidayTheme === selectedTheme).slice(0, 4));
+        }
+      } finally {
+        if (isMounted) setIsLoadingPackages(false);
+      }
+    }
+
+    queueMicrotask(loadPackagesByTheme);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, allPackages, holidayThemeTabs]);
 
   const scrollTabs = (direction) => {
     if (!tabsRailRef.current) return;
@@ -151,11 +260,11 @@ export default function MarketplaceSection() {
             <span className="inline-flex h-5 w-5 items-center justify-center text-blue-700 sm:h-6 sm:w-6">
               <BusinessCenterOutlinedIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </span>
-            MARKETPLACE
+            PREMIUM SERVICES
           </p>
 
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-            Explore, Compare &amp; Choose the Best
+            Top Selling Packages
           </h2>
 
           <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
@@ -179,7 +288,7 @@ export default function MarketplaceSection() {
             ref={tabsRailRef}
             className="tabs-rail scrollbar-none mx-auto flex items-start gap-1 overflow-x-auto overflow-y-hidden px-1 pb-2 sm:gap-3 lg:mx-10"
           >
-            {marketplaceTabs.map((tab) => {
+            {holidayThemeTabs.map((tab) => {
               const isActive = tab.slug === activeTab;
               const colorClass = iconTone[tab.slug] || "text-blue-600";
               const Icon = tabIconMap[tab.slug] || PublicOutlinedIcon;
@@ -226,17 +335,18 @@ export default function MarketplaceSection() {
         </div>
 
         <div className="mt-10 grid gap-4 border-t border-slate-100 pt-8 sm:grid-cols-2 xl:grid-cols-4">
-          {displayServices.map((service, index) => (
+          {visiblePackages.map((item, index) => (
             <ServiceListingCard
-              key={`${currentTab.slug}-${service}`}
-              tabName={currentTab.name}
-              categorySlug={currentTab.slug}
-              serviceName={service}
-              image={getServiceImage(index)}
+              key={item.id}
+              item={item}
               index={index}
             />
           ))}
         </div>
+
+        {isLoadingPackages && (
+          <p className="mt-4 text-center text-sm text-slate-500">Loading packages...</p>
+        )}
 
         <div className="mt-8 flex justify-center">
           <Link

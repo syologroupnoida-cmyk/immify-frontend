@@ -11,6 +11,8 @@ import {
   IconButton,
   Checkbox,
   FormControlLabel,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -18,8 +20,14 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/user-login-img.png';
+import MainApi from '@/util/MainApi';
+import { getPostLoginPath, normalizeRole } from '@/util/authRouting';
+import { requestGoogleIdToken } from '@/util/googleAuth';
+import { getApiErrorMessage } from '@/util/profileHelpers';
 
 const theme = createTheme({
   palette: {
@@ -33,6 +41,7 @@ const theme = createTheme({
 });
 
 const Login = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,6 +49,9 @@ const Login = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
@@ -54,6 +66,10 @@ const Login = () => {
         ...prev,
         [name]: '',
       }));
+    }
+
+    if (submitError) {
+      setSubmitError('');
     }
   };
 
@@ -76,10 +92,133 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const getFirstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+
+  const persistAuthSession = (payload) => {
+    if (typeof window === 'undefined') return { role: 'customer', user: {} };
+
+    const data = payload?.data || payload || {};
+    const tokenPayload = data?.tokens || payload?.tokens || {};
+    const user = data?.user || payload?.user || data?.profile || payload?.profile || {};
+    const role = normalizeRole(getFirstValue(
+      user?.role,
+      user?.userRole,
+      user?.roleName,
+      data?.role,
+      payload?.role,
+      'customer'
+    ));
+    const accessToken = getFirstValue(
+      data?.accessToken,
+      data?.access_token,
+      tokenPayload?.accessToken,
+      tokenPayload?.access_token,
+      payload?.accessToken,
+      payload?.access_token
+    );
+    const refreshToken = getFirstValue(
+      data?.refreshToken,
+      data?.refresh_token,
+      tokenPayload?.refreshToken,
+      tokenPayload?.refresh_token,
+      payload?.refreshToken,
+      payload?.refresh_token
+    );
+    const refreshExpiresAt = getFirstValue(
+      data?.refreshExpiresAt,
+      data?.refresh_expires_at,
+      tokenPayload?.refreshExpiresAt,
+      tokenPayload?.refresh_expires_at,
+      payload?.refreshExpiresAt,
+      payload?.refresh_expires_at
+    );
+
+    window.localStorage.setItem('isAuthenticated', 'true');
+    window.localStorage.setItem('authData', JSON.stringify(payload));
+    window.localStorage.setItem('userRole', role);
+
+    if (user && typeof user === 'object') {
+      window.localStorage.setItem('userData', JSON.stringify(user));
+      window.localStorage.setItem('UserData', JSON.stringify(user));
+    }
+
+    if (accessToken) {
+      window.localStorage.setItem('accessToken', accessToken);
+    }
+
+    if (refreshToken) {
+      window.localStorage.setItem('refreshToken', refreshToken);
+    }
+
+    if (refreshExpiresAt) {
+      window.localStorage.setItem('refreshExpiresAt', refreshExpiresAt);
+    }
+
+    document.cookie = 'tripz_auth=true; path=/; SameSite=Lax';
+    document.cookie = `tripz_role=${role}; path=/; SameSite=Lax`;
+    window.dispatchEvent(new Event('tripz-auth-change'));
+
+    return { role, user };
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      console.log('Login Successful', formData);
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await MainApi.post('/auth/login', {
+        email: formData.email.trim(),
+        password: formData.password,
+      }, { skipAuth: true });
+      const payload = response?.data || {};
+      const { role, user } = persistAuthSession(payload);
+      const redirectPath = getPostLoginPath(role, payload, user);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login successful',
+        showConfirmButton: false,
+        timer: 900,
+      });
+      await router.push(redirectPath);
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Login failed. Please check your email and password.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const token = await requestGoogleIdToken();
+      const response = await MainApi.post('/auth/google/login', {
+        token,
+        role: 'CLIENT',
+      }, { skipAuth: true });
+      const payload = response?.data || {};
+      const { role, user } = persistAuthSession(payload);
+      const redirectPath = getPostLoginPath(role, payload, user);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login successful',
+        showConfirmButton: false,
+        timer: 900,
+      });
+      await router.push(redirectPath);
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Google login failed. Please try again.'));
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -249,6 +388,12 @@ const Login = () => {
             </Box>
 
             <form onSubmit={handleSubmit}>
+              {submitError && (
+                <Alert severity="error" sx={{ width: '92%', maxWidth: 520, mx: 'auto', mb: 2 }}>
+                  {submitError}
+                </Alert>
+              )}
+
               {/* Email Field with User Icon */}
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5 }}>
                 <TextField
@@ -257,16 +402,10 @@ const Login = () => {
                   value={formData.email}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting || isGoogleSubmitting}
                   error={!!errors.email}
                   helperText={errors.email}
-                  sx={{ width: '92%', maxWidth: 440 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlinedIcon fontSize="small" color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
+                  sx={{ width: '92%', maxWidth: 520 }}
                 />
               </Box>
 
@@ -279,31 +418,25 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   size="small"
+                  disabled={isSubmitting || isGoogleSubmitting}
                   error={!!errors.password}
                   helperText={errors.password}
-                  sx={{ width: '92%', maxWidth: 440 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlinedIcon fontSize="small" color="action" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label="toggle password visibility"
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          size="small"
-                        >
-                          {showPassword ? (
-                            <VisibilityOffIcon fontSize="small" />
-                          ) : (
-                            <VisibilityIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  sx={{ width: '92%', maxWidth: 520 }}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            onClick={() => setShowPassword((value) => !value)}
+                            edge="end"
+                            size="small"
+                          >
+                            {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Box>
@@ -315,7 +448,7 @@ const Login = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   width: '92%',
-                  maxWidth: 440,
+                  maxWidth: 520,
                   mx: 'auto',
                   mb: 3,
                 }}
@@ -326,6 +459,7 @@ const Login = () => {
                       name="rememberMe"
                       checked={formData.rememberMe}
                       onChange={handleChange}
+                      disabled={isSubmitting || isGoogleSubmitting}
                       size="small"
                     />
                   }
@@ -342,23 +476,25 @@ const Login = () => {
                   type="submit"
                   variant="contained"
                   fullWidth
+                  disabled={isSubmitting || isGoogleSubmitting}
+                  startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
                   sx={{
                     py: 1.2,
                     height: 44,
                     width: '92%',
-                    maxWidth: 440,
+                    maxWidth: 520,
                     borderRadius: 2,
                     textTransform: 'none',
                     fontWeight: 600,
                     fontSize: '1rem',
                   }}
                 >
-                  Login →
+                  {isSubmitting ? 'Logging in...' : 'Login'}
                 </Button>
               </Box>
             </form>
 
-            <Divider sx={{ my: 2, width: '92%', maxWidth: 440, mx: 'auto' }}>
+            <Divider sx={{ my: 2, width: '92%', maxWidth: 520, mx: 'auto' }}>
               <Typography variant="body2" color="text.secondary">
                 Or continue with
               </Typography>
@@ -369,18 +505,24 @@ const Login = () => {
               <Button
                 variant="outlined"
                 fullWidth
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting || isGoogleSubmitting}
                 startIcon={
-                  <img
+                  isGoogleSubmitting ? (
+                    <CircularProgress size={18} />
+                  ) : (
+                    <img
                     src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
                     alt="Google"
                     style={{ width: 20, height: 20 }}
-                  />
+                    />
+                  )
                 }
                 sx={{
                   py: 1.2,
                   height: 44,
                   width: '92%',
-                  maxWidth: 440,
+                  maxWidth: 520,
                   borderRadius: 2,
                   textTransform: 'none',
                   fontWeight: 500,
@@ -388,13 +530,13 @@ const Login = () => {
                   color: 'text.primary',
                 }}
               >
-                Continue with Google
+                {isGoogleSubmitting ? 'Connecting...' : 'Continue with Google'}
               </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center', mt: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link href="/user/sign-up" underline="hover" fontWeight={600}>
                   Create Account
                 </Link>

@@ -14,10 +14,10 @@ function Home() {
       <div className="flex flex-col">
         <HeroSection />
         <MarketplaceSection />
+        <CountrySection />
         <ServicesSection />
         <JobsSection />
         <PremiumServicesSection />
-        <CountrySection />
         <CategorySection />
         <TopCitiesSection />
         <FreeQuoteSection />

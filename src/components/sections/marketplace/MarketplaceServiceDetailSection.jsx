@@ -53,6 +53,12 @@ const extraGalleryImages = [
   "https://images.unsplash.com/photo-1522098543979-ffc7f79d11f3?auto=format&fit=crop&w=1000&q=80",
   "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?auto=format&fit=crop&w=1000&q=80",
 ];
+const dummyServiceImage = "/images/services/service-detail-dummy.png";
+
+function handleImageFallback(event) {
+  if (event.currentTarget.src.includes(dummyServiceImage)) return;
+  event.currentTarget.src = dummyServiceImage;
+}
 
 export default function MarketplaceServiceDetailSection() {
   const router = useRouter();
@@ -89,7 +95,7 @@ export default function MarketplaceServiceDetailSection() {
   }, [listing, listings]);
 
   const visibleThumbnails = galleryImages.slice(0, 6);
-  const activeImage = galleryImages[activeGalleryIndex] || listing?.image;
+  const activeImage = galleryImages[activeGalleryIndex] || listing?.image || dummyServiceImage;
 
   if (!listing) {
     return (
@@ -122,7 +128,7 @@ export default function MarketplaceServiceDetailSection() {
           <section className="space-y-5">
             <div>
               <div className="relative mt-2 h-[220px] overflow-hidden rounded-xl sm:mt-3 sm:h-[320px]">
-                <img src={activeImage} alt={listing.service} className="h-full w-full object-cover" />
+                <img src={activeImage} alt={listing.service} className="h-full w-full object-cover" onError={handleImageFallback} />
                 <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide text-white ${listing.badgeClass}`}>
                   {listing.badgeLabel}
                 </span>
@@ -141,7 +147,7 @@ export default function MarketplaceServiceDetailSection() {
                       activeGalleryIndex === index ? "border-blue-500" : "border-slate-200"
                     }`}
                   >
-                    <img src={image} alt={`${listing.service} ${index + 1}`} className="h-12 w-full object-cover sm:h-14" />
+                    <img src={image || dummyServiceImage} alt={`${listing.service} ${index + 1}`} className="h-12 w-full object-cover sm:h-14" onError={handleImageFallback} />
                   </button>
                 ))}
               </div>
@@ -292,7 +298,7 @@ export default function MarketplaceServiceDetailSection() {
                     href={`/marketplace/${item.detailSlug}`}
                     className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_6px_22px_rgba(15,23,42,0.06)]"
                   >
-                    <img src={item.image} alt={item.service} className="h-36 w-full object-cover" />
+                    <img src={item.image || dummyServiceImage} alt={item.service} className="h-36 w-full object-cover" onError={handleImageFallback} />
                     <div className="space-y-2 p-3">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">{item.categoryLabel}</p>
                       <h4 className="line-clamp-1 text-sm font-semibold text-slate-900">{item.service}</h4>

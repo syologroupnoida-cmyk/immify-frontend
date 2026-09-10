@@ -15,6 +15,7 @@ import {
     Checkbox,
     FormControlLabel,
     FormGroup,
+    MenuItem,
     Chip,
     CircularProgress,
     Stack,
@@ -31,6 +32,8 @@ import {
 import { styled } from '@mui/material/styles';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
+import MainApi from '@/util/MainApi';
+import { getLoginPath, getVendorType, normalizeRole } from '@/util/authRouting';
 import SiteLogo from '@/images/site-logo.png';
 import SliderImage1 from '@/images/immify_kyc_step_1_no_logo.png';
 import SliderImage2 from '@/images/immify_kyc_step_2_no_logo.png';
@@ -168,27 +171,111 @@ const SliderImageWrapper = styled(Box)({
     backgroundColor: '#0f172a',
 });
 
+const referralSourceOptions = ['GOOGLE', 'FACEBOOK', 'INSTAGRAM', 'LINKEDIN', 'FRIEND', 'OTHER'];
+const maxImageSizeKb = 500;
+const maxImageSizeBytes = maxImageSizeKb * 1024;
+
+function readStoredJson(key) {
+    if (typeof window === 'undefined') return null;
+
+    try {
+        const value = window.localStorage.getItem(key);
+        return value ? JSON.parse(value) : null;
+    } catch {
+        return null;
+    }
+}
+
+function getPostKycLoginPath() {
+    if (typeof window === 'undefined') return '/agent/login';
+
+    const authData = readStoredJson('authData') || {};
+    const storedUser = readStoredJson('userData') || readStoredJson('UserData') || {};
+    const dataUser = authData?.data?.user || authData?.user || {};
+    const user = Object.keys(storedUser).length > 0 ? storedUser : dataUser;
+    const role = normalizeRole(window.localStorage.getItem('userRole') || user?.role || authData?.data?.user?.role || authData?.role);
+    const vendorType = getVendorType(user) || getVendorType(authData);
+
+    return getLoginPath(role, { ...authData, ...user, vendorType }) || '/agent/login';
+}
+
+function withKycSubmittedFlag(path) {
+    return `${path}${path.includes('?') ? '&' : '?'}kycSubmitted=1`;
+}
+
+function clearAuthSession() {
+    if (typeof window === 'undefined') return;
+
+    [
+        'isAuthenticated',
+        'authData',
+        'userData',
+        'UserData',
+        'userRole',
+        'accessToken',
+        'refreshToken',
+        'refreshExpiresAt',
+    ].forEach((key) => window.localStorage.removeItem(key));
+
+    [
+        'tripz_auth',
+        'tripz_role',
+        'tripz_kyc',
+        'tripz_kyc_status',
+        'tripz_vendor_type',
+        'tripz_next_step',
+    ].forEach((name) => {
+        document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+    });
+
+    window.dispatchEvent(new Event('tripz-auth-change'));
+}
+
+function getFirstArray(...values) {
+    return values.find((value) => Array.isArray(value)) || [];
+}
+
+function normalizeServiceCategories(responseData) {
+    const categoriesArray = getFirstArray(
+        responseData,
+        responseData?.data,
+        responseData?.data?.data,
+        responseData?.categories,
+        responseData?.serviceCategories,
+        responseData?.data?.categories,
+        responseData?.data?.serviceCategories,
+        responseData?.data?.items,
+        responseData?.data?.results,
+        responseData?.items,
+        responseData?.results
+    );
+    const categories = categoriesArray.length > 0
+        ? categoriesArray
+        : [responseData?.data, responseData].filter((value) => (
+            value &&
+            typeof value === 'object' &&
+            !Array.isArray(value) &&
+            (value.name || value.categoryName || value.title)
+        ));
+
+    return categories.map((category, categoryIndex) => {
+        const categoryId = category?._id || category?.id || category?.slug || `category-${categoryIndex}`;
+        const categoryName = category?.name || category?.categoryName || category?.title || 'Unnamed Category';
+
+        return {
+            id: String(categoryId),
+            name: categoryName,
+        };
+    }).filter((category) => category.name);
+}
+
 // Image upload API function
 const uploadImage = async (file, purpose) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('purpose', purpose);
 
-    try {
-        const response = await fetch('/api/v1/upload/images', {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to upload image');
-        }
-
-        return await response.json();
-    } catch (error) {
-        throw error;
-    }
+    return MainApi.post('/uploads/image', formData);
 };
 
 // Main Component
@@ -207,12 +294,23 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
         // Step 2: Company Details
         companyName: '',
-        address: '',
-        companyLink: '',
-        instagramLink: '',
+        businessName: '',
+        companyType: '',
+        companySince: '',
+        teamSize: '',
+        country: 'India',
+        officeAddress: '',
+        officeCity: '',
+        officeState: '',
+        destinations: '',
+        dailyLeadRequirement: '',
+        profileUrl: '',
+        referralSource: '',
+        marketplaceWorked: false,
+        agreeTerms: false,
+        declareTrue: false,
         companyImage: null,
         companyImageUrl: null,
-        employeeCount: '',
 
         // Step 3: Documents
         aadharNumber: '',
@@ -238,22 +336,16 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
     const [companyImagePreview, setCompanyImagePreview] = useState(null);
     const [verifyErrors, setVerifyErrors] = useState({});
     const [documentImagePreviews, setDocumentImagePreviews] = useState({});
-
-    // Services options
-    const services = [
-        { id: 'web_dev', label: 'Web Development' },
-        { id: 'mobile_dev', label: 'Mobile Development' },
-        { id: 'it_services', label: 'IT Services' },
-        { id: 'design', label: 'Design Services' },
-        { id: 'digital_marketing', label: 'Digital Marketing' },
-        { id: 'cloud_services', label: 'Cloud Services' },
-    ];
+    const [serviceCategories, setServiceCategories] = useState([]);
+    const [isLoadingServices, setIsLoadingServices] = useState(false);
+    const [servicesError, setServicesError] = useState('');
 
     // Steps configuration
     const steps = [
         { label: 'Select Services', step: 'services' },
         { label: 'Company Details', step: 'company-details' },
         { label: 'Document Verification', step: 'documents' },
+        { label: 'Additional Details', step: 'additional-details' },
         { label: 'Review & Submit', step: 'review' }
     ];
 
@@ -268,6 +360,37 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
         }
         setIsInitialLoad(false);
     }, [searchParams]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadServiceCategories() {
+            setIsLoadingServices(true);
+            setServicesError('');
+
+            try {
+                const response = await MainApi.get('/service-categories', { suppressAuthRedirect: true });
+                if (!isMounted) return;
+
+                setServiceCategories(normalizeServiceCategories(response?.data));
+            } catch (error) {
+                if (!isMounted) return;
+
+                setServicesError(error.message || 'Failed to load service categories.');
+                setServiceCategories([]);
+            } finally {
+                if (isMounted) {
+                    setIsLoadingServices(false);
+                }
+            }
+        }
+
+        loadServiceCategories();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Update URL when step changes
     const updateRoute = (stepIndex) => {
@@ -312,7 +435,18 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
     // Handle form field changes
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        const verificationResetMap = {
+            aadharNumber: 'aadharVerified',
+            panNumber: 'panVerified',
+            cinNumber: 'cinVerified',
+            gstNumber: 'gstVerified',
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            [field]: value,
+            ...(verificationResetMap[field] ? { [verificationResetMap[field]]: false } : {}),
+        }));
         if (verifyErrors[field]) {
             setVerifyErrors(prev => ({ ...prev, [field]: '' }));
         }
@@ -358,7 +492,10 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 showConfirmButton: false,
             });
 
-            const imageUrl = response.data?.url || response.url || response.imageUrl;
+            const imageUrl = response?.data?.url || response?.data?.data?.url || response?.data?.imageUrl || response?.data?.data?.imageUrl || response?.url || response?.imageUrl;
+            if (!imageUrl) {
+                throw new Error('Upload completed but image URL was not returned.');
+            }
 
             if (field === 'companyImage') {
                 setCompanyImagePreview(imageUrl);
@@ -366,6 +503,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     ...prev,
                     [field]: imageUrl,
                     companyImageUrl: imageUrl,
+                    profileUrl: imageUrl,
                 }));
                 if (errors.companyImage) {
                     setErrors(prev => ({ ...prev, companyImage: '' }));
@@ -398,6 +536,16 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
     // Handle file selection
     const handleFileSelect = (field, file, purpose) => {
         if (file) {
+            if (file.size > maxImageSizeBytes) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Image Too Large',
+                    text: `Please upload an image under ${maxImageSizeKb} KB.`,
+                    confirmButtonColor: '#f79f03',
+                });
+                return;
+            }
+
             if (field === 'companyImage') {
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -415,6 +563,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
             ...prev,
             [field]: null,
             [`${field}Url`]: null,
+            ...(field === 'companyImage' ? { profileUrl: '' } : {}),
         }));
         if (field === 'companyImage') {
             setCompanyImagePreview(null);
@@ -427,7 +576,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
     };
 
     // Handle document verification
-    const handleVerify = (docType, numberField, verifyField) => {
+    const handleVerify = async (docType, numberField, verifyField, endpoint) => {
         const number = formData[numberField];
 
         setVerifyErrors(prev => ({ ...prev, [numberField]: '' }));
@@ -463,24 +612,24 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
             return;
         }
 
-        Swal.fire({
-            title: 'Verifying...',
-            text: `Please wait while we verify ${docType}`,
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            },
-        });
+        try {
+            Swal.fire({
+                title: 'Verifying...',
+                text: `Please wait while we verify ${docType}`,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                },
+            });
 
-        // Simulate API call
-        setTimeout(() => {
+            const response = await MainApi.post(endpoint, { number: number.trim().toUpperCase() });
             Swal.close();
 
-            Swal.fire({
+            await Swal.fire({
                 icon: 'success',
                 title: `${docType} Verified!`,
-                text: `${docType} has been verified successfully.`,
+                text: response?.data?.message || `${docType} has been verified successfully.`,
                 confirmButtonColor: '#f79f03',
             });
 
@@ -488,7 +637,16 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 ...prev,
                 [verifyField]: true
             }));
-        }, 1500);
+        } catch (error) {
+            Swal.close();
+            setVerifyErrors(prev => ({ ...prev, [numberField]: error.message || `${docType} verification failed` }));
+            await Swal.fire({
+                icon: 'error',
+                title: 'Verification Failed',
+                text: error.message || `${docType} verification failed. Please try again.`,
+                confirmButtonColor: '#f79f03',
+            });
+        }
     };
 
     // Validate current step
@@ -498,8 +656,17 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
         switch (activeStep) {
             case 0:
-                if (formData.selectedServices.length === 0) {
-                    newErrors.selectedServices = 'Please select at least one service';
+                if (isLoadingServices) {
+                    newErrors.selectedServices = 'Please wait while services are loading';
+                    isValid = false;
+                } else if (servicesError) {
+                    newErrors.selectedServices = servicesError;
+                    isValid = false;
+                } else if (serviceCategories.length === 0) {
+                    newErrors.selectedServices = 'No categories are available';
+                    isValid = false;
+                } else if (formData.selectedServices.length === 0) {
+                    newErrors.selectedServices = 'Please select at least one category';
                     isValid = false;
                 }
                 break;
@@ -509,20 +676,63 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     newErrors.companyName = 'Company name is required';
                     isValid = false;
                 }
-                if (!formData.address.trim()) {
-                    newErrors.address = 'Address is required';
+                if (!formData.businessName.trim()) {
+                    newErrors.businessName = 'Business name is required';
                     isValid = false;
                 }
-                if (!formData.companyLink.trim()) {
-                    newErrors.companyLink = 'Company link is required';
+                if (!formData.companyType) {
+                    newErrors.companyType = 'Company type is required';
                     isValid = false;
                 }
-                if (!formData.instagramLink.trim()) {
-                    newErrors.instagramLink = 'Instagram link is required';
+                if (!formData.companySince || Number.isNaN(Number(formData.companySince)) || Number(formData.companySince) < 0) {
+                    newErrors.companySince = 'Company since must be a valid number';
                     isValid = false;
                 }
-                if (!formData.employeeCount) {
-                    newErrors.employeeCount = 'Number of employees is required';
+                if (!formData.teamSize || Number(formData.teamSize) < 1) {
+                    newErrors.teamSize = 'Team size is required';
+                    isValid = false;
+                }
+                if (!formData.country.trim()) {
+                    newErrors.country = 'Country is required';
+                    isValid = false;
+                }
+                if (!formData.officeAddress.trim()) {
+                    newErrors.officeAddress = 'Office address is required';
+                    isValid = false;
+                }
+                if (!formData.officeCity.trim()) {
+                    newErrors.officeCity = 'Office city is required';
+                    isValid = false;
+                }
+                if (!formData.officeState.trim()) {
+                    newErrors.officeState = 'Office state is required';
+                    isValid = false;
+                }
+                if (!formData.destinations.trim()) {
+                    newErrors.destinations = 'Destinations are required';
+                    isValid = false;
+                }
+                if (!formData.dailyLeadRequirement || Number(formData.dailyLeadRequirement) < 1) {
+                    newErrors.dailyLeadRequirement = 'Daily lead requirement is required';
+                    isValid = false;
+                }
+                if (!formData.profileUrl) {
+                    newErrors.companyImage = 'Company logo is required';
+                    isValid = false;
+                }
+                break;
+
+            case 3:
+                if (!formData.referralSource) {
+                    newErrors.referralSource = 'Referral source is required';
+                    isValid = false;
+                }
+                if (!formData.agreeTerms) {
+                    newErrors.agreeTerms = 'Please agree to the terms';
+                    isValid = false;
+                }
+                if (!formData.declareTrue) {
+                    newErrors.declareTrue = 'Please confirm the declaration';
                     isValid = false;
                 }
                 break;
@@ -543,9 +753,14 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     newErrors.panVerified = 'Please verify PAN card';
                     isValid = false;
                 }
-                break;
-
-            case 3:
+                if (formData.cinNumber.trim() && !formData.cinVerified) {
+                    newErrors.cinVerified = 'Please verify CIN';
+                    isValid = false;
+                }
+                if (formData.gstNumber.trim() && !formData.gstVerified) {
+                    newErrors.gstVerified = 'Please verify GST';
+                    isValid = false;
+                }
                 break;
         }
 
@@ -577,57 +792,34 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
         try {
             const payload = {
-                services: formData.selectedServices.map(id =>
-                    services.find(s => s.id === id)?.label
-                ),
-                companyDetails: {
-                    name: formData.companyName,
-                    address: formData.address,
-                    companyLink: formData.companyLink,
-                    instagramLink: formData.instagramLink,
-                    employeeCount: formData.employeeCount,
-                    companyImage: formData.companyImageUrl || formData.companyImage,
-                },
-                documents: {
-                    aadhar: {
-                        number: formData.aadharNumber,
-                        image: formData.aadharImageUrl || formData.aadharImage,
-                        verified: formData.aadharVerified,
-                    },
-                    pan: {
-                        number: formData.panNumber,
-                        image: formData.panImageUrl || formData.panImage,
-                        verified: formData.panVerified,
-                    },
-                    cin: {
-                        number: formData.cinNumber,
-                        image: formData.cinImageUrl || formData.cinImage,
-                        verified: formData.cinVerified,
-                    },
-                    gst: {
-                        number: formData.gstNumber,
-                        image: formData.gstImageUrl || formData.gstImage,
-                        verified: formData.gstVerified,
-                    },
-                },
+                companyName: formData.companyName.trim(),
+                businessName: formData.businessName.trim(),
+                companyType: formData.companyType,
+                companySince: Number(formData.companySince),
+                teamSize: Number(formData.teamSize),
+                country: formData.country.trim(),
+                officeAddress: formData.officeAddress.trim(),
+                officeCity: formData.officeCity.trim(),
+                officeState: formData.officeState.trim(),
+                services: formData.selectedServices,
+                destinations: formData.destinations.split(',').map(item => item.trim()).filter(Boolean),
+                dailyLeadRequirement: Number(formData.dailyLeadRequirement),
+                profileUrl: formData.profileUrl,
+                referralSource: formData.referralSource,
+                marketplaceWorked: Boolean(formData.marketplaceWorked),
+                agreeTerms: Boolean(formData.agreeTerms),
+                declareTrue: Boolean(formData.declareTrue),
+                panNumber: formData.panNumber.trim().toUpperCase(),
             };
 
-            const response = await fetch('/api/v1/kyc-submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await MainApi.post('/vendor/kyc', payload);
 
-            if (!response.ok) {
-                throw new Error('Failed to submit KYC');
-            }
+            const loginPath = withKycSubmittedFlag(getPostKycLoginPath());
 
             await Swal.fire({
                 icon: 'success',
                 title: 'KYC Submitted Successfully!',
-                text: 'Your KYC verification is in process.',
+                text: response?.data?.message || 'Your KYC verification is in process.',
                 confirmButtonColor: '#f79f03',
             });
 
@@ -635,37 +827,8 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 onSubmit(payload);
             }
 
-            // Reset form
-            setFormData({
-                selectedServices: [],
-                companyName: '',
-                address: '',
-                companyLink: '',
-                instagramLink: '',
-                companyImage: null,
-                companyImageUrl: null,
-                employeeCount: '',
-                aadharNumber: '',
-                aadharImage: null,
-                aadharImageUrl: null,
-                aadharVerified: false,
-                panNumber: '',
-                panImage: null,
-                panImageUrl: null,
-                panVerified: false,
-                cinNumber: '',
-                cinImage: null,
-                cinImageUrl: null,
-                cinVerified: false,
-                gstNumber: '',
-                gstImage: null,
-                gstImageUrl: null,
-                gstVerified: false,
-            });
-            setCompanyImagePreview(null);
-            setDocumentImagePreviews({});
-            setActiveStep(0);
-            updateRoute(0);
+            clearAuthSession();
+            router.replace(loginPath);
 
         } catch (error) {
             await Swal.fire({
@@ -689,6 +852,8 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
             case 2:
                 return renderDocumentVerificationStep();
             case 3:
+                return renderAdditionalDetailsStep();
+            case 4:
                 return renderReviewStep();
             default:
                 return null;
@@ -698,53 +863,69 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
     // Step 1: Services Selection
     const renderServicesStep = () => (
         <Box>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Select Services
-            </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                Please select the services you offer
+                Select services:
             </Typography>
 
-            <FormGroup>
-                <Box
-                    sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-                        columnGap: 3,
-                        rowGap: 0.5,
-                        width: '100%',
-                    }}
-                >
-                    {services.map((service) => (
-                        <Box key={service.id} sx={{ minWidth: 0 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={formData.selectedServices.includes(service.id)}
-                                        onChange={() => handleServiceToggle(service.id)}
+            {isLoadingServices ? (
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <CircularProgress size={18} />
+                    <Typography variant="body2" color="textSecondary">
+                        Loading categories...
+                    </Typography>
+                </Stack>
+            ) : servicesError ? (
+                <Typography color="error" variant="body2">
+                    {servicesError}
+                </Typography>
+            ) : serviceCategories.length === 0 ? (
+                <Typography color="textSecondary" variant="body2">
+                    No categories are available.
+                </Typography>
+            ) : (
+                <Stack spacing={2}>
+                    <FormGroup>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
+                                columnGap: 3,
+                                rowGap: 0.5,
+                                width: '100%',
+                            }}
+                        >
+                            {serviceCategories.map((category) => (
+                                <Box key={category.id} sx={{ minWidth: 0 }}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={formData.selectedServices.includes(category.id)}
+                                                onChange={() => handleServiceToggle(category.id)}
+                                                sx={{
+                                                    color: '#f79f03',
+                                                    '&.Mui-checked': {
+                                                        color: '#f79f03',
+                                                    },
+                                                }}
+                                            />
+                                        }
+                                        label={category.name}
                                         sx={{
-                                            color: '#f79f03',
-                                            '&.Mui-checked': {
-                                                color: '#f79f03',
+                                            m: 0,
+                                            width: '100%',
+                                            minHeight: 36,
+                                            '& .MuiFormControlLabel-label': {
+                                                color: '#1e293b',
+                                                fontSize: 14,
                                             },
                                         }}
                                     />
-                                }
-                                label={service.label}
-                                sx={{
-                                    m: 0,
-                                    width: '100%',
-                                    minHeight: 36,
-                                    '& .MuiFormControlLabel-label': {
-                                        color: '#1e293b',
-                                        fontSize: 14,
-                                    },
-                                }}
-                            />
+                                </Box>
+                            ))}
                         </Box>
-                    ))}
-                </Box>
-            </FormGroup>
+                    </FormGroup>
+                </Stack>
+            )}
 
             {errors.selectedServices && (
                 <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
@@ -756,11 +937,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
     // Step 2: Company Details
     const renderCompanyDetailsStep = () => (
-        <Box>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                Company Details
-            </Typography>
-
+        <Box sx={{ pt: 1.5 }}>
             <Box
                 sx={{
                     display: 'grid',
@@ -784,58 +961,145 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     <TextField
                         fullWidth
                         size="small"
-                        label="Number of Employees"
+                        label="Business Name"
+                        value={formData.businessName}
+                        onChange={(e) => handleChange('businessName', e.target.value)}
+                        error={!!errors.businessName}
+                        helperText={errors.businessName}
+                    />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        select
+                        size="small"
+                        label="Company Type"
+                        value={formData.companyType}
+                        onChange={(e) => handleChange('companyType', e.target.value)}
+                        error={!!errors.companyType}
+                        helperText={errors.companyType}
+                    >
+                        {['PVT_LTD', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'OTHER'].map((option) => (
+                            <MenuItem key={option} value={option}>
+                                {option}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Company Since"
                         type="number"
-                        value={formData.employeeCount}
-                        onChange={(e) => handleChange('employeeCount', e.target.value)}
-                        error={!!errors.employeeCount}
-                        helperText={errors.employeeCount}
+                        placeholder="2015"
+                        value={formData.companySince}
+                        onChange={(e) => handleChange('companySince', e.target.value)}
+                        error={!!errors.companySince}
+                        helperText={errors.companySince || 'Enter year or number'}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                     <TextField
                         fullWidth
                         size="small"
-                        label="Company Website Link"
-                        value={formData.companyLink}
-                        onChange={(e) => handleChange('companyLink', e.target.value)}
-                        error={!!errors.companyLink}
-                        helperText={errors.companyLink}
+                        label="Team Size"
+                        type="number"
+                        value={formData.teamSize}
+                        onChange={(e) => handleChange('teamSize', e.target.value)}
+                        error={!!errors.teamSize}
+                        helperText={errors.teamSize}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                     <TextField
                         fullWidth
                         size="small"
-                        label="Instagram Link"
-                        value={formData.instagramLink}
-                        onChange={(e) => handleChange('instagramLink', e.target.value)}
-                        error={!!errors.instagramLink}
-                        helperText={errors.instagramLink}
+                        label="Country"
+                        value={formData.country}
+                        onChange={(e) => handleChange('country', e.target.value)}
+                        error={!!errors.country}
+                        helperText={errors.country}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                     <TextField
                         fullWidth
                         size="small"
-                        label="Address"
+                        label="Office City"
+                        value={formData.officeCity}
+                        onChange={(e) => handleChange('officeCity', e.target.value)}
+                        error={!!errors.officeCity}
+                        helperText={errors.officeCity}
+                    />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Office State"
+                        value={formData.officeState}
+                        onChange={(e) => handleChange('officeState', e.target.value)}
+                        error={!!errors.officeState}
+                        helperText={errors.officeState}
+                    />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Destinations"
+                        placeholder="Goa, Kerala"
+                        value={formData.destinations}
+                        onChange={(e) => handleChange('destinations', e.target.value)}
+                        error={!!errors.destinations}
+                        helperText={errors.destinations || 'Comma separated destinations'}
+                    />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Daily Lead Requirement"
+                        type="number"
+                        value={formData.dailyLeadRequirement}
+                        onChange={(e) => handleChange('dailyLeadRequirement', e.target.value)}
+                        error={!!errors.dailyLeadRequirement}
+                        helperText={errors.dailyLeadRequirement}
+                    />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Office Address"
                         multiline
                         rows={2}
-                        value={formData.address}
-                        onChange={(e) => handleChange('address', e.target.value)}
-                        error={!!errors.address}
-                        helperText={errors.address}
+                        value={formData.officeAddress}
+                        onChange={(e) => handleChange('officeAddress', e.target.value)}
+                        error={!!errors.officeAddress}
+                        helperText={errors.officeAddress}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                    <UploadContainer>
+                    <UploadContainer
+                        sx={{
+                            p: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 1,
+                            minHeight: 40,
+                        }}
+                    >
                         <Button
                             variant="outlined"
                             component="label"
                             startIcon={<CloudUploadIcon />}
                             sx={{
                                 textTransform: 'none',
-                                width: '100%',
+                                flex: 1,
+                                minWidth: 0,
+                                height: 40,
                                 borderColor: '#cbd5e1',
                                 color: '#475569',
                             }}
@@ -849,12 +1113,22 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                                 onChange={(e) => {
                                     const file = e.target.files[0];
                                     if (file) {
-                                        handleFileSelect('companyImage', file, 'companyImage');
+                                        handleFileSelect('companyImage', file, 'company-logo');
                                     }
                                     e.target.value = '';
                                 }}
                             />
                         </Button>
+
+                        {!companyImagePreview && (
+                            <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
+                            >
+                                Max {maxImageSizeKb} KB
+                            </Typography>
+                        )}
 
                         {errors.companyImage && (
                             <Typography color="error" variant="caption" sx={{ display: 'block' }}>
@@ -863,9 +1137,29 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                         )}
 
                         {companyImagePreview && (
-                            <PreviewImageContainer>
+                            <PreviewImageContainer
+                                sx={{
+                                    flex: '0 0 40px',
+                                    width: 40,
+                                    maxWidth: 40,
+                                    height: 40,
+                                    mt: 0,
+                                    borderRadius: '6px',
+                                }}
+                            >
                                 <PreviewImage src={companyImagePreview} alt="Company Logo Preview" />
-                                <RemoveImageButton onClick={() => handleRemoveImage('companyImage')} size="small">
+                                <RemoveImageButton
+                                    onClick={() => handleRemoveImage('companyImage')}
+                                    size="small"
+                                    sx={{
+                                        top: 1,
+                                        right: 1,
+                                        width: 16,
+                                        height: 16,
+                                        p: 0,
+                                        '& .MuiSvgIcon-root': { fontSize: 12 },
+                                    }}
+                                >
                                     <CloseIcon />
                                 </RemoveImageButton>
                             </PreviewImageContainer>
@@ -890,9 +1184,10 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 imageField: 'aadharImage',
                 verifyField: 'aadharVerified',
                 placeholder: 'Enter 12-digit Aadhar number',
+                verifyEndpoint: '/vendor/kyc/verify/aadhaar/initiate',
                 purpose: 'aadhar',
                 preview: documentImagePreviews.aadharImage,
-                showUpload: true,
+                showUpload: false,
                 optional: false,
             },
             {
@@ -906,9 +1201,10 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 imageField: 'panImage',
                 verifyField: 'panVerified',
                 placeholder: 'Enter PAN number (e.g., ABCDE1234F)',
+                verifyEndpoint: '/vendor/kyc/verify/pan',
                 purpose: 'pan',
                 preview: documentImagePreviews.panImage,
-                showUpload: true,
+                showUpload: false,
                 optional: false,
             },
             {
@@ -922,9 +1218,10 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 imageField: 'cinImage',
                 verifyField: 'cinVerified',
                 placeholder: 'Enter CIN number',
+                verifyEndpoint: '/vendor/kyc/verify/cin',
                 purpose: 'cin',
                 preview: documentImagePreviews.cinImage,
-                showUpload: true,
+                showUpload: false,
                 optional: true,
             },
             {
@@ -938,19 +1235,16 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                 imageField: 'gstImage',
                 verifyField: 'gstVerified',
                 placeholder: 'Enter GST number',
+                verifyEndpoint: '/vendor/kyc/verify/gstin',
                 purpose: 'gst',
                 preview: documentImagePreviews.gstImage,
-                showUpload: true,
+                showUpload: false,
                 optional: true,
             },
         ];
 
         return (
             <Box>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Document Verification
-                </Typography>
-
                 {documents.map((doc) => (
                     <Paper key={doc.key} sx={{ p: 1.5, mb: 1.5, border: '1px solid #e2e8f0', boxShadow: 'none' }}>
                         <Box
@@ -962,7 +1256,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                                 width: '100%',
                             }}
                         >
-                            {/* Label only – NO Verified chip */}
+                            {/* Label only - no verified chip */}
                             <Box sx={{ minWidth: 0, pt: { md: 1 } }}>
                                 <Typography variant="subtitle2" fontWeight={600}>
                                     {doc.label}
@@ -1032,7 +1326,7 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
 
                                     <VerifyButton
                                         size="small"
-                                        onClick={() => handleVerify(doc.label, doc.numberField, doc.verifyField)}
+                                        onClick={() => handleVerify(doc.label, doc.numberField, doc.verifyField, doc.verifyEndpoint)}
                                         disabled={doc.verified || !doc.number?.trim()}
                                         startIcon={doc.verified ? <VerifiedIcon /> : null}
                                     >
@@ -1056,31 +1350,132 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     </Paper>
                 ))}
 
-                {(errors.aadharVerified || errors.panVerified) && (
+                {(errors.aadharVerified || errors.panVerified || errors.cinVerified || errors.gstVerified) && (
                     <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
-                        {errors.aadharVerified || errors.panVerified}
+                        {errors.aadharVerified || errors.panVerified || errors.cinVerified || errors.gstVerified}
                     </Typography>
                 )}
             </Box>
         );
     };
 
-    // Step 4: Review
+    // Step 4: Additional Details
+    const renderAdditionalDetailsStep = () => (
+        <Box>
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+                    gap: 2.5,
+                    width: '100%',
+                }}
+            >
+                <Box sx={{ minWidth: 0, gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#1e293b' }}>
+                        Referral Sources
+                    </Typography>
+                    <FormGroup>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
+                                columnGap: 3,
+                                rowGap: 0.5,
+                                width: '100%',
+                            }}
+                        >
+                            {referralSourceOptions.map((option) => (
+                                <FormControlLabel
+                                    key={option}
+                                    control={
+                                        <Checkbox
+                                            checked={formData.referralSource === option}
+                                            onChange={(event) => handleChange('referralSource', event.target.checked ? option : '')}
+                                            sx={{ color: '#f79f03', '&.Mui-checked': { color: '#f79f03' } }}
+                                        />
+                                    }
+                                    label={option}
+                                    sx={{
+                                        m: 0,
+                                        minHeight: 36,
+                                        '& .MuiFormControlLabel-label': {
+                                            color: '#1e293b',
+                                            fontSize: 14,
+                                        },
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                    </FormGroup>
+                    {errors.referralSource && (
+                        <Typography color="error" variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                            {errors.referralSource}
+                        </Typography>
+                    )}
+                </Box>
+
+                <Box sx={{ minWidth: 0, gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.marketplaceWorked}
+                                onChange={(e) => handleChange('marketplaceWorked', e.target.checked)}
+                                sx={{ color: '#f79f03', '&.Mui-checked': { color: '#f79f03' } }}
+                            />
+                        }
+                        label="Worked with marketplace before"
+                    />
+                </Box>
+
+                <Box sx={{ minWidth: 0, gridColumn: { xs: '1', md: '1 / -1' } }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.agreeTerms}
+                                onChange={(e) => handleChange('agreeTerms', e.target.checked)}
+                                sx={{ color: '#f79f03', '&.Mui-checked': { color: '#f79f03' } }}
+                            />
+                        }
+                        label="I agree to the terms"
+                    />
+                    {errors.agreeTerms && (
+                        <Typography color="error" variant="caption" sx={{ display: 'block' }}>
+                            {errors.agreeTerms}
+                        </Typography>
+                    )}
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.declareTrue}
+                                onChange={(e) => handleChange('declareTrue', e.target.checked)}
+                                sx={{ color: '#f79f03', '&.Mui-checked': { color: '#f79f03' } }}
+                            />
+                        }
+                        label="I declare that the provided information is true"
+                    />
+                    {errors.declareTrue && (
+                        <Typography color="error" variant="caption" sx={{ display: 'block' }}>
+                            {errors.declareTrue}
+                        </Typography>
+                    )}
+                </Box>
+            </Box>
+        </Box>
+    );
+
+    // Step 5: Review
     const renderReviewStep = () => (
         <Box>
-            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 600 }}>
-                Review & Submit
-            </Typography>
-
             <Paper sx={{ p: 2.5, bgcolor: '#f8fafc', borderRadius: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 0.5, fontWeight: 600, color: '#f79f03' }}>
                     Selected Services
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
                     {formData.selectedServices.map(id => {
-                        const service = services.find(s => s.id === id);
-                        return service ? (
-                            <Chip key={id} label={service.label} size="small" />
+                        const category = serviceCategories.find(item => item.id === id);
+                        return category ? (
+                            <Chip key={id} label={category.name} size="small" />
                         ) : null;
                     })}
                 </Box>
@@ -1096,20 +1491,44 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                         <Typography variant="body2">{formData.companyName || '-'}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="caption" color="textSecondary">Employees</Typography>
-                        <Typography variant="body2">{formData.employeeCount || '-'}</Typography>
+                        <Typography variant="caption" color="textSecondary">Business Name</Typography>
+                        <Typography variant="body2">{formData.businessName || '-'}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="caption" color="textSecondary">Website</Typography>
-                        <Typography variant="body2">{formData.companyLink || '-'}</Typography>
+                        <Typography variant="caption" color="textSecondary">Company Type</Typography>
+                        <Typography variant="body2">{formData.companyType || '-'}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="caption" color="textSecondary">Instagram</Typography>
-                        <Typography variant="body2">{formData.instagramLink || '-'}</Typography>
+                        <Typography variant="caption" color="textSecondary">Company Since</Typography>
+                        <Typography variant="body2">{formData.companySince || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">Team Size</Typography>
+                        <Typography variant="body2">{formData.teamSize || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">Daily Leads</Typography>
+                        <Typography variant="body2">{formData.dailyLeadRequirement || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">Country</Typography>
+                        <Typography variant="body2">{formData.country || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">City / State</Typography>
+                        <Typography variant="body2">{[formData.officeCity, formData.officeState].filter(Boolean).join(', ') || '-'}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
                         <Typography variant="caption" color="textSecondary">Address</Typography>
-                        <Typography variant="body2">{formData.address || '-'}</Typography>
+                        <Typography variant="body2">{formData.officeAddress || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">Destinations</Typography>
+                        <Typography variant="body2">{formData.destinations || '-'}</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" color="textSecondary">Referral Source</Typography>
+                        <Typography variant="body2">{formData.referralSource || '-'}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
                         <Typography variant="caption" color="textSecondary">Company Logo</Typography>

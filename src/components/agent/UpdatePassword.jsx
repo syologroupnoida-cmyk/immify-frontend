@@ -230,17 +230,21 @@ export default function PasswordUpdate() {
             disabled={loading}
             size="small"
             sx={inputSx}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => togglePasswordVisibility('current')}
-                    edge="end"
-                  >
-                    {showPasswords.current ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                      onClick={() => togglePasswordVisibility('current')}
+                      edge="end"
+                      size="small"
+                    >
+                      {showPasswords.current ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
 
@@ -258,17 +262,21 @@ export default function PasswordUpdate() {
             disabled={loading}
             size="small"
             sx={inputSx}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => togglePasswordVisibility('new')}
-                    edge="end"
-                  >
-                    {showPasswords.new ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPasswords.new ? 'Hide new password' : 'Show new password'}
+                      onClick={() => togglePasswordVisibility('new')}
+                      edge="end"
+                      size="small"
+                    >
+                      {showPasswords.new ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
 

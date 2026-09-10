@@ -1,13 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Login, PersonAddAlt1 } from "@mui/icons-material";
+import {
+  AccountBalanceOutlined,
+  AutoStoriesOutlined,
+  Login,
+  MenuBookOutlined,
+  PersonAddAlt1,
+  SchoolOutlined,
+} from "@mui/icons-material";
 import SiteLogo from "@/images/site-logo.png";
 
 const navItems = [
-  { label: "Universities", href: "#top-universities" },
-  { label: "Courses", href: "#popular-courses" },
-  { label: "Partner Schools", href: "#partner-schools" },
-  { label: "Stories", href: "#success-stories" },
+  { label: "Universities", href: "#top-universities", Icon: AccountBalanceOutlined },
+  { label: "Courses", href: "#popular-courses", Icon: MenuBookOutlined },
+  { label: "Partner Schools", href: "#partner-schools", Icon: SchoolOutlined },
+  { label: "Stories", href: "#success-stories", Icon: AutoStoriesOutlined },
 ];
 
 export default function PartnerHeader() {
@@ -20,7 +27,8 @@ export default function PartnerHeader() {
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-700 lg:flex">
           {navItems.map((item) => (
-            <a key={item.label} href={item.href} className="transition hover:text-blue-700">
+            <a key={item.label} href={item.href} className="inline-flex items-center gap-1.5 transition hover:text-blue-700">
+              <item.Icon sx={{ fontSize: 17 }} />
               {item.label}
             </a>
           ))}
