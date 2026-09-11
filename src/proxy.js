@@ -134,6 +134,14 @@ export function proxy(request) {
   }
 
   if (
+    pathname === '/kyc' &&
+    isVendorRequest(role, vendorType) &&
+    isKycCompleteForDashboard(request)
+  ) {
+    return redirectTo(dashboardPath, request);
+  }
+
+  if (
     pathname.startsWith('/dashboard') &&
     isVendorRequest(role, vendorType) &&
     !isKycCompleteForDashboard(request)

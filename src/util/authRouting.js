@@ -13,23 +13,6 @@ export const ROLE_DASHBOARD_PATHS = {
 const KYC_COMPLETE_STATUSES = [
     'approved',
     'approved_by_admin',
-    'completed',
-    'complete',
-    'verified',
-    'submitted',
-    'in_review',
-    'under_review',
-    'awaiting_approval',
-    'true',
-];
-
-const KYC_INCOMPLETE_STATUSES = [
-    'pending',
-    'incomplete',
-    'not_started',
-    'not_submitted',
-    'rejected',
-    'false',
 ];
 
 const KYC_INCOMPLETE_STEPS = [
@@ -77,6 +60,10 @@ function isTruthyKycFlag(value) {
     return ['true', 'yes', 'y', '1', 'completed', 'complete', 'submitted', 'verified', 'approved'].includes(
         String(value).trim().toLowerCase()
     );
+}
+
+function normalizeKycValue(value) {
+    return String(value || '').trim().toLowerCase();
 }
 
 export function getVendorType(userOrAuthData) {
@@ -351,15 +338,18 @@ export function isKycComplete(payload = {}, userOverride = {}) {
     const user = userOverride || payload?.user || data?.user || {};
     const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
     const kyc = user?.kyc || user?.kycDetails || user?.kycProfile || user?.vendorKyc || vendorProfile?.kyc || vendorProfile?.kycDetails || data?.kyc || data?.kycDetails || data?.vendorKyc || payload?.kyc || payload?.kycDetails || payload?.vendorKyc || {};
-    const status = String(getKycStatus(payload, user)).toLowerCase();
-    const nextStep = String(getNextStep(payload, user)).toLowerCase();
+    const status = normalizeKycValue(getKycStatus(payload, user));
+    const nextStep = normalizeKycValue(getNextStep(payload, user));
 
-    if (KYC_INCOMPLETE_STEPS.includes(nextStep) || KYC_INCOMPLETE_STATUSES.includes(status)) {
+    if (KYC_COMPLETE_STATUSES.includes(status)) {
+        return true;
+    }
+
+    if (status || KYC_INCOMPLETE_STEPS.includes(nextStep)) {
         return false;
     }
 
-    return KYC_COMPLETE_STATUSES.includes(status) ||
-        [
+    return [
             user?.kycCompleted,
             user?.isKycCompleted,
             user?.kycVerified,
@@ -411,6 +401,17 @@ export function shouldCompleteKyc(role, payload = {}, user = {}) {
 }
 
 export function getPostLoginPath(role, payload = {}, user = {}) {
+    const kycStatus = normalizeKycValue(getKycStatus(payload, user));
+    const vendorType = getVendorType(user) || getVendorType(payload);
+
+    if (KYC_COMPLETE_STATUSES.includes(kycStatus)) {
+        return getDashboardPath(role, user || payload);
+    }
+
+    if (isVendorRole(role, vendorType) && kycStatus) {
+        return '/kyc';
+    }
+
     if (shouldCompleteKyc(role, payload, user)) {
         return '/kyc';
     }

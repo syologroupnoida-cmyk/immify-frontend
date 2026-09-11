@@ -23,7 +23,7 @@ import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/login-form-img.png';
 import MainApi from '@/util/MainApi';
-import { getKycStatus, getPostLoginPath, isAwaitingApproval, normalizeRole, shouldCompleteKyc } from '@/util/authRouting';
+import { getKycStatus, getPostLoginPath, isAwaitingApproval, normalizeRole } from '@/util/authRouting';
 import { requestGoogleIdToken } from '@/util/googleAuth';
 import { getApiErrorMessage } from '@/util/profileHelpers';
 
@@ -164,7 +164,8 @@ const Login = () => {
     const data = payload?.data || payload || {};
     const tokenPayload = data?.tokens || payload?.tokens || {};
     const user = data?.user || payload?.user || data?.profile || payload?.profile || {};
-    const vendorType = getFirstValue(user?.vendorType, user?.vendor_type, data?.vendorType, data?.vendor_type, payload?.vendorType, payload?.vendor_type, 'PROPERTY_OWNER');
+    const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
+    const vendorType = getFirstValue(user?.vendorType, user?.vendor_type, vendorProfile?.vendorType, vendorProfile?.vendor_type, data?.vendorType, data?.vendor_type, payload?.vendorType, payload?.vendor_type, 'PROPERTY_OWNER');
     const rawRole = getFirstValue(user?.role, user?.userRole, user?.roleName, data?.role, payload?.role, 'partner');
     const role = normalizeRole(rawRole) === 'agent' && String(vendorType || '').toUpperCase() === 'PROPERTY_OWNER'
       ? 'partner'
@@ -235,7 +236,7 @@ const Login = () => {
     const { role, user: persistedUser } = persistAuthSession(payload);
     const redirectPath = getPostLoginPath(role, payload, persistedUser);
 
-    if (shouldCompleteKyc(role, payload, persistedUser)) {
+    if (redirectPath === '/kyc') {
       await Swal.fire({
         icon: 'info',
         title: 'Complete KYC first',

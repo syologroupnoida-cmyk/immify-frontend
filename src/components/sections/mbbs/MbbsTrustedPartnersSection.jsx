@@ -1,3 +1,4 @@
+import Link from "next/link";
 import LeadGenerationButton from "@/components/common/LeadGenerationButton";
 import { destinations, universities } from "./mbbsData";
 
@@ -80,9 +81,9 @@ export default function MbbsTrustedPartnersSection() {
                   <p className="mt-2 text-sm font-bold text-[#062c53]">{university.fee}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className="rounded-full border border-[#0759ac] px-4 py-2 text-xs font-bold text-[#0759ac] transition hover:bg-blue-50">
+                  <Link href={`/mbbs-study-abroad/${university.slug}`} className="rounded-full border border-[#0759ac] px-4 py-2 text-xs font-bold text-[#0759ac] transition hover:bg-blue-50">
                     View details
-                  </button>
+                  </Link>
                   <LeadGenerationButton label="Apply Now" className="bg-yellow-300 px-4 py-2 text-xs text-slate-950 hover:bg-yellow-200" />
                 </div>
               </div>

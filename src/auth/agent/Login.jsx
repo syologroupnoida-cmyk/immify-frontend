@@ -25,7 +25,7 @@ import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/agent-login-img.png';
 import MainApi from '@/util/MainApi';
-import { getKycStatus, getPostLoginPath, normalizeRole, shouldCompleteKyc } from '@/util/authRouting';
+import { getKycStatus, getPostLoginPath, isAwaitingApproval, normalizeRole } from '@/util/authRouting';
 import { requestGoogleIdToken } from '@/util/googleAuth';
 import { getApiErrorMessage } from '@/util/profileHelpers';
 
@@ -164,7 +164,8 @@ const Login = () => {
     const data = payload?.data || payload || {};
     const tokenPayload = data?.tokens || payload?.tokens || {};
     const user = data?.user || payload?.user || data?.profile || payload?.profile || {};
-    const vendorType = getFirstValue(user?.vendorType, user?.vendor_type, data?.vendorType, data?.vendor_type, payload?.vendorType, payload?.vendor_type);
+    const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
+    const vendorType = getFirstValue(user?.vendorType, user?.vendor_type, vendorProfile?.vendorType, vendorProfile?.vendor_type, data?.vendorType, data?.vendor_type, payload?.vendorType, payload?.vendor_type);
     const rawRole = getFirstValue(user?.role, user?.userRole, user?.roleName, data?.role, payload?.role, 'agent');
     const role = normalizeRole(rawRole) === 'partner' && String(vendorType || '').toUpperCase() === 'CONSULTANCY'
       ? 'agent'
@@ -219,6 +220,42 @@ const Login = () => {
     return { role, user: { ...user, role, vendorType } };
   };
 
+  const completeLogin = async (payload) => {
+    const user = payload?.data?.user || payload?.user || payload?.data?.profile || payload?.profile || {};
+
+    if (isAwaitingApproval(payload, user)) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'Application Under Review',
+        text: reviewMessage,
+        confirmButtonColor: '#1a56db',
+      });
+      return;
+    }
+
+    const { role, user: persistedUser } = persistAuthSession(payload);
+    const redirectPath = getPostLoginPath(role, payload, persistedUser);
+
+    if (redirectPath === '/kyc') {
+      await Swal.fire({
+        icon: 'info',
+        title: 'Complete KYC first',
+        text: 'Your KYC is pending. Please complete KYC to access your dashboard.',
+        confirmButtonText: 'Continue',
+        confirmButtonColor: '#1a56db',
+      });
+    } else {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login successful',
+        showConfirmButton: false,
+        timer: 900,
+      });
+    }
+
+    await router.push(redirectPath);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -234,27 +271,7 @@ const Login = () => {
         email: formData.email.trim(),
         password: formData.password,
       }, { skipAuth: true });
-      const payload = response?.data || {};
-      const { role, user } = persistAuthSession(payload);
-      const redirectPath = getPostLoginPath(role, payload, user);
-
-      if (shouldCompleteKyc(role, payload, user)) {
-        await Swal.fire({
-          icon: 'info',
-          title: 'Complete KYC first',
-          text: 'Your KYC is pending. Please complete KYC to access your dashboard.',
-          confirmButtonText: 'Continue',
-          confirmButtonColor: '#1a56db',
-        });
-      } else {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Login successful',
-          showConfirmButton: false,
-          timer: 900,
-        });
-      }
-      await router.push(redirectPath);
+      await completeLogin(response?.data || {});
     } catch (error) {
       const message = getApiErrorMessage(error, 'Login failed. Please check your email and password.');
 
@@ -285,27 +302,7 @@ const Login = () => {
         token,
         role: 'VENDOR',
       }, { skipAuth: true });
-      const payload = response?.data || {};
-      const { role, user } = persistAuthSession(payload);
-      const redirectPath = getPostLoginPath(role, payload, user);
-
-      if (shouldCompleteKyc(role, payload, user)) {
-        await Swal.fire({
-          icon: 'info',
-          title: 'Complete KYC first',
-          text: 'Your KYC is pending. Please complete KYC to access your dashboard.',
-          confirmButtonText: 'Continue',
-          confirmButtonColor: '#1a56db',
-        });
-      } else {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Login successful',
-          showConfirmButton: false,
-          timer: 900,
-        });
-      }
-      await router.push(redirectPath);
+      await completeLogin(response?.data || {});
     } catch (error) {
       const message = getApiErrorMessage(error, 'Google login failed. Please try again.');
 

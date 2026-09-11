@@ -6,15 +6,28 @@ export default function MbbsHeroSection() {
   const heroCountries = destinations.slice(0, 10);
   const countryNames = destinations.map((country) => country.name);
   const [countryIndex, setCountryIndex] = useState(0);
+  const [visibleCharacterCount, setVisibleCharacterCount] = useState(1);
   const activeCountryName = countryNames[countryIndex] || "Russia";
+  const typedCountryName = activeCountryName.slice(0, visibleCharacterCount);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setCountryIndex((currentIndex) => (currentIndex + 1) % countryNames.length);
-    }, 1800);
+    if (!countryNames.length) return undefined;
 
-    return () => window.clearInterval(intervalId);
-  }, [countryNames.length]);
+    if (visibleCharacterCount < activeCountryName.length) {
+      const typeTimer = window.setTimeout(() => {
+        setVisibleCharacterCount((currentCount) => currentCount + 1);
+      }, 120);
+
+      return () => window.clearTimeout(typeTimer);
+    }
+
+    const nextCountryTimer = window.setTimeout(() => {
+      setCountryIndex((currentIndex) => (currentIndex + 1) % countryNames.length);
+      setVisibleCharacterCount(1);
+    }, 1200);
+
+    return () => window.clearTimeout(nextCountryTimer);
+  }, [activeCountryName.length, countryNames.length, visibleCharacterCount]);
 
   return (
     <section className="relative overflow-hidden bg-slate-950 px-4 pt-24 pb-10 text-white sm:px-6 lg:px-8">
@@ -27,9 +40,9 @@ export default function MbbsHeroSection() {
       <div className="relative mx-auto flex min-h-[470px] max-w-7xl items-center">
         <div>
           <p className="text-base font-semibold text-emerald-200">Committed to Success</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
             Study <span className="text-yellow-300">MBBS</span> in{" "}
-            <span className="text-yellow-300">{activeCountryName}</span>
+            <span className="text-yellow-300">{typedCountryName}</span>
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-white/82 sm:text-lg">
             Explore affordable medical universities, country options, admission steps, visa support, and expert counselling for Indian students.

@@ -232,6 +232,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
     const [serviceLoading, setServiceLoading] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [submitMode, setSubmitMode] = useState('');
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -380,12 +381,17 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         setIncludes((current) => current.filter((item) => item !== value));
     };
 
-    const validateForm = () => {
+    const validateForm = (isDraft = false) => {
         const nextErrors = {};
 
         if (!formData.categoryId) nextErrors.categoryId = 'Select service category.';
         if (!formData.serviceId) nextErrors.serviceId = 'Select service.';
         if (!formData.title.trim()) nextErrors.title = 'Title is required.';
+        if (isDraft) {
+            setErrors(nextErrors);
+            return Object.keys(nextErrors).length === 0;
+        }
+
         if (!formData.description.trim()) nextErrors.description = 'Description is required.';
         if (!includes.length) nextErrors.includes = 'Add at least one include item.';
         if (!formData.priceInPaise || Number(formData.priceInPaise) < 1) nextErrors.priceInPaise = 'Enter price in paise.';
@@ -414,8 +420,8 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const buildPayload = async () => {
-        const imageUrl = formData.imageUrl || await uploadServiceListingImage(imageFile);
+    const buildPayload = async (isDraft = false) => {
+        const imageUrl = formData.imageUrl || (imageFile ? await uploadServiceListingImage(imageFile) : '');
 
         return {
             categoryId: formData.categoryId,
@@ -423,7 +429,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
             title: formData.title.trim(),
             description: formData.description.trim(),
             includes,
-            priceInPaise: Number(formData.priceInPaise),
+            priceInPaise: formData.priceInPaise ? Number(formData.priceInPaise) : 0,
             currency: formData.currency.trim().toUpperCase(),
             chargesIncludeGst: Boolean(formData.chargesIncludeGst),
             imageUrl,
@@ -434,32 +440,35 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
             dynamicData: {
                 country: formData.country.trim(),
             },
+            isDraft,
         };
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const submitServiceListing = async (isDraft = false) => {
         setApiError('');
 
-        if (!validateForm()) {
+        if (!validateForm(isDraft)) {
             await Swal.fire({
                 icon: 'error',
                 title: 'Validation Error',
-                text: 'Please fill in all required fields correctly.',
+                text: isDraft ? 'Please select category, service, and title before saving as draft.' : 'Please fill in all required fields correctly.',
                 confirmButtonColor: '#f79f03',
             });
             return;
         }
 
         setSubmitting(true);
+        setSubmitMode(isDraft ? 'draft' : 'create');
         try {
-            const payload = await buildPayload();
-            const response = await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload);
+            const payload = await buildPayload(isDraft);
+            const response = await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload, {
+                params: { draft: isDraft ? 'true' : 'false' },
+            });
 
             await Swal.fire({
                 icon: 'success',
-                title: 'Service Listing Created',
-                text: getApiMessage(response?.data, 'Service listing created successfully.'),
+                title: isDraft ? 'Draft Saved' : 'Service Listing Created',
+                text: getApiMessage(response?.data, isDraft ? 'Service listing draft saved successfully.' : 'Service listing created successfully.'),
                 confirmButtonColor: '#f79f03',
             });
 
@@ -476,7 +485,17 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
             });
         } finally {
             setSubmitting(false);
+            setSubmitMode('');
         }
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        await submitServiceListing(false);
+    };
+
+    const handleSaveDraft = async () => {
+        await submitServiceListing(true);
     };
 
     const handleCancel = () => {
@@ -833,13 +852,23 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                                 {onCancel ? 'Cancel' : 'Clear'}
                             </Button>
                             <Button
+                                type="button"
+                                variant="outlined"
+                                disabled={submitting || categoryLoading || serviceLoading || imageUploading}
+                                startIcon={submitting && submitMode === 'draft' ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                                onClick={handleSaveDraft}
+                                sx={{ textTransform: 'none', borderColor: '#f79f03', color: '#b36b00', '&:hover': { borderColor: '#e08a02', bgcolor: '#fff7ed' } }}
+                            >
+                                {submitting && submitMode === 'draft' ? 'Saving Draft...' : 'Save Draft'}
+                            </Button>
+                            <Button
                                 type="submit"
                                 variant="contained"
                                 disabled={submitting || categoryLoading || serviceLoading || imageUploading}
-                                startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                                startIcon={submitting && submitMode === 'create' ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
                                 sx={{ bgcolor: '#f79f03', '&:hover': { bgcolor: '#e08a02' }, textTransform: 'none' }}
                             >
-                                {submitting ? 'Creating...' : 'Create Service Listing'}
+                                {submitting && submitMode === 'create' ? 'Creating...' : 'Create Service Listing'}
                             </Button>
                         </Stack>
                     </Box>

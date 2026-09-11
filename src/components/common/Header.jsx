@@ -3,8 +3,6 @@ import Image from "next/image";
 import { useCallback, useState, useRef, useEffect } from "react";
 import {
   AccountCircleOutlined,
-  BusinessCenterOutlined,
-  CampaignOutlined,
   ContactSupportOutlined,
   KeyboardArrowDown,
   LocationOnOutlined,
@@ -166,12 +164,14 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-[#1f2a77] text-white">
-      <div className="mx-auto flex w-full items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
-        <Link href="/" className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white shadow-md ring-1 ring-white/70 transition hover:bg-slate-50" aria-label="Immify home">
-          <Image src={SiteLogo} alt="Immify" width={46} height={46} className="h-[46px] w-[46px] object-contain" priority />
-        </Link>
+      <div className="mx-auto grid w-full grid-cols-[auto_minmax(280px,620px)_auto] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 justify-start">
+          <Link href="/" className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white shadow-md ring-1 ring-white/70 transition hover:bg-slate-50" aria-label="Immify home">
+            <Image src={SiteLogo} alt="Immify" width={46} height={46} className="h-[46px] w-[46px] object-contain" priority />
+          </Link>
+        </div>
 
-        <div className="mx-auto flex min-w-[280px] max-w-[620px] flex-1 items-center gap-2 rounded-[10px] bg-white p-[4px] shadow-sm">
+        <div className="mx-auto flex w-full items-center gap-2 rounded-[10px] bg-white p-[4px] shadow-sm">
           <div className="relative min-w-[110px] rounded-[10px] border border-slate-200 bg-slate-100 px-2.5 py-1.75 text-sm text-slate-700" ref={locationRef}>
             <button
               type="button"
@@ -249,16 +249,8 @@ export default function Header() {
           </button>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex min-w-0 items-center justify-end gap-2">
           <LeadGenerationButton variant="light" className="px-2.5 py-1.5" />
-          <Link href="/advertise" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Advertise">
-            <CampaignOutlined sx={{ fontSize: 17 }} />
-            <span>Advertise</span>
-          </Link>
-          <button className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Free Business listing ">
-            <BusinessCenterOutlined sx={{ fontSize: 17 }} />
-            <span>Free Business listing</span>
-          </button>
           <Link href="/jobs" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Jobs">
             <WorkOutlineOutlined sx={{ fontSize: 17 }} />
             <span>Jobs</span>

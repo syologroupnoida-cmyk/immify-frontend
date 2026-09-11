@@ -7,11 +7,13 @@ export const destinations = [
   { name: "Nepal", image: "https://images.pexels.com/photos/1542495/pexels-photo-1542495.jpeg?auto=compress&cs=tinysrgb&w=900", fee: "INR 45L - 65L", duration: "5.5 years" },
   { name: "Bangladesh", image: "https://images.pexels.com/photos/1139040/pexels-photo-1139040.jpeg?auto=compress&cs=tinysrgb&w=900", fee: "INR 35L - 55L", duration: "5 years" },
   { name: "Philippines", image: "https://images.pexels.com/photos/1007657/pexels-photo-1007657.jpeg?auto=compress&cs=tinysrgb&w=900", fee: "INR 24L - 40L", duration: "5.5 years" },
+  { name: "Australia", image: "https://images.pexels.com/photos/1878293/pexels-photo-1878293.jpeg?auto=compress&cs=tinysrgb&w=900", fee: "INR 55L - 85L", duration: "5 years" },
 ];
 
 export const universities = [
   {
     name: "Far Eastern State Medical University",
+    slug: "far-eastern-state-medical-university",
     city: "Khabarovsk, Russia",
     established: "1956",
     rank: "#44 in Russia",
@@ -20,6 +22,7 @@ export const universities = [
   },
   {
     name: "Volgograd State Medical University",
+    slug: "volgograd-state-medical-university",
     city: "Volgograd, Russia",
     established: "1935",
     rank: "#19 in Russia",
@@ -28,6 +31,7 @@ export const universities = [
   },
   {
     name: "Voronezh State Medical University",
+    slug: "voronezh-state-medical-university",
     city: "Voronezh, Russia",
     established: "1930",
     rank: "#14 in Russia",
@@ -36,6 +40,7 @@ export const universities = [
   },
   {
     name: "Kemerovo State Medical University",
+    slug: "kemerovo-state-medical-university",
     city: "Kemerovo, Russia",
     established: "1955",
     rank: "#37 in Russia",
@@ -44,6 +49,7 @@ export const universities = [
   },
   {
     name: "Siberian State Medical University",
+    slug: "siberian-state-medical-university",
     city: "Tomsk, Russia",
     established: "1888",
     rank: "#21 in Russia",
@@ -52,6 +58,7 @@ export const universities = [
   },
   {
     name: "Pitirim Sorokin Syktyvkar State University",
+    slug: "pitirim-sorokin-syktyvkar-state-university",
     city: "Syktyvkar, Russia",
     established: "1957",
     rank: "#52 in Russia",
@@ -69,6 +76,7 @@ export const countryPartnerTiles = [
   { name: "Nepal", image: "https://images.pexels.com/photos/1542495/pexels-photo-1542495.jpeg?auto=compress&cs=tinysrgb&w=900" },
   { name: "Bangladesh", image: "https://images.pexels.com/photos/1139040/pexels-photo-1139040.jpeg?auto=compress&cs=tinysrgb&w=900" },
   { name: "Philippines", image: "https://images.pexels.com/photos/1007657/pexels-photo-1007657.jpeg?auto=compress&cs=tinysrgb&w=900" },
+  { name: "Australia", image: "https://images.pexels.com/photos/1878293/pexels-photo-1878293.jpeg?auto=compress&cs=tinysrgb&w=900" },
 ];
 
 export const universityPartnerTiles = [
