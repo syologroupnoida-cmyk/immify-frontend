@@ -8,7 +8,7 @@ import {
   PersonAddAlt1,
   SchoolOutlined,
 } from "@mui/icons-material";
-import SiteLogo from "@/images/site-logo.png";
+import ImmifyLogo from "@/images/immify-logo.png";
 
 const navItems = [
   { label: "Universities", href: "#top-universities", Icon: AccountBalanceOutlined },
@@ -22,7 +22,9 @@ export default function PartnerHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/partner" className="flex items-center">
-          <Image src={SiteLogo} alt="Immify" width={72} height={72} className="h-16 w-auto object-contain" priority />
+          <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full">
+            <Image src={ImmifyLogo} alt="Immify" width={80} height={80} className="h-full w-full scale-[1.9] rounded-full object-contain" priority />
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-700 lg:flex">
@@ -35,20 +37,20 @@ export default function PartnerHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <a
-            href="#"
+          <Link
+            href="/partner/login"
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
           >
             <Login sx={{ fontSize: 18 }} />
             Login
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/partner/sign-up"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-700 to-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:translate-y-[-1px]"
           >
             <PersonAddAlt1 sx={{ fontSize: 18 }} />
             Sign Up
-          </a>
+          </Link>
         </div>
       </div>
     </header>

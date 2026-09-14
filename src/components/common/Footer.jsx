@@ -1,11 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import SiteLogo from "@/images/site-logo.png";
+import ImmifyLogo from "@/images/immify-logo.png";
 import { marketplaceTabs } from "../sections/home/homeData";
 import LeadGenerationButton from "./LeadGenerationButton";
 
 const importantLinks = [
   { label: "Marketplace", href: "/services/immigration-services" },
+  { label: "Universities", href: "/marketplace/universities" },
   { label: "Categories", href: "#categories" },
   { label: "Services", href: "#services" },
   { label: "Premium Services", href: "/premium-services" },
@@ -47,8 +48,8 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr] xl:gap-14">
           <div className="min-w-0">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-white/70">
-              <Image src={SiteLogo} alt="Immify" width={76} height={76} className="h-[76px] w-[76px] object-contain" priority />
+            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full">
+              <Image src={ImmifyLogo} alt="Immify" width={96} height={96} className="h-full w-full scale-[1.9] rounded-full object-contain" priority />
             </div>
             <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
               We connect aspiring movers with trusted consultants, practical guidance, and end-to-end planning for visas, education, and relocation.

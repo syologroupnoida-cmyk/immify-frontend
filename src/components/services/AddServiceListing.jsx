@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Box,
@@ -26,6 +26,7 @@ import {
     Save as SaveIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
 import MainApi from '@/util/MainApi';
 
@@ -219,6 +220,13 @@ function SectionHeader({ title }) {
 }
 
 export default function AddServiceListing({ onSubmit, onCancel }) {
+    const router = useRouter();
+    const listingId = typeof router.query.id === 'string'
+        ? router.query.id
+        : typeof router.query.listingId === 'string'
+            ? router.query.listingId
+            : '';
+    const isEditMode = Boolean(listingId);
     const [formData, setFormData] = useState(initialFormData);
     const [categories, setCategories] = useState([]);
     const [services, setServices] = useState([]);
@@ -233,6 +241,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
     const [imageUploading, setImageUploading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitMode, setSubmitMode] = useState('');
+    const [listingLoading, setListingLoading] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -267,7 +276,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         };
     }, []);
 
-    const fetchCategoryServices = async (categoryId) => {
+    const fetchCategoryServices = useCallback(async (categoryId) => {
         if (!categoryId) {
             setServices([]);
             return;
@@ -298,7 +307,67 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         } finally {
             setServiceLoading(false);
         }
-    };
+    }, [categories]);
+
+    useEffect(() => {
+        if (!router.isReady || !listingId) return undefined;
+
+        let isMounted = true;
+
+        async function loadListingDetails() {
+            setListingLoading(true);
+            setApiError('');
+
+            try {
+                const response = await MainApi.get(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`);
+                const listing = response?.data?.data ?? response?.data ?? {};
+                const dynamicData = listing.dynamicData || listing.dynamic_data || {};
+                const categoryId = getCategoryId(listing.category || listing.serviceCategory || listing) || String(listing.categoryId || listing.serviceCategoryId || '');
+                const serviceId = getServiceId(listing.service || listing) || String(listing.serviceId || '');
+                const imageUrl = getUploadedImageUrl(listing) || getUploadedImageUrl(response?.data) || listing.imageUrl || listing.image_url || '';
+
+                if (!isMounted) return;
+
+                setFormData({
+                    categoryId,
+                    serviceId,
+                    title: listing.title || '',
+                    description: listing.description || '',
+                    priceInPaise: listing.priceInPaise !== undefined && listing.priceInPaise !== null
+                        ? String(listing.priceInPaise)
+                        : listing.price !== undefined && listing.price !== null
+                            ? String(Math.round(Number(listing.price) * 100))
+                            : '',
+                    currency: listing.currency || 'INR',
+                    chargesIncludeGst: listing.chargesIncludeGst ?? listing.charges_include_gst ?? true,
+                    imageUrl,
+                    overview: listing.overview || '',
+                    process: listing.process || '',
+                    pricingDetails: listing.pricingDetails || listing.pricing_details || '',
+                    termsAndConditions: listing.termsAndConditions || listing.terms_and_conditions || '',
+                    country: dynamicData.country || listing.country || '',
+                });
+                setIncludes(Array.isArray(listing.includes) ? listing.includes.map(String) : []);
+                setImageFile(null);
+                setImagePreview('');
+                setErrors({});
+
+                if (categoryId) {
+                    await fetchCategoryServices(categoryId);
+                }
+            } catch (error) {
+                if (isMounted) setApiError(getApiErrorMessage(error, 'Unable to load service listing details.'));
+            } finally {
+                if (isMounted) setListingLoading(false);
+            }
+        }
+
+        queueMicrotask(loadListingDetails);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [fetchCategoryServices, router.isReady, listingId]);
 
     const handleChange = (field) => (event) => {
         const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
@@ -420,7 +489,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const buildPayload = async (isDraft = false) => {
+    const buildPayload = async () => {
         const imageUrl = formData.imageUrl || (imageFile ? await uploadServiceListingImage(imageFile) : '');
 
         return {
@@ -440,7 +509,6 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
             dynamicData: {
                 country: formData.country.trim(),
             },
-            isDraft,
         };
     };
 
@@ -460,20 +528,28 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         setSubmitting(true);
         setSubmitMode(isDraft ? 'draft' : 'create');
         try {
-            const payload = await buildPayload(isDraft);
-            const response = await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload, {
-                params: { draft: isDraft ? 'true' : 'false' },
-            });
+            const payload = await buildPayload();
+            const response = isEditMode
+                ? await MainApi.patch(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`, payload, {
+                    params: { draft: isDraft ? 'true' : 'false' },
+                })
+                : await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload, {
+                    params: { draft: isDraft ? 'true' : 'false' },
+                });
 
             await Swal.fire({
                 icon: 'success',
-                title: isDraft ? 'Draft Saved' : 'Service Listing Created',
-                text: getApiMessage(response?.data, isDraft ? 'Service listing draft saved successfully.' : 'Service listing created successfully.'),
+                title: isDraft ? 'Draft Saved' : isEditMode ? 'Service Listing Updated' : 'Service Listing Created',
+                text: getApiMessage(response?.data, isDraft ? 'Service listing draft saved successfully.' : isEditMode ? 'Service listing updated successfully.' : 'Service listing created successfully.'),
                 confirmButtonColor: '#f79f03',
             });
 
             onSubmit?.(payload);
-            resetForm();
+            if (isEditMode) {
+                router.push('/agent/service-list');
+            } else {
+                resetForm();
+            }
         } catch (error) {
             const message = getApiErrorMessage(error, 'Failed to create service listing.');
             setApiError(message);
@@ -519,11 +595,18 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                 }}
             >
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b', fontSize: 18 }}>
-                    Add Service Listing
+                    {listingLoading ? 'Loading Service Listing...' : isEditMode ? 'Edit Service Listing' : 'Add Service Listing'}
                 </Typography>
             </Paper>
 
             <StyledPaper elevation={0}>
+                {listingLoading && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                        <CircularProgress size={20} />
+                        <Typography variant="body2" color="text.secondary">Loading listing details...</Typography>
+                    </Box>
+                )}
+
                 {apiError && (
                     <Alert severity="error" sx={{ mb: 2 }} onClose={() => setApiError('')}>
                         {apiError}
@@ -854,7 +937,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                             <Button
                                 type="button"
                                 variant="outlined"
-                                disabled={submitting || categoryLoading || serviceLoading || imageUploading}
+                                disabled={listingLoading || submitting || categoryLoading || serviceLoading || imageUploading}
                                 startIcon={submitting && submitMode === 'draft' ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
                                 onClick={handleSaveDraft}
                                 sx={{ textTransform: 'none', borderColor: '#f79f03', color: '#b36b00', '&:hover': { borderColor: '#e08a02', bgcolor: '#fff7ed' } }}
@@ -864,11 +947,11 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                             <Button
                                 type="submit"
                                 variant="contained"
-                                disabled={submitting || categoryLoading || serviceLoading || imageUploading}
+                                disabled={listingLoading || submitting || categoryLoading || serviceLoading || imageUploading}
                                 startIcon={submitting && submitMode === 'create' ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
                                 sx={{ bgcolor: '#f79f03', '&:hover': { bgcolor: '#e08a02' }, textTransform: 'none' }}
                             >
-                                {submitting && submitMode === 'create' ? 'Creating...' : 'Create Service Listing'}
+                                {submitting && submitMode === 'create' ? (isEditMode ? 'Updating...' : 'Creating...') : isEditMode ? 'Update Service Listing' : 'Create Service Listing'}
                             </Button>
                         </Stack>
                     </Box>

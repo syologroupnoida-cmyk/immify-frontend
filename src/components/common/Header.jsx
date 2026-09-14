@@ -3,16 +3,18 @@ import Image from "next/image";
 import { useCallback, useState, useRef, useEffect } from "react";
 import {
   AccountCircleOutlined,
+  HandshakeOutlined,
   ContactSupportOutlined,
+  ForumOutlined,
   KeyboardArrowDown,
   LocationOnOutlined,
   PaymentsOutlined,
   PersonAddAlt1Outlined,
+  SupportAgentOutlined,
   SearchOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
-import SiteLogo from "@/images/site-logo.png";
-import LeadGenerationButton from "./LeadGenerationButton";
+import ImmifyLogo from "@/images/immify-logo.png";
 
 const LOCATION_STORAGE_KEY = "immifySelectedLocation";
 const DEFAULT_LOCATION = "Moradabad";
@@ -164,10 +166,27 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-[#1f2a77] text-white">
-      <div className="mx-auto grid w-full grid-cols-[auto_minmax(280px,620px)_auto] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+      <div className="border-b border-white/10 bg-[#17215f]">
+        <div className="mx-auto flex min-w-[1120px] w-full items-center justify-end gap-2 px-4 py-1 text-xs font-medium sm:px-6 lg:px-8">
+          <span className="text-white/80">Call Us</span>
+          <span className="text-white/35">|</span>
+          <Link href="/lead-generation" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Get Free Quote">
+            <ForumOutlined sx={{ fontSize: 14 }} />
+            <span>Get Free Quote</span>
+          </Link>
+          <span className="text-white/35">|</span>
+          <Link href="/partner/sign-up" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Become Our Partner">
+            <HandshakeOutlined sx={{ fontSize: 14 }} />
+            <span>Become Our Partner</span>
+          </Link>
+        </div>
+      </div>
+
+      <div>
+        <div className="mx-auto grid min-w-[1120px] w-full grid-cols-[auto_minmax(280px,620px)_auto] items-center gap-3 px-4 py-1 sm:px-6 lg:px-8">
         <div className="flex min-w-0 justify-start">
-          <Link href="/" className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white shadow-md ring-1 ring-white/70 transition hover:bg-slate-50" aria-label="Immify home">
-            <Image src={SiteLogo} alt="Immify" width={46} height={46} className="h-[46px] w-[46px] object-contain" priority />
+          <Link href="/" className="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full transition hover:opacity-90" aria-label="Immify home">
+            <Image src={ImmifyLogo} alt="Immify" width={56} height={56} className="h-full w-full scale-[1.9] rounded-full object-contain" priority />
           </Link>
         </div>
 
@@ -250,7 +269,6 @@ export default function Header() {
         </div>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
-          <LeadGenerationButton variant="light" className="px-2.5 py-1.5" />
           <Link href="/jobs" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Jobs">
             <WorkOutlineOutlined sx={{ fontSize: 17 }} />
             <span>Jobs</span>
@@ -280,6 +298,14 @@ export default function Header() {
                   <PersonAddAlt1Outlined sx={{ fontSize: 18 }} />
                   Register
                 </Link>
+                <Link href="/agent/login" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <SupportAgentOutlined sx={{ fontSize: 18 }} />
+                  Agent Login
+                </Link>
+                <Link href="/partner/sign-up" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <HandshakeOutlined sx={{ fontSize: 18 }} />
+                  Become Our Partner
+                </Link>
                 <div className="border-t border-slate-200" />
                 <a href="#" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
                   <ContactSupportOutlined sx={{ fontSize: 18 }} />
@@ -289,6 +315,7 @@ export default function Header() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </header>
   );

@@ -5,6 +5,7 @@ import JobsSection from "../components/sections/home/JobsSection";
 import PremiumServicesSection from "../components/sections/home/PremiumServicesSection";
 import CategorySection from "../components/sections/home/CategorySection";
 import CountrySection from "../components/sections/home/CountrySection";
+import UniversitySection from "../components/sections/home/UniversitySection";
 import TopCitiesSection from "../components/sections/home/TopCitiesSection";
 import FreeQuoteSection from "../components/sections/home/FreeQuoteSection";
 
@@ -15,6 +16,7 @@ function Home() {
         <HeroSection />
         <MarketplaceSection />
         <CountrySection />
+        <UniversitySection />
         <ServicesSection />
         <JobsSection />
         <PremiumServicesSection />

@@ -8,8 +8,9 @@ function AgentServiceListingPage() {
             <AgentDashboard>
                 <ServiceListingList
                     endpoint={VENDOR_SERVICE_LISTINGS_ENDPOINT}
-                    title="My Service Listings"
+                    title="Service Listings"
                     canReview={false}
+                    canManage
                 />
             </AgentDashboard>
         </div>

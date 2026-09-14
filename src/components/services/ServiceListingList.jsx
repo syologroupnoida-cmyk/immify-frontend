@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import {
     Alert,
     Box,
@@ -33,6 +34,8 @@ import {
     Cancel as CancelIcon,
     CheckCircle as CheckCircleIcon,
     Close as CloseIcon,
+    Delete as DeleteIcon,
+    Edit as EditIcon,
     MoreVert as MoreVertIcon,
     Search as SearchIcon,
     Visibility as VisibilityIcon,
@@ -505,7 +508,10 @@ export default function ServiceListingList({
     endpoint = SERVICE_LISTINGS_ENDPOINT,
     title = 'Service Listings',
     canReview = true,
+    canManage = false,
+    editPath = '/service/edit-service-listing',
 }) {
+    const router = useRouter();
     const tableScrollRef = useRef(null);
     const [listings, setListings] = useState([]);
     const [page, setPage] = useState(0);
@@ -572,6 +578,54 @@ export default function ServiceListingList({
         handleMenuClose();
         setSelectedListing(listing);
         setDetailsOpen(true);
+    };
+
+    const handleEditListing = (listing) => {
+        const listingId = getListingId(listing);
+        handleMenuClose();
+        if (!listingId) return;
+        router.push(`${editPath}?id=${encodeURIComponent(listingId)}`);
+    };
+
+    const handleDeleteListing = async (listing) => {
+        const listingId = getListingId(listing);
+        const listingTitle = listing?.title || 'this service listing';
+        handleMenuClose();
+        if (!listingId) return;
+
+        const result = await Swal.fire({
+            icon: 'warning',
+            title: 'Delete Service Listing?',
+            text: `Are you sure you want to delete ${listingTitle}?`,
+            showCancelButton: true,
+            confirmButtonText: 'Delete',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+        });
+
+        if (!result.isConfirmed) return;
+
+        setActionLoading(true);
+        try {
+            const response = await MainApi.delete(`${endpoint}/${listingId}`);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Deleted',
+                text: getApiMessage(response?.data, 'Service listing deleted successfully.'),
+                confirmButtonColor: '#f79f03',
+            });
+            fetchListings();
+        } catch (error) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: getApiErrorMessage(error, 'Failed to delete service listing.'),
+                confirmButtonColor: '#f79f03',
+            });
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handleTableKeyDown = (event) => {
@@ -857,6 +911,22 @@ export default function ServiceListingList({
                         </ListItemIcon>
                         <ListItemText>View Details</ListItemText>
                     </MenuItem>
+                    {canManage && (
+                        <MenuItem onClick={() => handleEditListing(menuListing)}>
+                            <ListItemIcon>
+                                <EditIcon color="primary" />
+                            </ListItemIcon>
+                            <ListItemText>Edit</ListItemText>
+                        </MenuItem>
+                    )}
+                    {canManage && (
+                        <MenuItem onClick={() => handleDeleteListing(menuListing)}>
+                            <ListItemIcon>
+                                <DeleteIcon color="error" />
+                            </ListItemIcon>
+                            <ListItemText>Delete</ListItemText>
+                        </MenuItem>
+                    )}
                 </Menu>
 
                 <ServiceListingDetailsModal
