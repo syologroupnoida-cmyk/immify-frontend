@@ -53,6 +53,7 @@ import {
     Help as HelpIcon,
     AccountBalanceWallet as WalletIcon,
     Campaign as CampaignIcon,
+    Work as WorkIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import SidebarLogo from '@/images/sidebar-logo.png';
@@ -64,13 +65,18 @@ const AGENT_WALLET_BALANCE_ENDPOINTS = ['/api/v1/vendor/wallet'];
 
 const menuItems = [
     { name: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/agent' },
-    // {
-    //     name: 'Leads', icon: <SupportIcon />, children: [
-    //         { name: 'Package Leads', path: '/agent/lead-list' },
-    //         { name: 'Globel Leads', path: '/agent/globel-lead-list' },
-    //         { name: 'Purchased Leads', path: '/agent/purchase-lead-list' },
-    //     ]
-    // },
+    {
+        name: 'Services', icon: <SupportIcon />, children: [
+            { name: 'Add Service', path: '/service/add-service-listing' },
+            { name: 'Service List', path: '/agent/service-list' },
+        ]
+    },
+    {
+        name: 'Jobs', icon: <WorkIcon />, children: [
+            { name: 'Add Job', path: '/agent/add-job' },
+            { name: 'Job List', path: '/agent/job-list' },
+        ]
+    },
     // {
     //     name: 'Packages', icon: <PackagesIcon />, children: [
     //         { name: 'Add Package', path: '/marketplace/add-package' },
@@ -732,7 +738,7 @@ const DashboardLayout = ({ children }) => {
                 }}
             >
                 <Box sx={{ p: 2, minHeight: 72, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Box sx={{ width: isSidebarOpen ? 170 : 64, height: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box component={NextLink} href="/" aria-label="Go to Immify home page" title="Home" sx={{ width: isSidebarOpen ? 170 : 64, height: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', cursor: 'pointer' }}>
                         <Image
                             src={SidebarLogo}
                             alt="Sidebar logo"

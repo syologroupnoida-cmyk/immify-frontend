@@ -1,0 +1,33 @@
+
+> immify-frontend@0.1.0 dev
+> next dev --webpack
+
+▲ Next.js 16.2.12 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.129:3000
+- Environments: .env.local
+✓ Ready in 1232ms
+
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+○ Compiling /admin/login ...
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /admin/login 200 in 14.8s (next.js: 14.4s, proxy.ts: 51ms, application-code: 319ms)
+ GET /admin/login 200 in 7.8s (next.js: 15ms, proxy.ts: 7.6s, application-code: 98ms)
+○ Compiling / ...
+ GET / 200 in 5.8s (next.js: 5.4s, application-code: 429ms)
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /admin/login 304 in 1032ms (next.js: 580ms, proxy.ts: 278ms, application-code: 173ms)
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+ GET /admin/login 200 in 134ms (next.js: 15ms, proxy.ts: 12ms, application-code: 107ms)
+ GET /user/login 200 in 1664ms (next.js: 1411ms, proxy.ts: 12ms, application-code: 241ms)
+ GET /agent/login 200 in 1438ms (next.js: 1203ms, proxy.ts: 128ms, application-code: 108ms)
+ GET /admin/login 200 in 113ms (next.js: 17ms, proxy.ts: 17ms, application-code: 79ms)
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[browser] Image with src "/_next/static/media/admin-login-img.49f265a5.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[?25h

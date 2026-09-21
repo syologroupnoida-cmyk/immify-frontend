@@ -1,493 +1,155 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
-import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import {
-  buildMarketplaceListings,
-  marketplaceServiceAliasMap,
-  structuredMarketplaceTabs,
-} from "./marketplaceData";
+import { fetchServiceListings, serviceListingFallbackImage } from "@/util/serviceListings";
+import { marketplaceTabs } from "../home/homeData";
 
-function ListingCard({ item }) {
-  return (
-    <Link
-      href={`/marketplace/${item.detailSlug}`}
-      className="block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)]"
-    >
-      <div className="relative h-44 w-full overflow-hidden">
-        <img src={item.image} alt={item.service} className="h-full w-full object-cover" />
-        <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white ${item.badgeClass}`}>
-          {item.badgeLabel}
-        </span>
-        <button
-          type="button"
-          aria-label={`Favorite ${item.service}`}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm"
-        >
-          <FavoriteBorderRoundedIcon className="h-4 w-4" />
-        </button>
-      </div>
+const pageSize = 8;
+const categoryLabels = {
+  "test-prepation": "Test Preparation",
+  "document-attention-services": "Document Attestation Services",
+  "helth-insurance": "Health Insurance",
+  "legal-and-complance": "Legal and Compliance",
+};
+const serviceTypes = marketplaceTabs.map(({ slug, name }) => ({ slug, name: categoryLabels[slug] || name }));
 
-      <div className="space-y-2 p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-sky-700">{item.categoryLabel}</p>
-        <h3 className="line-clamp-1 text-lg font-semibold leading-tight text-slate-900">{item.service}</h3>
-        <p className="line-clamp-2 text-sm leading-6 text-slate-600">
-          Verified support and transparent process guidance for {item.categoryName.toLowerCase()}.
-        </p>
-
-        <div className="flex items-end justify-between gap-2 pt-2">
-          <p className="text-lg font-semibold leading-none text-blue-600">{item.priceLabel}</p>
-          <p className="flex items-center gap-1 text-sm font-semibold text-amber-500">
-            <StarRoundedIcon className="h-4 w-4" />
-            {item.rating}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1">
-            <LocationOnOutlinedIcon className="h-3.5 w-3.5" />
-            {item.city}
-          </span>
-          <span>({item.votes})</span>
-        </div>
-      </div>
-    </Link>
-  );
+function getServiceType(item) {
+  const name = item.categoryName.toLowerCase();
+  if (/business setup|corporate immigration/.test(name)) return "business-setup-services-and-immigration";
+  if (/family relocation/.test(name)) return "family-relocation-services";
+  if (/study abroad|overseas education/.test(name)) return "study-abroad-services";
+  if (/test prep|language training/.test(name)) return "test-prepation";
+  if (/document|attestation/.test(name)) return "document-attention-services";
+  if (/health|helth|insurance/.test(name)) return "helth-insurance";
+  if (/legal|complian/.test(name)) return "legal-and-complance";
+  if (/financial|finance/.test(name)) return "financial-services";
+  if (/forex|foreign exchange/.test(name)) return "forex-services";
+  if (/international|global mobility/.test(name)) return "international-services";
+  if (/immigration/.test(name)) return "immigration-services";
+  if (/visa/.test(name)) return "visa-services";
+  return serviceTypes.find((type) => type.slug === item.categorySlug)?.slug || "";
 }
 
 export default function MarketplaceMainSection() {
   const router = useRouter();
-  const structuredTabs = useMemo(() => structuredMarketplaceTabs, []);
-  const listings = useMemo(() => buildMarketplaceListings(structuredTabs), [structuredTabs]);
-  const itemsPerPage = 8;
-
-  const [searchKeywords, setSearchKeywords] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [maxPrice, setMaxPrice] = useState(50000);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [expandedServiceCategories, setExpandedServiceCategories] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const [expandedFilters, setExpandedFilters] = useState({
-    search: false,
-    categories: true,
-    location: false,
-    price: false,
-  });
-
-  const visibleServiceTabs = useMemo(() => {
-    if (!selectedCategories.length) {
-      return structuredTabs;
-    }
-
-    return structuredTabs.filter((tab) => selectedCategories.includes(tab.slug));
-  }, [selectedCategories, structuredTabs]);
-
-  const allKnownServices = useMemo(
-    () => new Set(structuredTabs.flatMap((tab) => tab.services)),
-    [structuredTabs]
-  );
-
-  const visibleServicesSet = useMemo(
-    () => new Set(visibleServiceTabs.flatMap((tab) => tab.services)),
-    [visibleServiceTabs]
-  );
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState(null);
+  const [location, setLocation] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [page, setPage] = useState(1);
+  const resultsRef = useRef(null);
+  const [resultsHeight, setResultsHeight] = useState(null);
 
   useEffect(() => {
-    setExpandedServiceCategories(
-      structuredTabs.reduce((acc, tab) => {
-        acc[tab.slug] = false;
-        return acc;
-      }, {})
-    );
-  }, [structuredTabs]);
+    let active = true;
+    fetchServiceListings()
+      .then((items) => { if (active) setListings(items); })
+      .catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
-    if (!selectedCategories.length) return;
+    const element = resultsRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setResultsHeight(entry.borderBoxSize?.[0]?.blockSize || entry.contentRect.height));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
-    setExpandedServiceCategories((prev) => {
-      const next = { ...prev };
-
-      structuredTabs.forEach((tab) => {
-        next[tab.slug] = selectedCategories.includes(tab.slug);
-      });
-
-      return next;
-    });
-  }, [selectedCategories, structuredTabs]);
-
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    const queryCategory = typeof router.query.category === "string" ? router.query.category : "";
-    const queryService = typeof router.query.service === "string" ? router.query.service : "";
-
-    if (queryCategory && structuredTabs.some((tab) => tab.slug === queryCategory)) {
-      setSelectedCategories([queryCategory]);
-    }
-
-    if (queryService) {
-      const normalizedService = marketplaceServiceAliasMap[queryService.toLowerCase()] || queryService;
-
-      if (allKnownServices.has(normalizedService)) {
-        setSelectedServices([normalizedService]);
-      } else {
-        setSelectedServices([]);
-      }
-    }
-  }, [router.isReady, router.query.category, router.query.service, structuredTabs, allKnownServices]);
-
-  useEffect(() => {
-    setSelectedServices((prev) => prev.filter((service) => visibleServicesSet.has(service)));
-  }, [visibleServicesSet]);
-
-  const categoryCounts = useMemo(() => {
-    return structuredTabs.reduce((acc, tab) => {
-      acc[tab.slug] = listings.filter((item) => item.categorySlug === tab.slug).length;
-      return acc;
-    }, {});
-  }, [listings, structuredTabs]);
-
-  const filteredListings = useMemo(() => {
-    let next = [...listings];
-
-    if (selectedCategories.length) {
-      next = next.filter((item) => selectedCategories.includes(item.categorySlug));
-    }
-
-    if (selectedServices.length) {
-      next = next.filter((item) => selectedServices.includes(item.service));
-    }
-
-    if (searchKeywords.trim()) {
-      const keyword = searchKeywords.trim().toLowerCase();
-      next = next.filter(
-        (item) =>
-          item.service.toLowerCase().includes(keyword) ||
-          item.categoryName.toLowerCase().includes(keyword)
-      );
-    }
-
-    if (locationFilter.trim()) {
-      const loc = locationFilter.trim().toLowerCase();
-      next = next.filter((item) => item.city.toLowerCase().includes(loc));
-    }
-
-    next = next.filter((item) => item.priceValue <= maxPrice);
-
-    next.sort((a, b) => b.createdOrder - a.createdOrder);
-
-    return next;
-  }, [
-    listings,
-    locationFilter,
-    maxPrice,
-    searchKeywords,
-    selectedCategories,
-    selectedServices,
-  ]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredListings.length / itemsPerPage));
-
-  useEffect(() => {
-    setCurrentPage((prevPage) => Math.min(prevPage, totalPages));
-  }, [totalPages]);
-
-  const paginatedListings = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredListings.slice(startIndex, startIndex + itemsPerPage);
-  }, [currentPage, filteredListings]);
-
-  const totalResults = filteredListings.length;
-
-  const toggleCategory = (slug) => {
-    setSelectedCategories((prev) =>
-      prev.includes(slug) ? prev.filter((item) => item !== slug) : [...prev, slug]
-    );
+  const categoryKey = selectedTypes === null
+    ? (typeof router.query.category === "string" ? router.query.category : "")
+    : selectedTypes.join("|");
+  const selectedCategories = useMemo(() => categoryKey ? categoryKey.split("|") : [], [categoryKey]);
+  const typeCounts = useMemo(() => listings.reduce((counts, item) => {
+    const type = getServiceType(item);
+    if (type) counts[type] = (counts[type] || 0) + 1;
+    return counts;
+  }, {}), [listings]);
+  const toggleType = (slug) => {
+    setSelectedTypes(selectedCategories.includes(slug) ? selectedCategories.filter((type) => type !== slug) : [...selectedCategories, slug]);
+    setPage(1);
   };
+  const filtered = useMemo(() => listings.filter((item) => {
+    const query = search.trim().toLowerCase();
+    return (!query || `${item.service} ${item.categoryName} ${item.description}`.toLowerCase().includes(query))
+      && (!selectedCategories.length || selectedCategories.includes(getServiceType(item)))
+      && (!location || item.city.toLowerCase().includes(location.trim().toLowerCase()))
+      && (!maxPrice || item.priceValue <= Number(maxPrice));
+  }), [listings, search, selectedCategories, location, maxPrice]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const activePage = Math.min(page, totalPages);
+  const visible = filtered.slice((activePage - 1) * pageSize, activePage * pageSize);
 
-  const toggleService = (service) => {
-    setSelectedServices((prev) =>
-      prev.includes(service) ? prev.filter((item) => item !== service) : [...prev, service]
-    );
-  };
-
-  const toggleFilterGroup = (group) => {
-    setExpandedFilters((prev) => ({
-      ...prev,
-      [group]: !prev[group],
-    }));
-  };
-
-  const toggleServiceCategory = (slug) => {
-    setExpandedServiceCategories((prev) => ({
-      ...prev,
-      [slug]: !prev[slug],
-    }));
-  };
-
-  const clearFilters = () => {
-    setSearchKeywords("");
-    setLocationFilter("");
-    setMaxPrice(50000);
-    setSelectedCategories([]);
-    setSelectedServices([]);
-    setCurrentPage(1);
-  };
+  const reset = () => { setSearch(""); setSelectedTypes([]); setLocation(""); setMaxPrice(""); setPage(1); };
 
   return (
-    <main className="min-h-screen bg-[#f6f8ff] px-4 pb-8 pt-16 sm:px-6 sm:pt-20 lg:px-8 lg:pt-24">
-      <div className="mx-auto max-w-[1440px]">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-slate-900">Marketplace</h1>
+    <main className="min-h-screen bg-[#f6f8fb] pb-12 pt-6 sm:pt-8">
+      <section className="relative flex min-h-[230px] items-center justify-center overflow-hidden bg-slate-900 px-4 text-center">
+        <img src="/images/marketplace-banner.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+        <div className="relative">
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">Service Marketplace</h1>
+          <p className="mt-3 text-sm text-white/90 sm:text-base">Explore services from our providers.</p>
         </div>
-        <p className="mb-6 text-sm text-slate-600 sm:text-base">
-          Explore trusted services, products, and opportunities all in one place.
-        </p>
+      </section>
 
-        <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
-          <aside
-            className="market-sidebar sticky top-16 flex h-[calc(140vh-20px)] flex-col overflow-hidden rounded-2xl bg-white p-3"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-semibold text-slate-900">Filter</h2>
-              <button type="button" onClick={clearFilters} className="cursor-pointer text-sm font-semibold text-blue-600">
-                Reset All
-              </button>
-            </div>
-
-            <div
-              className="market-sidebar-body mt-3 min-h-0 flex-1 divide-y divide-slate-200 overflow-y-auto pr-1"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              <div className="py-2.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFilterGroup("price")}
-                  className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800"
-                >
-                  Price Range
-                  {expandedFilters.price ? <ExpandLessRoundedIcon className="h-5 w-5" /> : <ExpandMoreRoundedIcon className="h-5 w-5" />}
-                </button>
-                {expandedFilters.price && (
-                  <div className="mt-3">
-                    <input
-                      type="range"
-                      min="5000"
-                      max="50000"
-                      step="500"
-                      value={maxPrice}
-                      onChange={(event) => setMaxPrice(Number(event.target.value))}
-                      className="w-full accent-blue-600"
-                    />
-                    <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-                      <span>INR 5,000</span>
-                      <span>INR {maxPrice.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="py-2.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFilterGroup("search")}
-                  className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800"
-                >
-                  Search Keywords
-                  {expandedFilters.search ? <ExpandLessRoundedIcon className="h-5 w-5" /> : <ExpandMoreRoundedIcon className="h-5 w-5" />}
-                </button>
-                {expandedFilters.search && (
-                  <div className="mt-3 flex items-center rounded-xl border border-slate-200 px-3">
-                    <input
-                      id="searchKeywords"
-                      type="text"
-                      value={searchKeywords}
-                      onChange={(event) => setSearchKeywords(event.target.value)}
-                      placeholder="Search services, products..."
-                      className="h-10 w-full bg-transparent text-sm outline-none"
-                    />
-                    <SearchRoundedIcon className="h-4 w-4 text-slate-400" />
-                  </div>
-                )}
-              </div>
-
-              <div className="py-2.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFilterGroup("categories")}
-                  className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800"
-                >
-                  Categories
-                  {expandedFilters.categories ? <ExpandLessRoundedIcon className="h-5 w-5" /> : <ExpandMoreRoundedIcon className="h-5 w-5" />}
-                </button>
-                {expandedFilters.categories && (
-                  <div className="mt-3 space-y-2">
-                    {structuredTabs.map((tab) => (
-                      <label key={tab.slug} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
-                        <span className="flex items-center gap-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.includes(tab.slug)}
-                            onChange={() => toggleCategory(tab.slug)}
-                            className="h-4 w-4 rounded border-slate-300"
-                          />
-                          {tab.name}
-                        </span>
-                        <span className="text-xs text-slate-500">{categoryCounts[tab.slug] || 0}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="py-2.5">
-                <p className="text-sm font-semibold text-slate-800">Category and Sub Category</p>
-                <div className="mt-2.5 space-y-2.5 pr-1">
-                  {visibleServiceTabs.map((tab, tabIndex) => (
-                    <div key={tab.slug} className="rounded-lg border border-slate-100 px-2 py-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleServiceCategory(tab.slug)}
-                        className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800"
-                      >
-                        <span>{tabIndex + 1}. {tab.name}</span>
-                        {expandedServiceCategories[tab.slug] ? (
-                          <ExpandLessRoundedIcon className="h-5 w-5" />
-                        ) : (
-                          <ExpandMoreRoundedIcon className="h-5 w-5" />
-                        )}
-                      </button>
-
-                      {expandedServiceCategories[tab.slug] && (
-                        <div className="mt-2 space-y-2 pl-2">
-                          {tab.services.map((service) => (
-                            <label
-                              key={`${tab.slug}-${service}`}
-                              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-600 transition hover:bg-slate-50"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedServices.includes(service)}
-                                onChange={() => toggleService(service)}
-                                className="mt-0.5 h-4 w-4 rounded border-slate-300"
-                              />
-                              <span>{service}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="py-2.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFilterGroup("location")}
-                  className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800"
-                >
-                  Location
-                  {expandedFilters.location ? <ExpandLessRoundedIcon className="h-5 w-5" /> : <ExpandMoreRoundedIcon className="h-5 w-5" />}
-                </button>
-                {expandedFilters.location && (
-                  <input
-                    id="locationFilter"
-                    type="text"
-                    value={locationFilter}
-                    onChange={(event) => setLocationFilter(event.target.value)}
-                    placeholder="Enter city or country"
-                    className="mt-3 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none"
-                  />
-                )}
-              </div>
-
-            </div>
-          </aside>
-
-          <section>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-600">
-                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalResults)}-
-                {Math.min(currentPage * itemsPerPage, totalResults)} of {totalResults} results
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {paginatedListings.map((item) => (
-                <ListingCard key={item.id} item={item} />
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 pt-8 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8">
+        <aside style={{ "--results-height": resultsHeight ? `${resultsHeight}px` : "auto" }} className="border-b border-slate-200 pb-6 lg:h-[var(--results-height)] lg:overflow-y-auto lg:border-b-0 lg:border-r lg:pr-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900">Filters</h2>
+            <button type="button" onClick={reset} className="text-sm font-medium text-blue-700">Reset</button>
+          </div>
+          <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-search">Search</label>
+          <div className="mt-2 flex items-center rounded-md border border-slate-300 bg-white px-3">
+            <input id="service-search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search services" className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none" />
+            <SearchRoundedIcon className="h-4 w-4 text-slate-400" />
+          </div>
+          <fieldset className="mt-5">
+            <legend className="text-sm font-semibold text-slate-800">Service types</legend>
+            <div className="mt-2 space-y-1">
+              {serviceTypes.map((type) => (
+                <label key={type.slug} className="flex cursor-pointer items-start justify-between gap-2 rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-white">
+                  <span className="flex min-w-0 items-start gap-2">
+                    <input type="checkbox" checked={selectedCategories.includes(type.slug)} onChange={() => toggleType(type.slug)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-700" />
+                    <span>{type.name}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-500">{typeCounts[type.slug] || 0}</span>
+                </label>
               ))}
             </div>
+          </fieldset>
+          <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-location">Location</label>
+          <input id="service-location" value={location} onChange={(event) => { setLocation(event.target.value); setPage(1); }} placeholder="City or country" className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
+          <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-price">Maximum price</label>
+          <input id="service-price" type="number" min="0" value={maxPrice} onChange={(event) => { setMaxPrice(event.target.value); setPage(1); }} placeholder="Any price" className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
+        </aside>
 
-            {totalPages > 1 && (
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
-                  <button
-                    key={pageNumber}
-                    type="button"
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={`h-10 min-w-10 rounded-xl px-3 text-sm font-semibold transition ${
-                      pageNumber === currentPage
-                        ? "bg-blue-600 text-white"
-                        : "border border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700"
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
+        <section ref={resultsRef} aria-label="Service listings" className="min-w-0 min-h-[480px] self-start">
+          <p className="mb-4 text-sm text-slate-600">{loading ? "Loading services..." : `Showing ${filtered.length ? (activePage - 1) * pageSize + 1 : 0}-${Math.min(activePage * pageSize, filtered.length)} of ${filtered.length} services`}</p>
+          {error && <p className="py-10 text-center text-sm text-red-700">Services could not be loaded. Please try again later.</p>}
+          {!loading && !error && !visible.length && <p className="py-10 text-center text-sm text-slate-600">No services match your filters.</p>}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map((item) => (
+              <Link key={item.id} href={`/marketplace/${item.detailSlug}`} className="overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-blue-300 hover:shadow-md">
+                <div className="aspect-[16/10] bg-slate-100"><img src={item.image} alt="" className="h-full w-full object-cover" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = serviceListingFallbackImage; }} /></div>
+                <div className="p-4">
+                  <p className="text-xs font-semibold uppercase text-blue-700">{item.categoryName}</p>
+                  <h3 className="mt-2 line-clamp-2 min-h-12 font-semibold text-slate-900">{item.service}</h3>
+                  <p className="mt-2 line-clamp-2 min-h-10 text-sm text-slate-600">{item.description || "Explore this service and its details."}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm"><span className="text-slate-500">{item.city}</span><strong className="text-blue-700">{item.priceLabel}</strong></div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          {totalPages > 1 && <nav aria-label="Service pages" className="mt-8 flex flex-wrap justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => <button key={number} type="button" onClick={() => setPage(number)} aria-current={number === activePage ? "page" : undefined} className={`h-9 min-w-9 rounded-md px-2 text-sm font-semibold ${number === activePage ? "bg-blue-700 text-white" : "border border-slate-300 bg-white text-slate-700"}`}>{number}</button>)}
+          </nav>}
+        </section>
       </div>
-
-      <style jsx>{`
-        .market-sidebar {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .market-sidebar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .market-sidebar-body {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .market-sidebar-body::-webkit-scrollbar {
-          display: none;
-          width: 0;
-          height: 0;
-        }
-      `}</style>
     </main>
   );
 }

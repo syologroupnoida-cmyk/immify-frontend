@@ -14,8 +14,8 @@ import Swal from 'sweetalert2';
 import MainApi from '@/util/MainApi';
 
 // CORRECT ENDPOINT - Make sure this matches your API
-export const SUBSCRIPTION_PLANS_ENDPOINT = '/api/v1/vendor/subscription-plans';
-const SUBSCRIPTION_PURCHASE_ENDPOINT = '/api/v1/vendor/subscriptions';
+export const SUBSCRIPTION_PLANS_ENDPOINT = '/vendor/subscriptions/plans';
+const SUBSCRIPTION_CHECKOUT_ENDPOINT = '/vendor/subscriptions/checkout';
 
 // Helper functions (add these to your subscriptionPlanUtils or keep here)
 export function extractSubscriptionPlans(data) {
@@ -36,6 +36,8 @@ export function extractSubscriptionPlans(data) {
 }
 
 export function mapSubscriptionPlan(apiPlan) {
+    const isCurrentPlan = apiPlan.isCurrentPlan === true || apiPlan.is_current_plan === true;
+
     return {
         id: apiPlan.id,
         name: apiPlan.name,
@@ -54,11 +56,34 @@ export function mapSubscriptionPlan(apiPlan) {
         featured: apiPlan.isFeatured || false,
         features: apiPlan.displayContent?.features || [],
         ctaButtonText: apiPlan.displayContent?.ctaButtonText || `Choose ${apiPlan.name}`,
+        buttonLabel: apiPlan.buttonLabel || apiPlan.button_label || apiPlan.displayContent?.buttonLabel || apiPlan.displayContent?.button_label || null,
         iconUrl: apiPlan.displayContent?.iconUrl || null,
-        isCurrentPlan: apiPlan.isCurrentPlan || false, // IMPORTANT: Map this field
-        action: apiPlan.action || null,
+        isCurrentPlan,
+        action: apiPlan.action || apiPlan.subscriptionAction || apiPlan.subscription_action || null,
         originalData: apiPlan
     };
+}
+
+function getPlanActionLabel(plan) {
+    if (plan.buttonLabel) return plan.buttonLabel;
+    if (plan.isCurrentPlan) return 'Active Plan';
+
+    switch (String(plan.action || '').toUpperCase()) {
+        case 'BUY':
+            return 'Buy';
+        case 'UPGRADE':
+            return 'Upgrade';
+        case 'DOWNGRADE':
+            return 'Downgrade';
+        case 'RENEW':
+            return 'Renew';
+        default:
+            return plan.ctaButtonText || `Buy ${plan.name.replace(' Plan', '')}`;
+    }
+}
+
+function canPurchasePlan(plan) {
+    return plan.isCurrentPlan !== true;
 }
 
 function formatPrice(priceInPaise) {
@@ -92,7 +117,10 @@ function getApiErrorMessage(error, fallback) {
 
 async function purchaseSubscriptionPlan(planId) {
     try {
-        const response = await MainApi.post(SUBSCRIPTION_PURCHASE_ENDPOINT, { planId });
+        const response = await MainApi.post(SUBSCRIPTION_CHECKOUT_ENDPOINT, {
+            planId,
+            autoRenew: false,
+        });
         return response.data;
     } catch (error) {
         console.error('Subscription purchase error:', error);
@@ -169,12 +197,13 @@ export default function AgentPlansPricing() {
     }, []);
 
     const handleBuyPlan = async (plan) => {
-        if (!plan?.id || purchasingPlanId) return;
+        const checkoutPlanId = plan?.planId || plan?.id;
+        if (!checkoutPlanId || purchasingPlanId || !canPurchasePlan(plan)) return;
 
         setPurchasingPlanId(plan.id);
 
         try {
-            const response = await purchaseSubscriptionPlan(plan.id);
+            const response = await purchaseSubscriptionPlan(checkoutPlanId);
             await Swal.fire({
                 icon: 'success',
                 title: 'Subscription activated',
@@ -270,8 +299,9 @@ export default function AgentPlansPricing() {
                     
                     {!isLoadingPlans && plans.map((plan) => {
                         const isPurchasingThisPlan = purchasingPlanId === plan.id;
-                        const isAnyPurchaseInProgress = Boolean(purchasingPlanId);
                         const isCurrentPlan = plan.isCurrentPlan === true;
+                        const canBuyThisPlan = canPurchasePlan(plan);
+                        const isButtonDisabled = isCurrentPlan || isPurchasingThisPlan;
 
                         return (
                             <Paper
@@ -450,7 +480,7 @@ export default function AgentPlansPricing() {
                                     <Button
                                         fullWidth
                                         variant={isCurrentPlan ? 'outlined' : (plan.featured ? 'contained' : 'outlined')}
-                                        disabled={isAnyPurchaseInProgress || isCurrentPlan}
+                                        disabled={isButtonDisabled}
                                         onClick={() => handleBuyPlan(plan)}
                                         startIcon={isPurchasingThisPlan ? <CircularProgress size={16} color="inherit" /> : null}
                                         sx={{
@@ -461,8 +491,8 @@ export default function AgentPlansPricing() {
                                             color: isCurrentPlan ? '#98a2b3' : (plan.featured ? '#fff' : plan.accent),
                                             textTransform: 'none',
                                             fontWeight: 700,
-                                            cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
-                                            opacity: isCurrentPlan ? 0.8 : 1,
+                                            cursor: canBuyThisPlan ? 'pointer' : 'not-allowed',
+                                            opacity: canBuyThisPlan ? 1 : 0.8,
                                             '&:hover': {
                                                 borderColor: isCurrentPlan ? '#b8e6cc' : plan.accent,
                                                 bgcolor: isCurrentPlan ? '#f5f6f8' : (plan.featured ? plan.accent : plan.bg),
@@ -471,9 +501,7 @@ export default function AgentPlansPricing() {
                                     >
                                         {isPurchasingThisPlan
                                             ? 'Processing...'
-                                            : isCurrentPlan
-                                                ? '✓ Current Plan'
-                                                : plan.ctaButtonText || `Buy ${plan.name.replace(' Plan', '')}`}
+                                            : getPlanActionLabel(plan)}
                                     </Button>
                                 </Stack>
                             </Paper>

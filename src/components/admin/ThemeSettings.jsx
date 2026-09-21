@@ -169,9 +169,9 @@ function LogoUploadField({ label, hint, previewUrl, uploading, onUpload, onRemov
                   <CircularProgress size={22} />
                 </Box>
               )}
-              <IconButton
-                size="small"
-                onClick={(event) => {
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
                   onRemove();
@@ -453,12 +453,6 @@ export default function ThemeSettings() {
               required
               disabled={loading}
               size="small"
-              sx={textFieldSx}
-              InputProps={{
-                startAdornment: (
-                  <Language sx={{ fontSize: 18, color: '#94a3b8', mr: 1 }} />
-                ),
-              }}
             />
           </Box>
 

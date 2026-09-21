@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     Button,
+    Checkbox,
     Chip,
     CircularProgress,
     GlobalStyles,
+    ListItemText,
     MenuItem,
     Paper,
     Stack,
@@ -19,8 +21,8 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import Swal from 'sweetalert2';
 import MainApi from '@/util/MainApi';
 
-const SUBSCRIPTION_PLANS_ENDPOINT = '/api/v1/super-admin/subscription-plans';
-const PUBLIC_SUBSCRIPTION_PLANS_ENDPOINT = '/api/v1/subscription-plans';
+const SUBSCRIPTION_PLANS_ENDPOINT = '/super-admin/subscription-plans';
+const SERVICE_CATEGORIES_ENDPOINT = '/api/v1/service-categories';
 
 const billingCycleDays = {
     MONTHLY: 30,
@@ -37,6 +39,21 @@ const billingCycleLabels = {
 };
 
 const billingCycleOptions = Object.keys(billingCycleDays);
+const supportLevelOptions = ['EMAIL', 'PRIORITY_EMAIL', 'DEDICATED'];
+const analyticsLevelOptions = ['BASIC', 'ADVANCED', 'PREMIUM'];
+const commercialTermFields = new Set([
+    'salePriceInPaise',
+    'offerPriceInPaise',
+    'currency',
+    'billingCycle',
+    'durationDays',
+    'trialDays',
+    'includedCredits',
+    'maxPackages',
+    'maxJobPosts',
+    'jobPortalAccess',
+    'directLeadPriceCredits',
+]);
 
 const clearBodyScrollPadding = () => {
     if (typeof document === 'undefined') return;
@@ -104,25 +121,118 @@ const createCard = (overrides = {}) => ({
     description: '',
     salePriceInPaise: '0',
     offerPriceInPaise: '0',
+    currency: 'INR',
     billingCycle: 'MONTHLY',
     durationDays: '30',
     trialDays: '0',
     includedCredits: '0',
     maxPackages: '0',
+    maxJobPosts: '0',
+    jobPortalAccess: false,
     directLeadPriceCredits: '0',
     priorityWeight: '0',
     isFeatured: false,
     displayOrder: '1',
     isActive: true,
+    categoryIds: [],
     badgeText: '',
     ribbonText: '',
     iconUrl: '',
     themeColor: '#8B4513',
     ctaButtonText: '',
     softColor: '#fff7ed',
+    supportLevel: 'EMAIL',
+    analyticsLevel: 'BASIC',
     features: [createFeature()],
     ...overrides,
 });
+
+const subscriptionTemplates = [
+    createCard({
+        name: 'Basic Bronze Plan',
+        description: 'For agents starting with package marketplace creation.',
+        salePriceInPaise: '39900',
+        offerPriceInPaise: '29900',
+        includedCredits: '100',
+        maxPackages: '5',
+        maxJobPosts: '2',
+        jobPortalAccess: false,
+        directLeadPriceCredits: '8',
+        priorityWeight: '0',
+        isFeatured: false,
+        displayOrder: '1',
+        badgeText: 'Starter',
+        ribbonText: '',
+        themeColor: '#8B4513',
+        softColor: '#fff7ed',
+        ctaButtonText: 'Choose Basic Bronze',
+        supportLevel: 'EMAIL',
+        analyticsLevel: 'BASIC',
+        features: [
+            createFeature('Create up to 5 marketplace packages', true),
+            createFeature('100 wallet credits included', true),
+            createFeature('Standard marketplace visibility', true),
+            createFeature('Direct contact after lead purchase', true),
+            createFeature('Priority placement', false),
+        ],
+    }),
+    createCard({
+        name: 'Advanced Silver Plan',
+        description: 'For growing agencies that need more packages, leads, and visibility.',
+        salePriceInPaise: '79900',
+        offerPriceInPaise: '59900',
+        includedCredits: '300',
+        maxPackages: '20',
+        maxJobPosts: '10',
+        jobPortalAccess: true,
+        directLeadPriceCredits: '6',
+        priorityWeight: '50',
+        isFeatured: true,
+        displayOrder: '2',
+        badgeText: 'Most Popular',
+        ribbonText: 'Best Value',
+        themeColor: '#A7A9AC',
+        softColor: '#f8fafc',
+        ctaButtonText: 'Choose Advanced Silver',
+        supportLevel: 'PRIORITY_EMAIL',
+        analyticsLevel: 'ADVANCED',
+        features: [
+            createFeature('Create up to 20 marketplace packages', true),
+            createFeature('300 wallet credits included', true),
+            createFeature('Enhanced marketplace visibility', true),
+            createFeature('Job portal access', true),
+            createFeature('Priority email support', true),
+        ],
+    }),
+    createCard({
+        name: 'Premium Gold Plan',
+        description: 'For established agencies requiring maximum reach and premium support.',
+        salePriceInPaise: '149900',
+        offerPriceInPaise: '119900',
+        includedCredits: '750',
+        maxPackages: '50',
+        maxJobPosts: '30',
+        jobPortalAccess: true,
+        directLeadPriceCredits: '4',
+        priorityWeight: '100',
+        isFeatured: false,
+        displayOrder: '3',
+        badgeText: 'Premium',
+        ribbonText: 'Maximum Reach',
+        themeColor: '#D4AF37',
+        softColor: '#fffbeb',
+        ctaButtonText: 'Choose Premium Gold',
+        supportLevel: 'DEDICATED',
+        analyticsLevel: 'PREMIUM',
+        features: [
+            createFeature('Create up to 50 marketplace packages', true),
+            createFeature('750 wallet credits included', true),
+            createFeature('Premium marketplace visibility', true),
+            createFeature('Highest listing priority', true),
+            createFeature('Dedicated account support', true),
+        ],
+    }),
+];
 
 const getPlanId = (card) => card?.planId || card?.backendId || card?._id || null;
 const getApiPlanId = (plan) => plan?.planId || plan?.backendId || plan?._id || plan?.id || null;
@@ -136,6 +246,31 @@ const parseJsonObject = (value) => {
     } catch {
         return {};
     }
+};
+
+const getFirstArray = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) || [];
+
+const extractServiceCategories = (payload = {}) => {
+    const data = payload?.data ?? payload ?? {};
+    const candidates = getFirstArray(
+        data,
+        data?.content,
+        data?.items,
+        data?.results,
+        data?.categories,
+        data?.serviceCategories,
+        data?.data,
+        data?.data?.content,
+        data?.data?.items,
+        data?.data?.results,
+        data?.data?.categories,
+        data?.data?.serviceCategories
+    );
+
+    return candidates.map((category, index) => ({
+        id: String(category?.id || category?._id || category?.categoryId || category?.serviceCategoryId || category?.uuid || category?.slug || `category-${index}`),
+        name: category?.name || category?.categoryName || category?.serviceCategoryName || category?.title || 'Unnamed Category',
+    })).filter((category) => category.id && category.name);
 };
 
 const extractPlanList = (payload = {}) => {
@@ -194,8 +329,28 @@ const normalizeApiFeatures = (features = []) => {
     });
 };
 
+const normalizeCategoryIds = (categoryIds = []) => {
+    if (!Array.isArray(categoryIds)) return [];
+
+    return categoryIds
+        .map((category) => {
+            if (category && typeof category === 'object') {
+                return category.id || category._id || category.categoryId || category.serviceCategoryId || category.uuid || category.slug || '';
+            }
+
+            return category;
+        })
+        .filter((categoryId) => categoryId !== null && categoryId !== undefined && categoryId !== '')
+        .map(String);
+};
+
+const getCommercialTermChanges = (payload = {}) => Object.keys(payload).filter((field) => commercialTermFields.has(field));
+const activateSubscriptionPlan = (planId) => MainApi.post(`${SUBSCRIPTION_PLANS_ENDPOINT}/${planId}/activate`, {});
+const deactivateSubscriptionPlan = (planId) => MainApi.post(`${SUBSCRIPTION_PLANS_ENDPOINT}/${planId}/deactivate`, {});
+
 const mapApiPlanToCard = (plan = {}, index = 0) => {
     const displayContent = parseJsonObject(plan.displayContent || plan.display_content) || {};
+    const rules = parseJsonObject(plan.rules || plan.planRules || plan.plan_rules) || {};
     const backendId = getApiPlanId(plan) || '';
     const billingCycle = billingCycleOptions.includes(plan.billingCycle) ? plan.billingCycle : 'MONTHLY';
 
@@ -207,22 +362,28 @@ const mapApiPlanToCard = (plan = {}, index = 0) => {
         description: plan.description ?? '',
         salePriceInPaise: stringifyValue(plan.salePriceInPaise ?? plan.sale_price_in_paise, '0'),
         offerPriceInPaise: stringifyValue(plan.offerPriceInPaise ?? plan.offer_price_in_paise, '0'),
+        currency: plan.currency ?? 'INR',
         billingCycle,
         durationDays: stringifyValue(plan.durationDays ?? plan.duration_days, billingCycleDays[billingCycle]),
         trialDays: stringifyValue(plan.trialDays ?? plan.trial_days, '0'),
         includedCredits: stringifyValue(plan.includedCredits ?? plan.included_credits, '0'),
         maxPackages: stringifyValue(plan.maxPackages ?? plan.max_packages, '0'),
+        maxJobPosts: stringifyValue(plan.maxJobPosts ?? plan.max_job_posts, '0'),
+        jobPortalAccess: Boolean(plan.jobPortalAccess ?? plan.job_portal_access),
         directLeadPriceCredits: stringifyValue(plan.directLeadPriceCredits ?? plan.direct_lead_price_credits, '0'),
         priorityWeight: stringifyValue(plan.priorityWeight ?? plan.priority_weight, '0'),
         isFeatured: Boolean(plan.isFeatured ?? plan.is_featured),
         displayOrder: stringifyValue(plan.displayOrder ?? plan.display_order, index + 1),
         isActive: plan.isActive ?? plan.is_active ?? true,
+        categoryIds: normalizeCategoryIds(plan.categoryIds || plan.category_ids || plan.categories || plan.serviceCategories || []),
         badgeText: displayContent.badgeText ?? displayContent.badge_text ?? plan.badgeText ?? '',
         ribbonText: displayContent.ribbonText ?? displayContent.ribbon_text ?? plan.ribbonText ?? '',
         iconUrl: displayContent.iconUrl ?? displayContent.icon_url ?? plan.iconUrl ?? '',
         themeColor: displayContent.themeColor ?? displayContent.theme_color ?? plan.themeColor ?? '#8B4513',
         ctaButtonText: displayContent.ctaButtonText ?? displayContent.cta_button_text ?? plan.ctaButtonText ?? 'Choose Plan',
         softColor: displayContent.softColor ?? displayContent.soft_color ?? plan.softColor ?? '#fff7ed',
+        supportLevel: rules.supportLevel ?? rules.support_level ?? 'EMAIL',
+        analyticsLevel: rules.analyticsLevel ?? rules.analytics_level ?? 'BASIC',
         features: normalizeApiFeatures(displayContent.features || plan.features),
     });
 };
@@ -241,16 +402,20 @@ const getCardPayload = (card) => ({
     description: card.description,
     salePriceInPaise: toNumber(card.salePriceInPaise),
     offerPriceInPaise: toNumber(card.offerPriceInPaise),
+    currency: card.currency || 'INR',
     billingCycle: card.billingCycle,
     durationDays: toNumber(card.durationDays),
     trialDays: toNumber(card.trialDays),
     includedCredits: toNumber(card.includedCredits),
     maxPackages: toNumber(card.maxPackages),
+    maxJobPosts: toNumber(card.maxJobPosts),
+    jobPortalAccess: Boolean(card.jobPortalAccess),
     directLeadPriceCredits: toNumber(card.directLeadPriceCredits),
     priorityWeight: toNumber(card.priorityWeight),
     isFeatured: Boolean(card.isFeatured),
     displayOrder: toNumber(card.displayOrder),
     isActive: Boolean(card.isActive),
+    categoryIds: normalizeCategoryIds(card.categoryIds),
     displayContent: {
         badgeText: card.badgeText,
         ribbonText: card.ribbonText?.trim() || null,
@@ -259,7 +424,10 @@ const getCardPayload = (card) => ({
         ctaButtonText: card.ctaButtonText,
         features: normalizeFeatures(card.features),
     },
-    rules: {},
+    rules: {
+        supportLevel: card.supportLevel,
+        analyticsLevel: card.analyticsLevel,
+    },
 });
 
 const areValuesEqual = (firstValue, secondValue) => JSON.stringify(firstValue) === JSON.stringify(secondValue);
@@ -288,9 +456,12 @@ const initialCards = [];
 
 export default function AddSubscription() {
     const [cards, setCards] = useState(initialCards);
+    const [serviceCategories, setServiceCategories] = useState([]);
     const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
     const [savingCardId, setSavingCardId] = useState('');
     const [deletingCardId, setDeletingCardId] = useState('');
+    const [statusChangingCardId, setStatusChangingCardId] = useState('');
     const originalCardsRef = useRef(snapshotCards(initialCards));
 
     useEffect(() => {
@@ -300,7 +471,7 @@ export default function AddSubscription() {
             setIsLoadingPlans(true);
 
             try {
-                const response = await MainApi.get(PUBLIC_SUBSCRIPTION_PLANS_ENDPOINT);
+                const response = await MainApi.get(SUBSCRIPTION_PLANS_ENDPOINT);
                 const fetchedCards = extractPlanList(response?.data)
                     .map(mapApiPlanToCard)
                     .sort((firstCard, secondCard) => toNumber(firstCard.displayOrder) - toNumber(secondCard.displayOrder));
@@ -324,6 +495,34 @@ export default function AddSubscription() {
         };
 
         loadSubscriptionPlans();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadServiceCategories = async () => {
+            setIsLoadingCategories(true);
+
+            try {
+                const response = await MainApi.get(SERVICE_CATEGORIES_ENDPOINT, {
+                    skipAuth: true,
+                    suppressAuthRedirect: true,
+                });
+                const normalizedCategories = extractServiceCategories(response?.data);
+
+                if (isMounted) setServiceCategories(normalizedCategories);
+            } catch {
+                if (isMounted) setServiceCategories([]);
+            } finally {
+                if (isMounted) setIsLoadingCategories(false);
+            }
+        };
+
+        loadServiceCategories();
 
         return () => {
             isMounted = false;
@@ -357,6 +556,21 @@ export default function AddSubscription() {
             ...current,
             createCard({
                 displayOrder: String(current.length + 1),
+            }),
+        ]);
+    };
+
+    const addTemplateCard = (template) => {
+        setCards((current) => [
+            ...current,
+            createCard({
+                ...template,
+                id: `${Date.now()}-${Math.random()}`,
+                planId: '',
+                backendId: '',
+                categoryIds: [],
+                displayOrder: template.displayOrder || String(current.length + 1),
+                features: template.features.map((feature) => createFeature(feature.text, feature.included)),
             }),
         ]);
     };
@@ -430,11 +644,71 @@ export default function AddSubscription() {
         event.target.value = '';
     };
 
+    const handleActiveToggle = async (card, isActive) => {
+        const planId = getPlanId(card);
+
+        if (!planId) {
+            updateCard(card.id, 'isActive', isActive);
+            return;
+        }
+
+        const previousIsActive = Boolean(card.isActive);
+        updateCard(card.id, 'isActive', isActive);
+        setStatusChangingCardId(card.id);
+
+        try {
+            const response = isActive
+                ? await activateSubscriptionPlan(planId)
+                : await deactivateSubscriptionPlan(planId);
+            const responsePlan = extractPlanFromPayload(response?.data);
+            const responseIsActive = responsePlan?.isActive ?? responsePlan?.is_active ?? isActive;
+
+            setCards((current) => current.map((currentCard) => (
+                currentCard.id === card.id ? { ...currentCard, isActive: Boolean(responseIsActive) } : currentCard
+            )));
+
+            originalCardsRef.current[card.id] = {
+                ...(originalCardsRef.current[card.id] || card),
+                isActive: Boolean(responseIsActive),
+            };
+
+            await Swal.fire({
+                icon: 'success',
+                title: isActive ? 'Plan Activated' : 'Plan Deactivated',
+                text: getApiMessage(response?.data || {}, isActive ? 'Subscription plan activated successfully.' : 'Subscription plan deactivated successfully.'),
+                confirmButtonColor: '#3446f1',
+            });
+        } catch (error) {
+            updateCard(card.id, 'isActive', previousIsActive);
+            await Swal.fire({
+                icon: 'error',
+                title: isActive ? 'Unable to Activate' : 'Unable to Deactivate',
+                text: getApiErrorMessage(error, isActive ? 'Something went wrong while activating subscription plan.' : 'Something went wrong while deactivating subscription plan.'),
+                confirmButtonColor: '#3446f1',
+            });
+        } finally {
+            setStatusChangingCardId('');
+        }
+    };
+
     const saveCardChanges = async (card) => {
+        const selectedCategoryIds = normalizeCategoryIds(card.categoryIds);
+        if (!selectedCategoryIds.length) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Select Service Category',
+                text: 'Please select at least one service category before saving this subscription plan.',
+                confirmButtonColor: '#3446f1',
+            });
+            return;
+        }
+
         const planId = getPlanId(card);
         const isExistingPlan = Boolean(planId);
         const originalCard = originalCardsRef.current[card.id];
-        const changedPayload = isExistingPlan ? getChangedCardPayload(card, originalCard) : getCardPayload(card);
+        const cardWithCategoryIds = { ...card, categoryIds: selectedCategoryIds };
+        const originalCardWithCategoryIds = originalCard ? { ...originalCard, categoryIds: normalizeCategoryIds(originalCard.categoryIds) } : originalCard;
+        const changedPayload = isExistingPlan ? getChangedCardPayload(cardWithCategoryIds, originalCardWithCategoryIds) : getCardPayload(cardWithCategoryIds);
 
         if (isExistingPlan && !Object.keys(changedPayload).length) {
             await Swal.fire({
@@ -446,17 +720,64 @@ export default function AddSubscription() {
             return;
         }
 
+        const commercialTermChanges = isExistingPlan ? getCommercialTermChanges(changedPayload) : [];
+        const originalPlanIsActive = Boolean(originalCardWithCategoryIds?.isActive);
+        const shouldDeactivateBeforeCommercialUpdate = originalPlanIsActive && changedPayload.isActive === false && commercialTermChanges.length > 0;
+
+        if (originalPlanIsActive && commercialTermChanges.length > 0 && !shouldDeactivateBeforeCommercialUpdate) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Deactivate Plan First',
+                text: 'Turn off Active and save before changing price, credits, limits, or billing terms for this plan.',
+                confirmButtonColor: '#3446f1',
+            });
+            return;
+        }
+
         setSavingCardId(card.id);
 
         try {
-            const response = isExistingPlan
-                ? await MainApi.patch(`${SUBSCRIPTION_PLANS_ENDPOINT}/${planId}`, changedPayload)
-                : await MainApi.post(SUBSCRIPTION_PLANS_ENDPOINT, changedPayload);
+            let response;
+
+            if (isExistingPlan) {
+                if (shouldDeactivateBeforeCommercialUpdate) {
+                    const deactivateResponse = await deactivateSubscriptionPlan(planId);
+                    const commercialUpdatePayload = { ...changedPayload };
+                    delete commercialUpdatePayload.isActive;
+
+                    response = Object.keys(commercialUpdatePayload).length
+                        ? await MainApi.patch(`${SUBSCRIPTION_PLANS_ENDPOINT}/${planId}`, commercialUpdatePayload)
+                        : deactivateResponse;
+                } else {
+                    const shouldActivatePlan = changedPayload.isActive === true;
+                    const shouldDeactivatePlan = changedPayload.isActive === false;
+                    const updatePayload = { ...changedPayload };
+
+                    if (shouldActivatePlan || shouldDeactivatePlan) {
+                        delete updatePayload.isActive;
+                    }
+
+                    if (Object.keys(updatePayload).length) {
+                        response = await MainApi.patch(`${SUBSCRIPTION_PLANS_ENDPOINT}/${planId}`, updatePayload);
+                    }
+
+                    if (shouldActivatePlan) {
+                        response = await activateSubscriptionPlan(planId);
+                    }
+
+                    if (shouldDeactivatePlan) {
+                        response = await deactivateSubscriptionPlan(planId);
+                    }
+                }
+            } else {
+                response = await MainApi.post(SUBSCRIPTION_PLANS_ENDPOINT, changedPayload);
+            }
+
             const responsePlan = extractPlanFromPayload(response?.data);
             const responsePlanId = getApiPlanId(responsePlan);
             const savedCard = responsePlanId
-                ? { ...card, id: card.id, planId: responsePlanId, backendId: responsePlanId }
-                : { ...card };
+                ? { ...cardWithCategoryIds, id: card.id, planId: responsePlanId, backendId: responsePlanId }
+                : { ...cardWithCategoryIds };
 
             setCards((current) => current.map((currentCard) => (
                 currentCard.id === card.id ? savedCard : currentCard
@@ -491,25 +812,41 @@ export default function AddSubscription() {
                     },
                 }}
             />
-            <Paper elevation={0} sx={{ borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fff', p: { xs: 1.25, md: 1.5 }, boxShadow: '0 2px 8px rgba(31,45,61,0.06)' }}>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between" sx={{ mb: 2 }}>
-                    <Box>
-                        <Typography sx={{ color: '#172b4d', fontSize: { xs: 19, md: 22 }, fontWeight: 700 }}>
+            <Paper elevation={0} sx={{ borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fff', p: { xs: 1, md: 1.25 }, boxShadow: '0 2px 8px rgba(31,45,61,0.06)' }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) auto' }, alignItems: 'center', gap: 1, mb: 1.25, minHeight: 36 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ color: '#172b4d', fontSize: { xs: 18, md: 20 }, fontWeight: 700, lineHeight: 1.1 }}>
                             Add Subscription
                         </Typography>
-                        <Typography sx={{ color: '#667085', fontSize: 13, mt: 0.35 }}>
+                        <Typography sx={{ color: '#667085', fontSize: 12, mt: 0.2, lineHeight: 1.2 }}>
                             {isLoadingPlans ? 'Loading subscription plans...' : 'Create and update subscription cards dynamically.'}
                         </Typography>
                     </Box>
-                </Stack>
+                    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap justifyContent={{ xs: 'flex-start', md: 'flex-end' }} alignItems="center" sx={{ justifySelf: { xs: 'stretch', md: 'end' }, maxWidth: '100%' }}>
+                        {subscriptionTemplates.map((template) => (
+                            <Button
+                                key={template.name}
+                                variant="outlined"
+                                size="small"
+                                onClick={() => addTemplateCard(template)}
+                                disabled={isLoadingPlans}
+                                sx={{ minHeight: 30, height: 30, px: 1.2, py: 0, textTransform: 'none', fontSize: 12, lineHeight: 1, fontWeight: 700, whiteSpace: 'nowrap' }}
+                            >
+                                {template.name.replace(' Plan', '')}
+                            </Button>
+                        ))}
+                    </Stack>
+                </Box>
 
                 <Box>
                     <Stack spacing={2}>
                         {isLoadingPlans && (
-                            <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fcfcfd' }}>
-                                <Stack spacing={1.25} alignItems="center" justifyContent="center">
-                                    <CircularProgress size={34} thickness={4} sx={{ color: '#f79f03' }} />
-                                    <Typography sx={{ color: '#667085', fontSize: 14, fontWeight: 700 }}>
+                            <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, minHeight: { xs: 180, md: 240 }, borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fcfcfd', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                                <Stack spacing={1.25} alignItems="center" justifyContent="center" sx={{ width: '100%', textAlign: 'center' }}>
+                                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                        <CircularProgress size={34} thickness={4} sx={{ color: '#f79f03' }} />
+                                    </Box>
+                                    <Typography sx={{ width: '100%', color: '#667085', fontSize: 14, fontWeight: 700, textAlign: 'center' }}>
                                         Loading subscription plans...
                                     </Typography>
                                 </Stack>
@@ -533,7 +870,13 @@ export default function AddSubscription() {
                                     </Typography>
                                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, height: 38, flexShrink: 0 }}>
                                         <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.35, height: 34, flexShrink: 0 }}>
-                                            <Switch size="small" checked={card.isActive} onChange={(event) => updateCard(card.id, 'isActive', event.target.checked)} sx={{ m: 0 }} />
+                                            <Switch
+                                                size="small"
+                                                checked={card.isActive}
+                                                disabled={isLoadingPlans || savingCardId === card.id || deletingCardId === card.id || statusChangingCardId === card.id}
+                                                onChange={(event) => handleActiveToggle(card, event.target.checked)}
+                                                sx={{ m: 0 }}
+                                            />
                                             <Typography sx={{ fontSize: 13, fontWeight: 600, lineHeight: 1 }}>
                                                 {card.isActive ? 'Active' : 'Inactive'}
                                             </Typography>
@@ -544,14 +887,58 @@ export default function AddSubscription() {
                                                 Featured
                                             </Typography>
                                         </Box>
-                                        <Button startIcon={<DeleteIcon />} variant="outlined" color="error" onClick={() => deleteCard(card)} disabled={isLoadingPlans || savingCardId === card.id || deletingCardId === card.id} sx={{ height: 34, textTransform: 'none', fontWeight: 700 }}>
-                                            {deletingCardId === card.id ? 'Deleting...' : 'Remove'}
-                                        </Button>
+                                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.35, height: 34, flexShrink: 0 }}>
+                                            <Switch size="small" checked={card.jobPortalAccess} onChange={(event) => updateCard(card.id, 'jobPortalAccess', event.target.checked)} sx={{ m: 0 }} />
+                                            <Typography sx={{ fontSize: 13, fontWeight: 600, lineHeight: 1 }}>
+                                                Job Portal
+                                            </Typography>
+                                        </Box>
                                     </Box>
                                 </Box>
 
                                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>
                                     <TextField label="Plan Name" size="small" value={card.name} onChange={(event) => updateCard(card.id, 'name', event.target.value)} fullWidth />
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <TextField
+                                            label="Service Categories"
+                                            size="small"
+                                            select
+                                            value={card.categoryIds}
+                                            onChange={(event) => updateCard(card.id, 'categoryIds', normalizeCategoryIds(typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value))}
+                                            required
+                                            error={!normalizeCategoryIds(card.categoryIds).length}
+                                            slotProps={{
+                                                select: {
+                                                    multiple: true,
+                                                    displayEmpty: true,
+                                                    renderValue: (selected) => {
+                                                        const selectedCount = normalizeCategoryIds(selected).length;
+                                                        return selectedCount ? `${selectedCount} selected` : 'Select categories';
+                                                    },
+                                                    MenuProps: selectMenuProps,
+                                                    onOpen: clearBodyScrollPadding,
+                                                    onClose: clearBodyScrollPadding,
+                                                },
+                                            }}
+                                            helperText={isLoadingCategories ? 'Loading categories...' : normalizeCategoryIds(card.categoryIds).length ? '' : 'At least one category is required'}
+                                            fullWidth
+                                        >
+                                            {serviceCategories.map((category) => (
+                                                <MenuItem key={category.id} value={category.id}>
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={normalizeCategoryIds(card.categoryIds).includes(category.id)}
+                                                        sx={{ p: 0.5, mr: 0.75 }}
+                                                    />
+                                                    <ListItemText
+                                                        primary={category.name}
+                                                        primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }}
+                                                    />
+                                                </MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Box>
+                                    <TextField label="Currency" size="small" value={card.currency} onChange={(event) => updateCard(card.id, 'currency', event.target.value.toUpperCase())} fullWidth />
                                     <TextField label="Badge Text" size="small" value={card.badgeText} onChange={(event) => updateCard(card.id, 'badgeText', event.target.value)} fullWidth />
                                     <TextField label="CTA Button Text" size="small" value={card.ctaButtonText} onChange={(event) => updateCard(card.id, 'ctaButtonText', event.target.value)} fullWidth />
                                     <Box sx={{ display: 'grid', gridTemplateColumns: card.iconUrl ? 'minmax(0, 1fr) auto' : 'minmax(0, 1fr)', alignItems: 'center', gap: 1, minWidth: 0 }}>
@@ -568,7 +955,7 @@ export default function AddSubscription() {
                                     <TextField label="Description" size="small" value={card.description} onChange={(event) => updateCard(card.id, 'description', event.target.value)} fullWidth sx={{ gridColumn: { md: '1 / 3' } }} />
                                     <TextField label="Sale Price In Paise" size="small" value={card.salePriceInPaise} onChange={(event) => updateCard(card.id, 'salePriceInPaise', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Offer Price In Paise" size="small" value={card.offerPriceInPaise} onChange={(event) => updateCard(card.id, 'offerPriceInPaise', sanitizeUnsignedNumber(event.target.value))} fullWidth />
-                                    <TextField label="Billing Cycle" size="small" select value={card.billingCycle} onChange={(event) => updateCard(card.id, 'billingCycle', event.target.value)} SelectProps={{ MenuProps: selectMenuProps, onOpen: clearBodyScrollPadding, onClose: clearBodyScrollPadding }} fullWidth>
+                                    <TextField label="Billing Cycle" size="small" select value={card.billingCycle} onChange={(event) => updateCard(card.id, 'billingCycle', event.target.value)} slotProps={{ select: { MenuProps: selectMenuProps, onOpen: clearBodyScrollPadding, onClose: clearBodyScrollPadding } }} fullWidth>
                                         {billingCycleOptions.map((option) => (
                                             <MenuItem key={option} value={option}>
                                                 {option}
@@ -579,9 +966,24 @@ export default function AddSubscription() {
                                     <TextField label="Trial Days" size="small" value={card.trialDays} onChange={(event) => updateCard(card.id, 'trialDays', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Included Credits" size="small" value={card.includedCredits} onChange={(event) => updateCard(card.id, 'includedCredits', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Max Packages (-1 Unlimited)" size="small" value={card.maxPackages} onChange={(event) => updateCard(card.id, 'maxPackages', sanitizeMaxPackages(event.target.value))} fullWidth />
+                                    <TextField label="Max Job Posts" size="small" value={card.maxJobPosts} onChange={(event) => updateCard(card.id, 'maxJobPosts', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Lead Price Credits" size="small" value={card.directLeadPriceCredits} onChange={(event) => updateCard(card.id, 'directLeadPriceCredits', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Priority Weight" size="small" value={card.priorityWeight} onChange={(event) => updateCard(card.id, 'priorityWeight', sanitizeUnsignedNumber(event.target.value))} fullWidth />
                                     <TextField label="Display Order" size="small" value={card.displayOrder} onChange={(event) => updateCard(card.id, 'displayOrder', sanitizeUnsignedNumber(event.target.value))} fullWidth />
+                                    <TextField label="Support Level" size="small" select value={card.supportLevel} onChange={(event) => updateCard(card.id, 'supportLevel', event.target.value)} slotProps={{ select: { MenuProps: selectMenuProps, onOpen: clearBodyScrollPadding, onClose: clearBodyScrollPadding } }} fullWidth>
+                                        {supportLevelOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                    <TextField label="Analytics Level" size="small" select value={card.analyticsLevel} onChange={(event) => updateCard(card.id, 'analyticsLevel', event.target.value)} slotProps={{ select: { MenuProps: selectMenuProps, onOpen: clearBodyScrollPadding, onClose: clearBodyScrollPadding } }} fullWidth>
+                                        {analyticsLevelOptions.map((option) => (
+                                            <MenuItem key={option} value={option}>
+                                                {option}
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
                                     <TextField label="Theme Color" size="small" type="color" value={card.themeColor} onChange={(event) => updateCard(card.id, 'themeColor', event.target.value)} fullWidth />
                                     <TextField label="Soft Color" size="small" type="color" value={card.softColor} onChange={(event) => updateCard(card.id, 'softColor', event.target.value)} fullWidth />
                                     <TextField label="Ribbon Text" size="small" value={card.ribbonText} onChange={(event) => updateCard(card.id, 'ribbonText', event.target.value)} fullWidth />
@@ -617,9 +1019,25 @@ export default function AddSubscription() {
                                 </Box>
 
                                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mt: 1.5 }}>
-                                    <Button variant="contained" onClick={() => saveCardChanges(card)} disabled={isLoadingPlans || savingCardId === card.id || deletingCardId === card.id} sx={{ height: 38, px: 2.5, ml: 'auto', bgcolor: '#f79f03', color: '#111827', textTransform: 'none', fontWeight: 800, boxShadow: 'none', '&:hover': { bgcolor: '#df8f02', boxShadow: 'none' } }}>
-                                        {savingCardId === card.id ? 'Saving...' : getPlanId(card) ? 'Save changes' : 'Save plan'}
-                                    </Button>
+                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 'auto', width: 'fit-content' }}>
+                                        <Button startIcon={<DeleteIcon />} variant="outlined" color="error" onClick={() => deleteCard(card)} disabled={isLoadingPlans || savingCardId === card.id || deletingCardId === card.id} sx={{ height: 34, textTransform: 'none', fontWeight: 700 }}>
+                                            {deletingCardId === card.id ? 'Deleting...' : 'Remove'}
+                                        </Button>
+                                        <Button variant="contained" onClick={() => saveCardChanges(card)} disabled={isLoadingPlans || savingCardId === card.id || deletingCardId === card.id} sx={{ height: 34, px: 2.2, minWidth: 116, bgcolor: '#f79f03', color: '#111827', textTransform: 'none', fontWeight: 800, boxShadow: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, '&:hover': { bgcolor: '#df8f02', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: '#f7bf5a', color: '#111827' } }}>
+                                            {savingCardId === card.id ? (
+                                                <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="center" sx={{ width: '100%', height: '100%', lineHeight: 1 }}>
+                                                    <CircularProgress size={15} thickness={5} sx={{ color: '#111827' }} />
+                                                    <Box component="span" sx={{ lineHeight: 1 }}>
+                                                        Saving...
+                                                    </Box>
+                                                </Stack>
+                                            ) : (
+                                                <Box component="span" sx={{ width: '100%', textAlign: 'center', lineHeight: 1 }}>
+                                                    {getPlanId(card) ? 'Save changes' : 'Save plan'}
+                                                </Box>
+                                            )}
+                                        </Button>
+                                    </Stack>
                                 </Box>
                             </Paper>
                         ))}
@@ -640,10 +1058,12 @@ export default function AddSubscription() {
 
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2, alignItems: { xs: 'stretch', md: 'center' }, pt: { xs: 0.5, md: 1.5 } }}>
                     {isLoadingPlans && (
-                        <Paper elevation={0} sx={{ gridColumn: '1 / -1', p: { xs: 3, md: 4 }, borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fcfcfd' }}>
-                            <Stack spacing={1.25} alignItems="center" justifyContent="center">
-                                <CircularProgress size={34} thickness={4} sx={{ color: '#f79f03' }} />
-                                <Typography sx={{ color: '#667085', fontSize: 14, fontWeight: 700 }}>
+                        <Paper elevation={0} sx={{ gridColumn: '1 / -1', p: { xs: 3, md: 4 }, minHeight: { xs: 220, md: 320 }, borderRadius: 2, border: '1px solid #e6eaf0', bgcolor: '#fcfcfd', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                            <Stack spacing={1.25} alignItems="center" justifyContent="center" sx={{ width: '100%', textAlign: 'center' }}>
+                                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                    <CircularProgress size={34} thickness={4} sx={{ color: '#f79f03' }} />
+                                </Box>
+                                <Typography sx={{ width: '100%', color: '#667085', fontSize: 14, fontWeight: 700, textAlign: 'center' }}>
                                     Preparing subscription preview...
                                 </Typography>
                             </Stack>

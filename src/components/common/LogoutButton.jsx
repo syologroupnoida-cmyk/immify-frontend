@@ -3,8 +3,14 @@ import { Box, ListItem, ListItemButton, ListItemIcon, ListItemText, MenuItem } f
 import { Logout } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
-// import MainApi from '@/util/MainApi';
-// import { getVendorType, normalizeRole } from '@/util/authRouting';
+import MainApi from '@/util/MainApi';
+import { getVendorType, normalizeRole } from '@/util/authRouting';
+import { closeAuthLoading, showAuthLoading } from '@/util/authLoading';
+
+function getStoredRefreshToken() {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('refreshToken') || '';
+}
 
 function clearAuthSession() {
     localStorage.removeItem('isAuthenticated');
@@ -22,20 +28,6 @@ function clearAuthSession() {
     document.cookie = 'tripz_vendor_type=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'tripz_next_step=; path=/; max-age=0; SameSite=Lax';
     window.dispatchEvent(new Event('tripz-auth-change'));
-}
-
-function showLogoutRedirectLoader() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Logout success',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        showCancelButton: false,
-        didOpen: () => {
-            Swal.showLoading();
-        },
-    });
 }
 
 function readStoredJson(key) {
@@ -58,7 +50,7 @@ function getLogoutRedirectPath() {
         return '/admin/login';
     }
 
-    if (vendorType === 'TRAVEL_AGENT' || role === 'agent') {
+    if (vendorType === 'TRAVEL_AGENT' || vendorType === 'CONSULTANCY' || role === 'agent' || role === 'vendor') {
         return '/agent/login';
     }
 
@@ -93,11 +85,20 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
 
         if (!result.isConfirmed) return;
 
-        MainApi.post('/api/v1/auth/logout').catch(() => {});
+        const refreshToken = getStoredRefreshToken();
+        showAuthLoading('Signing out...');
+
+        if (refreshToken) {
+            try {
+                await MainApi.post('/auth/logout', { refreshToken }, { keepalive: true });
+            } catch {
+                // Local sign-out must still complete when the server session has expired.
+            }
+        }
+
         clearAuthSession();
-        showLogoutRedirectLoader();
         await router.push(redirectPath);
-        Swal.close();
+        closeAuthLoading();
     };
 
     if (variant === 'list') {
@@ -134,6 +135,19 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
                     )}
                 </ListItemButton>
             </ListItem>
+        );
+    }
+
+    if (variant === 'header') {
+        return (
+            <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+            >
+                <Logout sx={{ fontSize: 18 }} />
+                Logout
+            </button>
         );
     }
 

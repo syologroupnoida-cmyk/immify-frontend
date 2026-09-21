@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+/* eslint-disable @next/next/no-img-element */
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
@@ -13,144 +15,30 @@ import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import WorkHistoryOutlinedIcon from "@mui/icons-material/WorkHistoryOutlined";
+import { fetchJobListings, getJobCategoryLabel, getJobFallbackImage } from "@/util/jobListings";
 
-const jobFilters = [
-  { id: "all", label: "All Jobs", icon: WorkHistoryOutlinedIcon },
-  { id: "it", label: "IT & Software", icon: ComputerOutlinedIcon },
-  { id: "eng", label: "Engineering", icon: SettingsOutlinedIcon },
-  { id: "health", label: "Healthcare", icon: HealingOutlinedIcon },
-  { id: "marketing", label: "Marketing", icon: CampaignOutlinedIcon },
-  { id: "finance", label: "Finance", icon: PaidOutlinedIcon },
-];
-
-const jobCards = [
-  {
-    title: "Software Engineer II",
-    company: "Microsoft",
-    location: "Hyderabad, India",
-    type: "Full Time",
-    salary: "INR 8 - 30 LPA",
-    tags: ["3-5 Years", "Software Development"],
-    logo: "MS",
-    logoClass: "bg-[#F3F7FF] text-[#2563EB]",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
-    category: "it",
-  },
-  {
-    title: "Frontend Developer",
-    company: "Tata Consultancy Services",
-    location: "Chennai, India",
-    type: "Full Time",
-    salary: "INR 6 - 12 LPA",
-    tags: ["1-3 Years", "React JS"],
-    logo: "TCS",
-    logoClass: "bg-white text-[#F43F5E]",
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80",
-    category: "it",
-  },
-  {
-    title: "Mechanical Design Engineer",
-    company: "Larsen & Toubro",
-    location: "Mumbai, India",
-    type: "Full Time",
-    salary: "INR 9 - 16 LPA",
-    tags: ["3-6 Years", "CAD / SolidWorks"],
-    logo: "L&T",
-    logoClass: "bg-[#111827] text-white",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80",
-    category: "eng",
-  },
-  {
-    title: "Civil Site Engineer",
-    company: "Tata Projects",
-    location: "Ahmedabad, India",
-    type: "Full Time",
-    salary: "INR 6 - 11 LPA",
-    tags: ["2-5 Years", "Site Execution"],
-    logo: "TP",
-    logoClass: "bg-white text-[#0F766E]",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
-    category: "eng",
-  },
-  {
-    title: "Registered Nurse",
-    company: "Apollo Hospitals",
-    location: "Chennai, India",
-    type: "Full Time",
-    salary: "INR 4 - 8 LPA",
-    tags: ["1-4 Years", "Patient Care"],
-    logo: "A",
-    logoClass: "bg-white text-[#DC2626]",
-    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=80",
-    category: "health",
-  },
-  {
-    title: "Physiotherapist",
-    company: "Fortis Healthcare",
-    location: "Delhi NCR, India",
-    type: "Full Time",
-    salary: "INR 5 - 9 LPA",
-    tags: ["2-5 Years", "Rehabilitation"],
-    logo: "F",
-    logoClass: "bg-[#ECFDF5] text-[#059669]",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
-    category: "health",
-  },
-  {
-    title: "Digital Marketing Manager",
-    company: "Ogilvy",
-    location: "Mumbai, India",
-    type: "Full Time",
-    salary: "INR 10 - 18 LPA",
-    tags: ["4-7 Years", "Performance Marketing"],
-    logo: "O",
-    logoClass: "bg-[#111827] text-white",
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80",
-    category: "marketing",
-  },
-  {
-    title: "Brand Strategist",
-    company: "Publicis",
-    location: "Bangalore, India",
-    type: "Full Time",
-    salary: "INR 8 - 14 LPA",
-    tags: ["3-6 Years", "Brand Strategy"],
-    logo: "P",
-    logoClass: "bg-white text-[#DB2777]",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80",
-    category: "marketing",
-  },
-  {
-    title: "Business Consultant",
-    company: "Deloitte",
-    location: "Gurgaon, India",
-    type: "Full Time",
-    salary: "INR 12 - 22 LPA",
-    tags: ["3-5 Years", "Consulting"],
-    logo: "D",
-    logoClass: "bg-[#111827] text-white",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
-    category: "finance",
-  },
-  {
-    title: "Financial Analyst",
-    company: "EY",
-    location: "Gurgaon, India",
-    type: "Full Time",
-    salary: "INR 7 - 13 LPA",
-    tags: ["2-4 Years", "Financial Modeling"],
-    logo: "EY",
-    logoClass: "bg-[#FFF7ED] text-[#C2410C]",
-    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=80",
-    category: "finance",
-  },
-];
+const getFilterIcon = (category) => {
+  const value = String(category || "").toLowerCase();
+  if (value.includes("it") || value.includes("software") || value.includes("tech")) return ComputerOutlinedIcon;
+  if (value.includes("engineer") || value.includes("logistic") || value.includes("driver")) return SettingsOutlinedIcon;
+  if (value.includes("health") || value.includes("medical") || value.includes("nurse")) return HealingOutlinedIcon;
+  if (value.includes("marketing") || value.includes("sales")) return CampaignOutlinedIcon;
+  if (value.includes("finance") || value.includes("bank")) return PaidOutlinedIcon;
+  return WorkHistoryOutlinedIcon;
+};
 
 function JobCard({ job }) {
   return (
     <article className="flex h-full w-full shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)]">
       <div className="relative h-28 w-full">
-        <img src={job.image} alt="" className="h-full w-full object-cover" />
+        <img
+          src={job.image}
+          alt={job.title}
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.src = getJobFallbackImage();
+          }}
+        />
         <button
           type="button"
           aria-label={`Save ${job.title}`}
@@ -181,18 +69,18 @@ function JobCard({ job }) {
         <p className="mt-2 text-sm font-semibold text-blue-700">{job.salary}</p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {job.tags.map((tag) => (
+          {job.tags.slice(0, 2).map((tag) => (
             <span key={tag} className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
               {tag}
             </span>
           ))}
         </div>
 
-        <Link 
-          href="#" 
+        <Link
+          href={`/jobs/${job.id}`}
           className="mt-auto inline-flex items-center gap-1.5 pt-3 text-xs font-semibold text-blue-700 transition hover:text-blue-800 hover:gap-2.5"
         >
-          Apply Now
+          View Details
           <ArrowForwardIosRoundedIcon sx={{ fontSize: 11 }} />
         </Link>
       </div>
@@ -201,52 +89,79 @@ function JobCard({ job }) {
 }
 
 export default function JobsSection() {
-  const [activeFilter, setActiveFilter] = useState(jobFilters[0].id);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const trackRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const autoSlideInterval = useRef(null);
 
-  const visibleJobs =
-    activeFilter === "all" ? jobCards : jobCards.filter((job) => job.category === activeFilter);
+  useEffect(() => {
+    let active = true;
+
+    async function loadJobs() {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await fetchJobListings();
+        if (active) setJobs(data);
+      } catch (loadError) {
+        if (active) setError(loadError?.message || "Unable to load jobs right now.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadJobs();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const jobFilters = useMemo(() => {
+    const categories = Array.from(new Set(jobs.map((job) => job.category).filter(Boolean)));
+    return [
+      { id: "all", label: "All Jobs", icon: WorkHistoryOutlinedIcon },
+      ...categories.map((category) => ({
+        id: category,
+        label: getJobCategoryLabel(category),
+        icon: getFilterIcon(category),
+      })),
+    ];
+  }, [jobs]);
+
+  const visibleJobs = useMemo(
+    () => (activeFilter === "all" ? jobs : jobs.filter((job) => job.category === activeFilter)),
+    [activeFilter, jobs]
+  );
 
   const handleFilterClick = (filterId) => {
     setActiveFilter(filterId);
     setCurrentIndex(0);
-    if (trackRef.current) {
-      trackRef.current.scrollTo({ left: 0, behavior: "smooth" });
-    }
+    trackRef.current?.scrollTo({ left: 0, behavior: "smooth" });
   };
 
   const scrollByCard = (direction) => {
     const track = trackRef.current;
     if (!track || visibleJobs.length === 0) return;
-    
+
     const firstCard = track.firstElementChild;
     const cardWidth = firstCard ? firstCard.getBoundingClientRect().width + 16 : track.clientWidth / 4;
     const newIndex = Math.max(0, Math.min(visibleJobs.length - 1, currentIndex + direction));
-    
+
     setCurrentIndex(newIndex);
     track.scrollTo({ left: newIndex * cardWidth, behavior: "smooth" });
   };
 
-  // Auto-slide functionality
   useEffect(() => {
-    // Only auto-slide if there are more than 4 cards
-    if (visibleJobs.length <= 4) {
+    if (visibleJobs.length <= 4 || isHovered) {
       if (autoSlideInterval.current) {
         clearInterval(autoSlideInterval.current);
         autoSlideInterval.current = null;
       }
-      return;
-    }
-
-    if (isHovered) {
-      if (autoSlideInterval.current) {
-        clearInterval(autoSlideInterval.current);
-        autoSlideInterval.current = null;
-      }
-      return;
+      return undefined;
     }
 
     autoSlideInterval.current = setInterval(() => {
@@ -255,9 +170,8 @@ export default function JobsSection() {
         const cardWidth = firstCard ? firstCard.getBoundingClientRect().width + 16 : 0;
         const maxScroll = (visibleJobs.length - 4) * cardWidth;
         const currentScroll = trackRef.current.scrollLeft;
-        
+
         if (currentScroll >= maxScroll - 10) {
-          // Reset to start
           trackRef.current.scrollTo({ left: 0, behavior: "smooth" });
           setCurrentIndex(0);
         } else {
@@ -276,7 +190,6 @@ export default function JobsSection() {
     };
   }, [visibleJobs, isHovered, currentIndex]);
 
-  // Check if we should show navigation buttons
   const showNavigation = visibleJobs.length > 4;
 
   return (
@@ -316,7 +229,7 @@ export default function JobsSection() {
           })}
         </div>
 
-        <div 
+        <div
           className="mt-8 flex items-center gap-2"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -332,20 +245,22 @@ export default function JobsSection() {
             </button>
           )}
 
-          {visibleJobs.length > 0 ? (
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center py-10 text-sm text-slate-500">Loading jobs...</div>
+          ) : visibleJobs.length > 0 ? (
             <div
               ref={trackRef}
               className={`flex flex-1 gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] snap-x snap-mandatory [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
-                !showNavigation ? 'justify-center' : ''
+                !showNavigation ? "justify-center" : ""
               }`}
             >
               {visibleJobs.map((job) => (
-                <JobCard key={`${job.title}-${job.company}`} job={job} />
+                <JobCard key={job.id} job={job} />
               ))}
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center py-10 text-sm text-slate-500">
-              No jobs found in this category right now.
+              {error || "No jobs found in this category right now."}
             </div>
           )}
 

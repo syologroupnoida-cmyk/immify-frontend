@@ -1,5 +1,8 @@
 import Link from "next/link";
+import LeadGenerationButton from "../../components/common/LeadGenerationButton";
 import { serviceCategories } from "../../components/sections/home/homeData";
+
+const serviceDummyImage = "/images/services/service-detail-dummy.png";
 
 export async function getStaticPaths() {
   const paths = serviceCategories.map((category) => ({ params: { slug: category.slug } }));
@@ -20,6 +23,10 @@ export async function getStaticProps({ params }) {
 
 function ServiceDetailPage({ category }) {
   const moreCategories = serviceCategories.filter((item) => item.slug !== category.slug).slice(0, 4);
+  const handleImageFallback = (event) => {
+    if (event.currentTarget.src.includes(serviceDummyImage)) return;
+    event.currentTarget.src = serviceDummyImage;
+  };
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,_#f8faff_0%,_#f3f6fb_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -31,12 +38,10 @@ function ServiceDetailPage({ category }) {
         <section className="mt-6 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
           <div className="relative h-[260px] sm:h-[380px] lg:h-[460px]">
             <img
-              src={category.image}
+              src={category.image || serviceDummyImage}
               alt={category.name}
               className="h-full w-full object-cover"
-              onError={(event) => {
-                event.currentTarget.src = "/images/services/service-dummy.svg";
-              }}
+              onError={handleImageFallback}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 lg:p-8">
@@ -118,9 +123,7 @@ function ServiceDetailPage({ category }) {
                 </div>
               </div>
 
-              <button className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-[#f5c542] px-5 text-sm font-semibold text-slate-950 hover:bg-[#e6b93a]">
-                Book consultation
-              </button>
+              <LeadGenerationButton label="Get Quote" variant="light" className="mt-6 rounded-xl" />
             </div>
           </div>
 
@@ -128,7 +131,7 @@ function ServiceDetailPage({ category }) {
             <h3 className="text-xl font-semibold text-slate-900">What&apos;s included</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {category.services.map((service) => (
-                <div key={service} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <div key={service} className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
                   {service}
                 </div>
               ))}
@@ -175,7 +178,7 @@ function ServiceDetailPage({ category }) {
                   href={`/services/${item.slug}`}
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md"
                 >
-                  <img src={item.image} alt={item.name} className="h-28 w-full rounded-xl object-cover" />
+                  <img src={item.image || serviceDummyImage} alt={item.name} className="h-28 w-full rounded-xl object-cover" onError={handleImageFallback} />
                   <h4 className="mt-3 text-sm font-semibold text-slate-900">{item.name}</h4>
                   <p className="mt-2 text-xs leading-6 text-slate-600">{item.shortDescription}</p>
                 </Link>

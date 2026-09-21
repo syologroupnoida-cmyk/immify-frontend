@@ -1,0 +1,14 @@
+▲ Next.js 16.2.12 (webpack)
+- Local:         http://localhost:3010
+- Network:       http://192.168.0.129:3010
+- Environments: .env.local
+✓ Ready in 1165ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          14932
+- Dir:          D:\Projects\immify-frontend
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 14932 /F to stop it.
+[?25h

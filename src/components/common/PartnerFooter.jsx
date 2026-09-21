@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import SiteLogo from "@/images/site-logo.png";
+import ImmifyLogo from "@/images/immify-logo.png";
 
 const quickLinks = [
   { label: "Partner Home", href: "/partner" },
@@ -15,7 +15,9 @@ export default function PartnerFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr] lg:px-8">
         <div>
           <div className="flex items-center gap-3">
-            <Image src={SiteLogo} alt="Immify" width={58} height={58} className="h-12 w-auto object-contain" />
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full">
+              <Image src={ImmifyLogo} alt="Immify" width={64} height={64} className="h-full w-full scale-[1.9] rounded-full object-contain" />
+            </span>
             <div>
               <p className="text-xl font-extrabold">Immify Partner</p>
               <p className="text-sm text-white/70">Helping students join top global universities.</p>
