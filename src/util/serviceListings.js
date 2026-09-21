@@ -2,6 +2,23 @@ import MainApi from "@/util/MainApi";
 
 const fallbackImage = "/images/services/service-detail-dummy.png";
 
+export const serviceListingCategories = [
+  "Immigration Services",
+  "Visa Services",
+  "Study Abroad Services",
+  "Test Preparation",
+  "International Services",
+  "Family Relocation Services",
+  "Document Attestation Services",
+  "Financial Services",
+  "Business Setup Services and Immigration",
+  "Health Insurance",
+  "Forex Services",
+  "Legal and Compliance",
+];
+
+export const SERVICE_FILTER_EVENT = "immify-service-filter";
+
 function findListings(value) {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== "object") return [];
@@ -19,6 +36,12 @@ function nameOf(value) {
   return typeof value === "string" ? value : value?.name || value?.title || value?.serviceName || value?.categoryName || "";
 }
 
+function normalizeImageUrl(value) {
+  if (typeof value !== "string") return value?.url || fallbackImage;
+  const markdownLink = value.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/);
+  return markdownLink?.[1] || value;
+}
+
 export function normalizeServiceListing(item) {
   const id = item.serviceListingId || item.listingId || item.id || item._id || item.uuid;
   if (!id) return null;
@@ -33,12 +56,27 @@ export function normalizeServiceListing(item) {
     detailSlug: `listing-${id}`,
     categorySlug: String(item.categoryId || item.category?.id || categoryName).toLowerCase(),
     categoryName,
+    category: item.category || null,
+    categoryDescription: item.category?.description || "",
+    serviceData: item.service || null,
+    serviceDescription: item.service?.description || "",
+    serviceName: item.serviceName || nameOf(item.service) || service,
+    title: item.title || service,
     categoryLabel: categoryName.toUpperCase(),
     service,
     description: item.description || item.overview || "",
+    overview: item.overview || "",
+    process: item.process || "",
+    pricingDetails: item.pricingDetails || "",
+    termsAndConditions: item.termsAndConditions || "",
+    chargesIncludeGst: Boolean(item.chargesIncludeGst),
+    currency,
+    priceInPaise: Number(item.priceInPaise ?? 0),
+    dynamicData: item.dynamicData && typeof item.dynamicData === "object" ? item.dynamicData : {},
+    vendor: item.vendor || null,
     badgeLabel: "SERVICE",
     badgeClass: "bg-teal-700",
-    image: typeof image === "string" ? image : image.url || fallbackImage,
+    image: normalizeImageUrl(image),
     city: typeof city === "string" ? city : nameOf(city),
     priceValue,
     priceLabel: new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 0 }).format(priceValue),
@@ -49,28 +87,23 @@ export function normalizeServiceListing(item) {
   };
 }
 
-export async function fetchServiceListings() {
-  const listings = [];
+function normalizeListingCollection(responseData) {
   const seen = new Set();
-  for (let skip = 0; ; skip += 100) {
-    const response = await MainApi.get("/service-listings", {
-      skipAuth: true,
-      suppressAuthRedirect: true,
-      params: { take: 100, skip },
-    });
-    const batch = findListings(response.data);
-    let added = 0;
-    for (const item of batch) {
-      const listing = normalizeServiceListing(item);
-      if (listing && !seen.has(listing.id)) {
-        seen.add(listing.id);
-        listings.push(listing);
-        added += 1;
-      }
-    }
-    if (batch.length < 100 || added === 0) break;
-  }
-  return listings;
+  return findListings(responseData)
+    .map(normalizeServiceListing)
+    .filter((listing) => listing && !seen.has(listing.id) && seen.add(listing.id));
+}
+
+export async function fetchServiceListings({ categoryName = "" } = {}) {
+  const apiCategoryName = categoryName.trim() === "Immigration Services" ? "Immigration" : categoryName.trim();
+  const endpoint = apiCategoryName
+    ? `/service-listings?categoryName=${encodeURIComponent(apiCategoryName)}`
+    : "/service-listings";
+  const response = await MainApi.get(endpoint, {
+    skipAuth: true,
+    suppressAuthRedirect: true,
+  });
+  return normalizeListingCollection(response.data);
 }
 
 export async function fetchServiceListingById(id) {

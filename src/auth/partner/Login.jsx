@@ -237,8 +237,8 @@ const Login = () => {
 
     const { role, user: persistedUser } = persistAuthSession(payload);
     const redirectPath = getPostLoginPath(role, payload, persistedUser);
-    closeAuthLoading();
     await router.push(redirectPath);
+    closeAuthLoading();
   };
 
   const handleSubmit = async (e) => {

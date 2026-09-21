@@ -6,6 +6,7 @@ import { Alert, Autocomplete, Box, Button, CircularProgress, Dialog, Slide, Text
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import Swal from "sweetalert2";
 import MainApi from "@/util/MainApi";
 import { universities } from "./universityData";
 import universityFallbackCampus from "@/images/university-fallback-campus.png";
@@ -110,11 +111,17 @@ export default function UniversityDetailSection() {
         firstName: enquiry.firstName.trim(), lastName: enquiry.lastName.trim(), email: enquiry.email.trim(), phone: enquiry.phone.trim(),
         country: enquiry.country.trim(), state: enquiry.state.trim(), city: enquiry.city.trim(),
         message,
-        metadata: { source: "university-detail", university: university.name, universitySlug: university.slug, servicesRequired, destinationCountries },
+        metadata: { source: "university-detail", university: university.name, universitySlug: university.slug, servicesRequired, destinationCountries, termsAccepted: true },
       }, { skipAuth: true, suppressAuthRedirect: true });
       if (response?.data?.success === false) throw new Error(response.data.message || "Unable to send enquiry.");
       setEnquiry(emptyEnquiry);
-      setFeedback({ type: "success", message: response?.data?.message || "Your enquiry has been sent. Our team will contact you soon." });
+      setOpen(false);
+      await Swal.fire({
+        icon: "success",
+        title: "Enquiry Submitted",
+        text: response?.data?.message || "Lead submitted for verification.",
+        confirmButtonColor: "#103d65",
+      });
     } catch (error) {
       setFeedback({ type: "error", message: error?.response?.data?.message || error.message || "Unable to send enquiry. Please try again." });
     } finally {

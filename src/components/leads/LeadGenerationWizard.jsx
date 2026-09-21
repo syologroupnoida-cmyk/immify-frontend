@@ -771,7 +771,7 @@ export default function LeadGenerationWizard() {
   };
 
   return (
-    <main className="min-h-screen bg-white px-4 py-6 pt-20 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 pb-20 pt-24 sm:px-6 sm:pt-28 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="grid overflow-hidden rounded-[5px] border border-slate-200 lg:grid-cols-[340px_minmax(0,1fr)]">
           <aside className="bg-[#1f2a77] p-5 text-white lg:min-h-[calc(100vh-128px)]">

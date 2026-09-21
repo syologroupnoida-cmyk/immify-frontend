@@ -9,15 +9,15 @@ export default function CountrySection() {
   return (
     <section id="countries" className="bg-[#f5f8fb] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
+        <div className="text-center">
+          <div className="mx-auto max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Medical education overseas</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">MBBS Study Abroad</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
               Explore medical study destinations and compare indicative tuition and course duration in one place.
             </p>
           </div>
-          <Link href="/mbbs-study-abroad" className="inline-flex shrink-0 items-center gap-1 self-start text-sm font-semibold text-blue-700 hover:text-blue-900 sm:self-auto">
+          <Link href="/mbbs-study-abroad" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-900">
             Explore all destinations <ArrowForwardRoundedIcon className="h-4 w-4" />
           </Link>
         </div>

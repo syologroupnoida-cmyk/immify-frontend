@@ -649,7 +649,7 @@ const DashboardLayout = ({ children }) => {
                 }}
             >
                 <Box sx={{ p: 2, minHeight: 72, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Box sx={{ width: isSidebarOpen ? 240 : 64, height: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box component={NextLink} href="/" aria-label="Go to Immify home page" title="Home" sx={{ width: isSidebarOpen ? 240 : 64, height: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', cursor: 'pointer' }}>
                         <Image
                             src={SidebarLogo}
                             alt="Sidebar logo"

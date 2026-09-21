@@ -96,9 +96,9 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
             }
         }
 
-        closeAuthLoading();
         clearAuthSession();
         await router.push(redirectPath);
+        closeAuthLoading();
     };
 
     if (variant === 'list') {
@@ -135,6 +135,19 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
                     )}
                 </ListItemButton>
             </ListItem>
+        );
+    }
+
+    if (variant === 'header') {
+        return (
+            <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+            >
+                <Logout sx={{ fontSize: 18 }} />
+                Logout
+            </button>
         );
     }
 

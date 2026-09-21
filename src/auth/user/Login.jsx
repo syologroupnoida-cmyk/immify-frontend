@@ -180,9 +180,8 @@ const Login = () => {
       const payload = response?.data || {};
       const { role, user } = persistAuthSession(payload);
       const redirectPath = getPostLoginPath(role, payload, user);
-      closeAuthLoading();
-
       await router.push(redirectPath);
+      closeAuthLoading();
     } catch (error) {
       closeAuthLoading();
       setSubmitError(getApiErrorMessage(error, 'Login failed. Please check your email and password.'));
@@ -205,9 +204,8 @@ const Login = () => {
       const payload = response?.data || {};
       const { role, user } = persistAuthSession(payload);
       const redirectPath = getPostLoginPath(role, payload, user);
-      closeAuthLoading();
-
       await router.push(redirectPath);
+      closeAuthLoading();
     } catch (error) {
       closeAuthLoading();
       setSubmitError(getApiErrorMessage(error, 'Google login failed. Please try again.'));

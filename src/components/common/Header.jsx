@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import {
   AccountCircleOutlined,
+  DashboardOutlined,
   HandshakeOutlined,
   ContactSupportOutlined,
   ForumOutlined,
@@ -15,6 +17,7 @@ import {
   SearchOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
+import { Avatar } from "@mui/material";
 import ImmifyLogo from "@/images/immify-logo.png";
 import universityFallbackCampus from "@/images/university-fallback-campus.png";
 import {
@@ -24,10 +27,32 @@ import {
   universityCourseCategories,
   universityDegreeLevels,
 } from "@/components/sections/universities/universityData";
+import LogoutButton from "@/components/common/LogoutButton";
+import { getDashboardPath, getVendorType, normalizeRole } from "@/util/authRouting";
+import { readStoredUserFromStorage } from "@/util/profileHelpers";
+import { SERVICE_FILTER_EVENT, serviceListingCategories } from "@/util/serviceListings";
 
 const LOCATION_STORAGE_KEY = "immifySelectedLocation";
 const DEFAULT_LOCATION = "Moradabad";
 const FALLBACK_LOCATIONS = ["Moradabad", "Delhi", "Mumbai", "Bengaluru", "Hyderabad"];
+
+function getHeaderUser() {
+  if (typeof window === "undefined") return null;
+  const authenticated = localStorage.getItem("isAuthenticated") === "true" || Boolean(localStorage.getItem("accessToken"));
+  if (!authenticated) return null;
+  const user = readStoredUserFromStorage();
+  if (!user) return null;
+  const role = normalizeRole(localStorage.getItem("userRole") || user.role || user.roleName);
+  const vendorType = getVendorType(user);
+  const firstName = user.firstName || user.first_name || user.name?.split(" ")[0] || "User";
+  const lastName = user.lastName || user.last_name || user.name?.split(" ").slice(1).join(" ") || "";
+  const profileImage = user.profileImage || user.profileImageUrl || user.avatarUrl || user.avatar_url || user.avatar || user.image || "";
+  const dashboardPath = getDashboardPath(role, { ...user, vendorType });
+  const profilePath = dashboardPath === "/dashboard/agent" ? "/agent/update-profile"
+    : dashboardPath === "/dashboard/partner" ? "/partner/update-profile"
+      : dashboardPath === "/dashboard/customer" ? "/user/update-profile" : "/admin/update-profile";
+  return { firstName, fullName: [firstName, lastName].filter(Boolean).join(" "), profileImage, dashboardPath, profilePath };
+}
 
 function getCityFromAddress(address = {}) {
   return address.city || address.town || address.village || address.municipality || address.county || address.state_district || "";
@@ -49,6 +74,7 @@ function formatSuggestion(place) {
 }
 
 export default function Header() {
+  const router = useRouter();
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [locationOpen, setLocationOpen] = useState(false);
   const [locationSearch, setLocationSearch] = useState("");
@@ -56,11 +82,16 @@ export default function Header() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
   const [userOpen, setUserOpen] = useState(false);
+  const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [serviceCategory, setServiceCategory] = useState(serviceListingCategories[0]);
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [serviceSearchOpen, setServiceSearchOpen] = useState(false);
   const [universityMenuOpen, setUniversityMenuOpen] = useState(false);
   const [activeUniversityCountry, setActiveUniversityCountry] = useState(universityCountries[0] || "");
   const [activeCourseCategory, setActiveCourseCategory] = useState(universityCourseCategories[0]?.category || "");
   const userRef = useRef(null);
   const locationRef = useRef(null);
+  const serviceSearchRef = useRef(null);
   const activeCountryUniversities = useMemo(
     () => universities.filter((university) => university.country === activeUniversityCountry),
     [activeUniversityCountry]
@@ -74,6 +105,25 @@ export default function Header() {
     [activeCourseCategory]
   );
   const visibleCountries = universityCountryMeta.slice(0, 12);
+  const matchingServiceCategories = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase();
+    return serviceListingCategories.filter((category) => !query || category.toLowerCase().includes(query));
+  }, [serviceSearch]);
+
+  const filterHomeServices = async (category, search = serviceSearch) => {
+    setServiceCategory(category);
+    const query = { serviceCategory: category };
+    if (search.trim()) query.serviceSearch = search.trim();
+    await router.push({ pathname: "/", query }, undefined, { shallow: router.pathname === "/" });
+    window.dispatchEvent(new CustomEvent(SERVICE_FILTER_EVENT, { detail: { category, search: search.trim() } }));
+    window.requestAnimationFrame(() => document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+
+  const submitServiceSearch = () => {
+    const exactCategory = serviceListingCategories.find((category) => category.toLowerCase() === serviceSearch.trim().toLowerCase());
+    setServiceSearchOpen(false);
+    return filterHomeServices(exactCategory || serviceCategory, exactCategory ? "" : serviceSearch);
+  };
 
   const selectLocation = useCallback((value) => {
     const nextLocation = value.trim();
@@ -126,12 +176,26 @@ export default function Header() {
   }, [selectLocation]);
 
   useEffect(() => {
+    const syncUser = () => setAuthenticatedUser(getHeaderUser());
+    queueMicrotask(syncUser);
+    window.addEventListener("tripz-auth-change", syncUser);
+    window.addEventListener("storage", syncUser);
+    return () => {
+      window.removeEventListener("tripz-auth-change", syncUser);
+      window.removeEventListener("storage", syncUser);
+    };
+  }, []);
+
+  useEffect(() => {
     function handleClick(e) {
       if (userRef.current && !userRef.current.contains(e.target)) {
         setUserOpen(false);
       }
       if (locationRef.current && !locationRef.current.contains(e.target)) {
         setLocationOpen(false);
+      }
+      if (serviceSearchRef.current && !serviceSearchRef.current.contains(e.target)) {
+        setServiceSearchOpen(false);
       }
     }
     document.addEventListener("click", handleClick);
@@ -232,7 +296,7 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="mx-auto flex w-full items-center gap-2 rounded-[10px] bg-white p-[4px] shadow-sm">
+        <form onSubmit={(event) => { event.preventDefault(); submitServiceSearch(); }} className="mx-auto flex w-full items-center gap-2 rounded-[10px] bg-white p-[4px] shadow-sm">
           <div className="relative min-w-[110px] rounded-[10px] border border-slate-200 bg-slate-100 px-2.5 py-1.75 text-sm text-slate-700" ref={locationRef}>
             <button
               type="button"
@@ -300,15 +364,35 @@ export default function Header() {
             )}
           </div>
 
-          <input
-            placeholder="Search products, services, suppliers"
-            className="flex-1 rounded-[10px] border border-slate-200 bg-white px-3 py-1.25 text-sm text-slate-900 outline-none focus:border-sky-500"
-          />
-          <button className="inline-flex cursor-pointer items-center gap-1.5 rounded-[10px] bg-emerald-500 px-3 py-1.25 text-sm font-semibold text-white transition hover:bg-emerald-600">
+          <div ref={serviceSearchRef} className="relative min-w-0 flex-1">
+            <input
+              value={serviceSearch}
+              onFocus={() => setServiceSearchOpen(true)}
+              onChange={(event) => { setServiceSearch(event.target.value); setServiceSearchOpen(true); }}
+              placeholder="Search services"
+              autoComplete="off"
+              className="w-full rounded-[10px] border border-slate-200 bg-white px-3 py-1.25 text-sm text-slate-900 outline-none focus:border-sky-500"
+            />
+            {serviceSearchOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 max-h-72 w-full min-w-72 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-slate-900 shadow-xl">
+                {matchingServiceCategories.length ? matchingServiceCategories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => { setServiceSearch(category); setServiceSearchOpen(false); filterHomeServices(category, ""); }}
+                    className="block w-full cursor-pointer px-4 py-2.5 text-left text-sm transition hover:bg-blue-50 hover:text-blue-700"
+                  >
+                    {category}
+                  </button>
+                )) : <p className="px-4 py-3 text-sm text-slate-500">Press Search to find &quot;{serviceSearch}&quot;</p>}
+              </div>
+            )}
+          </div>
+          <button type="submit" className="inline-flex cursor-pointer items-center gap-1.5 rounded-[10px] bg-emerald-500 px-3 py-1.25 text-sm font-semibold text-white transition hover:bg-emerald-600">
             <SearchOutlined sx={{ fontSize: 16 }} />
             Search
           </button>
-        </div>
+        </form>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
           <Link href="/jobs" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Jobs">
@@ -322,15 +406,36 @@ export default function Header() {
 
           <div className="relative" ref={userRef}>
             <button
+              type="button"
               onClick={() => setUserOpen((s) => !s)}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/15"
+              aria-label={authenticatedUser ? "Open profile menu" : "Open sign in menu"}
+              className={authenticatedUser
+                ? "inline-flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-[#0875d1] bg-white p-0 text-[#0875d1] shadow-sm transition hover:border-blue-700 hover:shadow-md"
+                : "inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/15"}
             >
-              <AccountCircleOutlined sx={{ fontSize: 19 }} />
-              <span>Sign In</span>
-              <KeyboardArrowDown sx={{ fontSize: 16 }} />
+              {authenticatedUser ? (
+                <Avatar src={authenticatedUser.profileImage || undefined} alt={authenticatedUser.fullName} sx={{ width: "100%", height: "100%", fontSize: 14, fontWeight: 700, color: "#0875d1", bgcolor: "#fff", "& img": { width: "100%", height: "100%", objectFit: "cover" } }}>{authenticatedUser.firstName.charAt(0).toUpperCase()}</Avatar>
+              ) : (
+                <><AccountCircleOutlined sx={{ fontSize: 19 }} /><span>Sign In</span><KeyboardArrowDown sx={{ fontSize: 16 }} /></>
+              )}
             </button>
 
-            {userOpen && (
+            {userOpen && authenticatedUser && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-[#0875d1] bg-white text-slate-900 shadow-xl">
+                <div className="border-b border-blue-100 bg-blue-50 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-slate-900">{authenticatedUser.fullName}</p>
+                </div>
+                <Link href={authenticatedUser.dashboardPath} onClick={() => setUserOpen(false)} className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-100">
+                  <DashboardOutlined sx={{ fontSize: 18, color: "#0f172a" }} /> Dashboard
+                </Link>
+                <Link href={authenticatedUser.profilePath} onClick={() => setUserOpen(false)} className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-100">
+                  <AccountCircleOutlined sx={{ fontSize: 18, color: "#0f172a" }} /> Update Profile
+                </Link>
+                <div className="border-t border-blue-100"><LogoutButton variant="header" onBeforeLogout={() => setUserOpen(false)} /></div>
+              </div>
+            )}
+
+            {userOpen && !authenticatedUser && (
               <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl">
                 <Link href="/user/login" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
                   <AccountCircleOutlined sx={{ fontSize: 18 }} />

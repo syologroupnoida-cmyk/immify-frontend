@@ -222,11 +222,17 @@ function normalizeListings(responseData) {
         data?.total
         ?? data?.totalElements
         ?? data?.totalCount
+        ?? data?.totalRecords
         ?? data?.count
+        ?? data?.pagination?.total
+        ?? data?.meta?.total
         ?? nestedData?.total
         ?? nestedData?.totalElements
         ?? nestedData?.totalCount
+        ?? nestedData?.totalRecords
         ?? nestedData?.count
+        ?? nestedData?.pagination?.total
+        ?? nestedData?.meta?.total
         ?? listings.length
     );
 
@@ -515,6 +521,7 @@ export default function ServiceListingList({
     const tableScrollRef = useRef(null);
     const latestFetchId = useRef(0);
     const [listings, setListings] = useState([]);
+    const [totalListings, setTotalListings] = useState(0);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [activeTab, setActiveTab] = useState('ALL');
@@ -526,6 +533,7 @@ export default function ServiceListingList({
     const [menuListing, setMenuListing] = useState(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [selectedListing, setSelectedListing] = useState(null);
+    const isServerPaginated = endpoint === ADMIN_SERVICE_LISTINGS_ENDPOINT;
     const requestedStatus = endpoint === ADMIN_SERVICE_LISTINGS_ENDPOINT && activeTab !== 'ALL' ? activeTab : '';
 
     const fetchListings = useCallback(async () => {
@@ -534,19 +542,26 @@ export default function ServiceListingList({
         setFetchError('');
 
         try {
-            const response = await MainApi.get(endpoint, requestedStatus ? { params: { status: requestedStatus } } : undefined);
+            const params = isServerPaginated
+                ? { take: rowsPerPage, skip: page * rowsPerPage, ...(requestedStatus ? { status: requestedStatus } : {}) }
+                : undefined;
+            const response = await MainApi.get(endpoint, params ? { params } : undefined);
             const normalized = normalizeListings(response?.data);
 
-            if (fetchId === latestFetchId.current) setListings(normalized.listings);
+            if (fetchId === latestFetchId.current) {
+                setListings(normalized.listings);
+                setTotalListings(normalized.total);
+            }
         } catch (error) {
             if (fetchId === latestFetchId.current) {
                 setListings([]);
+                setTotalListings(0);
                 setFetchError(getApiErrorMessage(error, 'Unable to load service listings.'));
             }
         } finally {
             if (fetchId === latestFetchId.current) setLoading(false);
         }
-    }, [endpoint, requestedStatus]);
+    }, [endpoint, isServerPaginated, page, requestedStatus, rowsPerPage]);
 
     useEffect(() => {
         queueMicrotask(fetchListings);
@@ -719,9 +734,12 @@ export default function ServiceListingList({
 
         return matchesTab && matchesSearch;
     });
-    const maxPage = Math.max(0, Math.ceil(visibleListings.length / rowsPerPage) - 1);
+    const paginationCount = isServerPaginated ? totalListings : visibleListings.length;
+    const maxPage = Math.max(0, Math.ceil(paginationCount / rowsPerPage) - 1);
     const activePage = Math.min(page, maxPage);
-    const pagedListings = visibleListings.slice(activePage * rowsPerPage, activePage * rowsPerPage + rowsPerPage);
+    const pagedListings = isServerPaginated
+        ? visibleListings
+        : visibleListings.slice(activePage * rowsPerPage, activePage * rowsPerPage + rowsPerPage);
 
     return (
         <Box sx={{ width: '100%', height: 'calc(100dvh - 104px)', minHeight: 0, m: 0, overflow: 'hidden' }}>
@@ -885,7 +903,7 @@ export default function ServiceListingList({
                 <TablePagination
                     rowsPerPageOptions={[10, 20, 50, 100]}
                     component="div"
-                    count={visibleListings.length}
+                    count={paginationCount}
                     rowsPerPage={rowsPerPage}
                     page={activePage}
                     onPageChange={handleChangePage}
