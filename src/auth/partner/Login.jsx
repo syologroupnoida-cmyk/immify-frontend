@@ -26,6 +26,7 @@ import MainApi from '@/util/MainApi';
 import { getKycStatus, getPostLoginPath, isAwaitingApproval, normalizeRole } from '@/util/authRouting';
 import { requestGoogleIdToken } from '@/util/googleAuth';
 import { getApiErrorMessage } from '@/util/profileHelpers';
+import { closeAuthLoading, showAuthLoading } from '@/util/authLoading';
 
 const theme = createTheme({
   palette: {
@@ -224,6 +225,7 @@ const Login = () => {
     const user = payload?.data?.user || payload?.user || payload?.data?.profile || payload?.profile || {};
 
     if (isAwaitingApproval(payload, user)) {
+      closeAuthLoading();
       await Swal.fire({
         icon: 'info',
         title: 'Application Under Review',
@@ -235,24 +237,7 @@ const Login = () => {
 
     const { role, user: persistedUser } = persistAuthSession(payload);
     const redirectPath = getPostLoginPath(role, payload, persistedUser);
-
-    if (redirectPath === '/kyc') {
-      await Swal.fire({
-        icon: 'info',
-        title: 'Complete KYC first',
-        text: 'Your KYC is pending. Please complete KYC to access your dashboard.',
-        confirmButtonText: 'Continue',
-        confirmButtonColor: '#1a56db',
-      });
-    } else {
-      await Swal.fire({
-        icon: 'success',
-        title: 'Login successful',
-        showConfirmButton: false,
-        timer: 900,
-      });
-    }
-
+    closeAuthLoading();
     await router.push(redirectPath);
   };
 
@@ -265,6 +250,7 @@ const Login = () => {
 
     setIsSubmitting(true);
     setSubmitError('');
+    showAuthLoading('Signing in...');
 
     try {
       const response = await MainApi.post('/auth/login', {
@@ -274,6 +260,7 @@ const Login = () => {
 
       await completeLogin(response?.data || {});
     } catch (error) {
+      closeAuthLoading();
       const message = getApiErrorMessage(error, 'Login failed. Please check your email and password.');
 
       if (isReviewMessage(message)) {
@@ -299,6 +286,7 @@ const Login = () => {
 
     try {
       const token = await requestGoogleIdToken();
+      showAuthLoading('Signing in...');
       const response = await MainApi.post('/auth/google/login', {
         token,
         role: 'VENDOR',
@@ -306,6 +294,7 @@ const Login = () => {
 
       await completeLogin(response?.data || {});
     } catch (error) {
+      closeAuthLoading();
       const message = getApiErrorMessage(error, 'Google login failed. Please try again.');
 
       if (isReviewMessage(message)) {

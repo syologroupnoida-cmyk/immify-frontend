@@ -20,6 +20,7 @@ import {
     CircularProgress,
     Stack,
     IconButton,
+    Autocomplete,
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
@@ -278,6 +279,56 @@ const uploadImage = async (file, purpose) => {
     return MainApi.post('/uploads/image', formData);
 };
 
+const GEO_API = 'https://countriesnow.space/api/v0.1/countries';
+
+async function getGeoData(path, payload, signal) {
+    async function read(response) {
+        if (!response.ok) throw new Error('Location lookup failed');
+        const result = await response.json();
+        if (result.error) throw new Error(result.msg || 'Location lookup failed');
+        return result.data;
+    }
+
+    if (!payload) return read(await fetch(`${GEO_API}${path}`, { signal }));
+
+    try {
+        return await read(await fetch(`${GEO_API}${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal,
+        }));
+    } catch (error) {
+        if (signal.aborted) throw error;
+        const query = new URLSearchParams(payload);
+        return read(await fetch(`${GEO_API}${path}/q?${query}`, { signal }));
+    }
+}
+
+function GeoLocationField({ label, value, options, loading, lookupError, onChange, error, helperText }) {
+
+    return (
+        <Autocomplete
+            freeSolo
+            options={options}
+            inputValue={value}
+            loading={loading}
+            openOnFocus
+            autoHighlight
+            filterOptions={(available, { inputValue }) => available.filter((option) => option.toLowerCase().includes(inputValue.trim().toLowerCase())).slice(0, 12)}
+            onInputChange={(_, nextValue, reason) => {
+                if (reason === 'input' || reason === 'clear') onChange(nextValue);
+            }}
+            onChange={(_, selected) => onChange(selected || '')}
+            noOptionsText={lookupError || 'No matching location found'}
+            renderInput={(params) => (
+                <TextField {...params} fullWidth size="small" label={label} error={error}
+                    helperText={helperText || lookupError} placeholder={`Search ${label.toLowerCase()}`} />
+            )}
+        />
+    );
+}
+
 // Main Component
 const KycWizardForm = ({ onSubmit, onCancel }) => {
     const router = useRouter();
@@ -339,6 +390,43 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
     const [serviceCategories, setServiceCategories] = useState([]);
     const [isLoadingServices, setIsLoadingServices] = useState(false);
     const [servicesError, setServicesError] = useState('');
+    const [countries, setCountries] = useState([]);
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [geoLoading, setGeoLoading] = useState({ country: true, state: false, city: false });
+    const [geoError, setGeoError] = useState({});
+
+    useEffect(() => {
+        const controller = new AbortController();
+        getGeoData('/iso', null, controller.signal)
+            .then((data) => setCountries(data.map((item) => item.name).filter(Boolean)))
+            .catch(() => { if (!controller.signal.aborted) setGeoError((prev) => ({ ...prev, country: 'Country suggestions unavailable.' })); })
+            .finally(() => { if (!controller.signal.aborted) setGeoLoading((prev) => ({ ...prev, country: false })); });
+        return () => controller.abort();
+    }, []);
+
+    const selectedCountry = countries.find((name) => name.toLowerCase() === formData.country.trim().toLowerCase());
+    const selectedState = states.find((name) => name.toLowerCase() === formData.officeState.trim().toLowerCase());
+
+    useEffect(() => {
+        if (!selectedCountry) return undefined;
+        const controller = new AbortController();
+        getGeoData('/states', { country: selectedCountry }, controller.signal)
+            .then((data) => setStates((data.states || []).map((item) => item.name).filter(Boolean)))
+            .catch(() => { if (!controller.signal.aborted) setGeoError((prev) => ({ ...prev, state: 'State suggestions unavailable.' })); })
+            .finally(() => { if (!controller.signal.aborted) setGeoLoading((prev) => ({ ...prev, state: false })); });
+        return () => controller.abort();
+    }, [selectedCountry]);
+
+    useEffect(() => {
+        if (!selectedCountry || !selectedState) return undefined;
+        const controller = new AbortController();
+        getGeoData('/state/cities', { country: selectedCountry, state: selectedState }, controller.signal)
+            .then((data) => setCities(Array.isArray(data) ? data.filter(Boolean) : []))
+            .catch(() => { if (!controller.signal.aborted) setGeoError((prev) => ({ ...prev, city: 'City suggestions unavailable.' })); })
+            .finally(() => { if (!controller.signal.aborted) setGeoLoading((prev) => ({ ...prev, city: false })); });
+        return () => controller.abort();
+    }, [selectedCountry, selectedState]);
 
     // Steps configuration
     const steps = [
@@ -1012,36 +1100,50 @@ const KycWizardForm = ({ onSubmit, onCancel }) => {
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                    <TextField
-                        fullWidth
-                        size="small"
+                    <GeoLocationField
                         label="Country"
                         value={formData.country}
-                        onChange={(e) => handleChange('country', e.target.value)}
+                        options={countries}
+                        loading={geoLoading.country}
+                        lookupError={geoError.country}
+                        onChange={(value) => {
+                            setFormData((prev) => ({ ...prev, country: value, officeState: '', officeCity: '' }));
+                            setStates([]);
+                            setCities([]);
+                            setGeoError((prev) => ({ ...prev, state: '', city: '' }));
+                            setGeoLoading((prev) => ({ ...prev, state: true, city: false }));
+                        }}
                         error={!!errors.country}
                         helperText={errors.country}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        label="Office City"
-                        value={formData.officeCity}
-                        onChange={(e) => handleChange('officeCity', e.target.value)}
-                        error={!!errors.officeCity}
-                        helperText={errors.officeCity}
+                    <GeoLocationField
+                        label="Office State"
+                        value={formData.officeState}
+                        options={states}
+                        loading={geoLoading.state && Boolean(selectedCountry)}
+                        lookupError={geoError.state}
+                        onChange={(value) => {
+                            setFormData((prev) => ({ ...prev, officeState: value, officeCity: '' }));
+                            setCities([]);
+                            setGeoError((prev) => ({ ...prev, city: '' }));
+                            setGeoLoading((prev) => ({ ...prev, city: true }));
+                        }}
+                        error={!!errors.officeState}
+                        helperText={errors.officeState}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        label="Office State"
-                        value={formData.officeState}
-                        onChange={(e) => handleChange('officeState', e.target.value)}
-                        error={!!errors.officeState}
-                        helperText={errors.officeState}
+                    <GeoLocationField
+                        label="Office City"
+                        value={formData.officeCity}
+                        options={cities}
+                        loading={geoLoading.city && Boolean(selectedState)}
+                        lookupError={geoError.city}
+                        onChange={(value) => handleChange('officeCity', value)}
+                        error={!!errors.officeCity}
+                        helperText={errors.officeCity}
                     />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>

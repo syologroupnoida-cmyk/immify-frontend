@@ -1,375 +1,79 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
-import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
-import CardTravelOutlinedIcon from "@mui/icons-material/CardTravelOutlined";
-import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
-import FlightTakeoffOutlinedIcon from "@mui/icons-material/FlightTakeoffOutlined";
-import GavelOutlinedIcon from "@mui/icons-material/GavelOutlined";
-import HealthAndSafetyOutlinedIcon from "@mui/icons-material/HealthAndSafetyOutlined";
-import LanguageOutlinedIcon from "@mui/icons-material/LanguageOutlined";
-import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
-import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
-import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
-import RequestQuoteOutlinedIcon from "@mui/icons-material/RequestQuoteOutlined";
-import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
-import { marketplaceTabs } from "./homeData";
-import { fetchHolidayPackages, getHolidayPackageFallbackImage, normalizeHolidayPackage } from "@/util/holidayPackages";
-
-const listingImages = [
-  "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&q=80",
-];
-
-const getServiceImage = (serviceIndex) => listingImages[serviceIndex % listingImages.length];
-
-const listingMeta = [
-  { badge: "FEATURED", badgeClass: "bg-blue-600", category: "TOUR PACKAGE", price: "INR 24,999", city: "New Delhi, India", rating: "4.8", votes: "120" },
-  { badge: "POPULAR", badgeClass: "bg-emerald-500", category: "REAL ESTATE", price: "INR 68.5 Lakh", city: "Bangalore, India", rating: "4.6", votes: "88" },
-  { badge: "NEW", badgeClass: "bg-violet-500", category: "JOB", price: "INR 8 - 12 LPA", city: "Mumbai, India", rating: "4.7", votes: "56" },
-  { badge: "BEST DEAL", badgeClass: "bg-amber-500", category: "VEHICLE", price: "INR 32.9 Lakh", city: "Chandigarh, India", rating: "4.9", votes: "73" },
-];
-
-const iconTone = {
-  "immigration-services": "text-blue-600",
-  "visa-services": "text-emerald-600",
-  "study-abroad-services": "text-violet-600",
-  "test-prepation": "text-amber-500",
-  "international-services": "text-cyan-600",
-  "family-relocation-services": "text-rose-500",
-  "document-attention-services": "text-indigo-600",
-  "financial-services": "text-lime-600",
-  "business-setup-services-and-immigration": "text-orange-500",
-  "helth-insurance": "text-sky-600",
-  "forex-services": "text-teal-600",
-  "legal-and-complance": "text-fuchsia-600",
-};
-
-const tabIconMap = {
-  "immigration-services": FlightTakeoffOutlinedIcon,
-  "visa-services": CardTravelOutlinedIcon,
-  "study-abroad-services": SchoolOutlinedIcon,
-  "test-prepation": VerifiedOutlinedIcon,
-  "international-services": PublicOutlinedIcon,
-  "family-relocation-services": LanguageOutlinedIcon,
-  "document-attention-services": RequestQuoteOutlinedIcon,
-  "financial-services": PaymentsOutlinedIcon,
-  "business-setup-services-and-immigration": BusinessCenterOutlinedIcon,
-  "helth-insurance": HealthAndSafetyOutlinedIcon,
-  "forex-services": RequestQuoteOutlinedIcon,
-  "legal-and-complance": GavelOutlinedIcon,
-};
-
-const fallbackPackages = marketplaceTabs
-  .flatMap((tab) =>
-    tab.services.slice(0, 2).map((service, serviceIndex) => ({
-      title: service,
-      holidayTheme: tab.name,
-      destination: listingMeta[serviceIndex % listingMeta.length].city,
-      price: 24999 + serviceIndex * 9000,
-      currency: "INR",
-      imageUrl: getServiceImage(serviceIndex),
-      rating: 4.7 + serviceIndex * 0.1,
-      votes: 80 + serviceIndex * 24,
-    }))
-  )
-  .map(normalizeHolidayPackage);
-
-function ServiceListingCard({ item, index }) {
-  const meta = {
-    ...listingMeta[index % listingMeta.length],
-    category: item.categoryLabel,
-    price: item.priceLabel,
-    city: item.city,
-    rating: item.rating,
-    votes: item.votes,
-  };
-
-  return (
-    <Link
-      href={{
-        pathname: "/marketplace",
-        query: {
-          package: item.id,
-          theme: item.holidayTheme,
-        },
-      }}
-      className="block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)]"
-    >
-      <div className="relative h-52 w-full overflow-hidden">
-        <img
-          src={item.image || getHolidayPackageFallbackImage(index)}
-          alt={item.service}
-          className="h-full w-full object-cover"
-          onError={(event) => {
-            event.currentTarget.src = getHolidayPackageFallbackImage(index);
-          }}
-        />
-        <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white ${item.badgeClass || meta.badgeClass}`}>
-          {item.badgeLabel || meta.badge}
-        </span>
-        <span
-          aria-hidden="true"
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm"
-        >
-          <FavoriteBorderRoundedIcon className="h-4 w-4" />
-        </span>
-      </div>
-
-      <div className="space-y-2 p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-sky-700">{meta.category}</p>
-        <h3 className="line-clamp-1 text-lg font-semibold leading-tight text-slate-900">{item.service}</h3>
-        <p className="line-clamp-2 text-sm leading-6 text-slate-600">
-          Complete assistance for {item.categoryName.toLowerCase()} with verified providers and transparent process guidance.
-        </p>
-
-        <div className="flex items-end justify-between gap-2 pt-2">
-          <p className="text-lg font-semibold leading-none text-blue-600">{meta.price}</p>
-          <p className="flex items-center gap-1 text-sm font-semibold text-amber-500">
-            <StarRoundedIcon className="h-4 w-4" />
-            {meta.rating}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between pt-1 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1">
-            <LocationOnOutlinedIcon className="h-3.5 w-3.5" />
-            {meta.city}
-          </span>
-          <span>({meta.votes})</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
+import { fetchServiceListings, serviceListingFallbackImage } from "@/util/serviceListings";
 
 export default function MarketplaceSection() {
-  const [activeTab, setActiveTab] = useState("all");
-  const [allPackages, setAllPackages] = useState(fallbackPackages);
-  const [visiblePackages, setVisiblePackages] = useState(fallbackPackages);
-  const [isLoadingPackages, setIsLoadingPackages] = useState(false);
-  const tabsRailRef = useRef(null);
+  const [listings, setListings] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadPackages() {
-      setIsLoadingPackages(true);
-
-      try {
-        const fetchedPackages = await fetchHolidayPackages({ take: 100, skip: 0 });
-
-        if (isMounted && fetchedPackages.length) {
-          setAllPackages(fetchedPackages);
-          setVisiblePackages(fetchedPackages.slice(0, 4));
-        }
-      } catch {
-        if (isMounted) {
-          setAllPackages(fallbackPackages);
-          setVisiblePackages(fallbackPackages.slice(0, 4));
-        }
-      } finally {
-        if (isMounted) setIsLoadingPackages(false);
-      }
-    }
-
-    queueMicrotask(loadPackages);
-
-    return () => {
-      isMounted = false;
-    };
+    let active = true;
+    fetchServiceListings()
+      .then((items) => { if (active) setListings(items); })
+      .catch(() => { if (active) setListings([]); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
-  const holidayThemeTabs = useMemo(
-    () => [
-      { slug: "all", name: "All Holiday" },
-      ...Array.from(new Set(allPackages.map((item) => item.holidayTheme).filter(Boolean))).map((theme) => ({
-        slug: theme.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
-        name: theme,
-      })),
-    ],
-    [allPackages]
-  );
-
-  useEffect(() => {
-    let isMounted = true;
-    const selectedTheme = holidayThemeTabs.find((tab) => tab.slug === activeTab)?.name;
-
-    async function loadPackagesByTheme() {
-      if (activeTab === "all" || !selectedTheme) {
-        setVisiblePackages(allPackages.slice(0, 4));
-        return;
-      }
-
-      setIsLoadingPackages(true);
-
-      try {
-        const fetchedPackages = await fetchHolidayPackages({
-          take: 12,
-          skip: 0,
-          type: selectedTheme,
-        });
-        const matchingPackages = fetchedPackages.filter((item) => item.holidayTheme === selectedTheme);
-        const nextPackages = matchingPackages.length
-          ? matchingPackages
-          : allPackages.filter((item) => item.holidayTheme === selectedTheme);
-
-        if (isMounted) {
-          setVisiblePackages(nextPackages.slice(0, 4));
-        }
-      } catch {
-        if (isMounted) {
-          setVisiblePackages(allPackages.filter((item) => item.holidayTheme === selectedTheme).slice(0, 4));
-        }
-      } finally {
-        if (isMounted) setIsLoadingPackages(false);
-      }
-    }
-
-    queueMicrotask(loadPackagesByTheme);
-
-    return () => {
-      isMounted = false;
-    };
-  }, [activeTab, allPackages, holidayThemeTabs]);
-
-  const scrollTabs = (direction) => {
-    if (!tabsRailRef.current) return;
-
-    tabsRailRef.current.scrollBy({
-      left: direction === "left" ? -360 : 360,
-      behavior: "smooth",
-    });
-  };
+  const categories = useMemo(() => Array.from(new Map(listings.map((item) => [item.categorySlug, item.categoryName])).entries()), [listings]);
+  const visibleListings = useMemo(() => listings
+    .filter((item) => activeCategory === "all" || item.categorySlug === activeCategory)
+    .slice(0, 8), [activeCategory, listings]);
 
   return (
-    <section
-      id="marketplace"
-      className="w-full overflow-x-clip bg-[radial-gradient(circle_at_top,_#f5f8ff_0%,_#ffffff_56%)] px-4 py-12 sm:px-6 lg:px-8 lg:py-14"
-    >
+    <section id="marketplace" className="bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-700 sm:text-sm">
-            <span className="inline-flex h-5 w-5 items-center justify-center text-blue-700 sm:h-6 sm:w-6">
-              <BusinessCenterOutlinedIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </span>
-            PREMIUM SERVICES
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
+            <BusinessCenterOutlinedIcon className="h-5 w-5" /> Services
           </p>
-
-          <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-            Top Selling Packages
-          </h2>
-
-          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-            Find trusted services, products, and opportunities all in one place.
-            <br className="hidden sm:block" />
-            Quality listings. Verified providers. Great value.
-          </p>
+          <h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">Top Selling Packages</h2>
+          <p className="mt-3 text-sm text-slate-600 sm:text-base">Explore available services from our providers.</p>
         </div>
 
-        <div className="relative mt-9">
-          <button
-            type="button"
-            aria-label="Scroll categories left"
-            onClick={() => scrollTabs("left")}
-            className="absolute left-0 top-9 z-10 hidden -translate-x-2 text-slate-500 transition hover:text-slate-800 lg:block"
-          >
-            <ArrowBackIosNewRoundedIcon className="h-7 w-7" />
-          </button>
-
-          <div
-            ref={tabsRailRef}
-            className="tabs-rail scrollbar-none mx-auto flex items-start gap-1 overflow-x-auto overflow-y-hidden px-1 pb-2 sm:gap-3 lg:mx-10"
-          >
-            {holidayThemeTabs.map((tab) => {
-              const isActive = tab.slug === activeTab;
-              const colorClass = iconTone[tab.slug] || "text-blue-600";
-              const Icon = tabIconMap[tab.slug] || PublicOutlinedIcon;
-
-              return (
-                <button
-                  key={tab.slug}
-                  type="button"
-                  onClick={() => setActiveTab(tab.slug)}
-                  className="group relative flex min-w-[122px] flex-col items-center px-1 text-center"
-                >
-                  <span
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border bg-white transition sm:h-12 sm:w-12 ${
-                      isActive
-                        ? `border-blue-200 ${colorClass} shadow-[0_6px_14px_rgba(37,99,235,0.10)]`
-                        : "border-slate-200 text-slate-400 group-hover:border-slate-300 group-hover:text-slate-600"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </span>
-
-                  <span
-                    className={`mt-3 line-clamp-2 text-xs font-medium leading-5 transition sm:text-sm ${
-                      isActive ? "text-blue-700" : "text-slate-600 group-hover:text-slate-900"
-                    }`}
-                  >
-                    {tab.name}
-                  </span>
-
-                  <span className={`mt-3 h-1 w-16 rounded-full ${isActive ? "bg-blue-600" : "bg-transparent"}`} />
-                </button>
-              );
-            })}
+        {categories.length > 1 && (
+          <div className="scrollbar-none mt-7 flex gap-2 overflow-x-auto border-b border-slate-200 pb-3">
+            {[["all", "All Services"], ...categories].map(([slug, name]) => (
+              <button key={slug} type="button" onClick={() => setActiveCategory(slug)}
+                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition ${activeCategory === slug ? "bg-blue-700 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
+                {name}
+              </button>
+            ))}
           </div>
-
-          <button
-            type="button"
-            aria-label="Scroll categories right"
-            onClick={() => scrollTabs("right")}
-            className="absolute right-0 top-9 z-10 hidden translate-x-2 text-slate-500 transition hover:text-slate-800 lg:block"
-          >
-            <ArrowForwardIosRoundedIcon className="h-7 w-7" />
-          </button>
-        </div>
-
-        <div className="mt-10 grid gap-4 border-t border-slate-100 pt-8 sm:grid-cols-2 xl:grid-cols-4">
-          {visiblePackages.map((item, index) => (
-            <ServiceListingCard
-              key={item.id}
-              item={item}
-              index={index}
-            />
-          ))}
-        </div>
-
-        {isLoadingPackages && (
-          <p className="mt-4 text-center text-sm text-slate-500">Loading packages...</p>
         )}
 
+        {loading ? <p className="py-12 text-center text-sm text-slate-500">Loading services...</p> : visibleListings.length ? (
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {visibleListings.map((item, index) => (
+              <Link key={item.id} href={`/marketplace/${item.detailSlug}`}
+                className={`group overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-blue-300 hover:shadow-md ${index >= 4 ? "hidden lg:block" : index >= 2 ? "hidden sm:block" : ""}`}>
+                <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                  <img src={item.image} alt="" className="h-full w-full object-cover transition group-hover:scale-105"
+                    onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = serviceListingFallbackImage; }} />
+                </div>
+                <div className="p-4">
+                  <p className="text-xs font-semibold uppercase text-blue-700">{item.categoryName}</p>
+                  <h3 className="mt-2 line-clamp-2 min-h-12 text-base font-semibold text-slate-900">{item.service}</h3>
+                  <p className="mt-2 line-clamp-2 min-h-10 text-sm text-slate-600">{item.description || "Explore this service and its details."}</p>
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span className="font-semibold text-slate-900">{item.priceLabel}</span>
+                    <ArrowForwardRoundedIcon className="h-5 w-5 text-blue-700" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : <p className="py-12 text-center text-sm text-slate-500">No services are available right now.</p>}
+
         <div className="mt-8 flex justify-center">
-          <Link
-            href="/marketplace"
-            className="rounded-xl border border-blue-300 px-8 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"
-          >
-            View All Listings
+          <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-md border border-blue-300 px-6 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+            View All Services <ArrowForwardRoundedIcon className="h-4 w-4" />
           </Link>
         </div>
       </div>
-
-      <style jsx>{`
-        .tabs-rail {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .tabs-rail::-webkit-scrollbar {
-          width: 0;
-          height: 0;
-          display: none;
-        }
-      `}</style>
     </section>
   );
 }

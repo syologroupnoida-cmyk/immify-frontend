@@ -95,6 +95,14 @@ const menuItems = [
             { name: 'Add Job', path: '/admin/add-job' },
         ],
     },
+    {
+        name: 'Blogs',
+        icon: <PackagesIcon />,
+        children: [
+            { name: 'Blog List', path: '/admin/blog-list' },
+            { name: 'Add Blog', path: '/admin/add-blog' },
+        ],
+    },
     // {
     //     name: 'Add Story',
     //     icon: <MoneyIcon />,

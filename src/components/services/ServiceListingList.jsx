@@ -513,6 +513,7 @@ export default function ServiceListingList({
 }) {
     const router = useRouter();
     const tableScrollRef = useRef(null);
+    const latestFetchId = useRef(0);
     const [listings, setListings] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -525,23 +526,27 @@ export default function ServiceListingList({
     const [menuListing, setMenuListing] = useState(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [selectedListing, setSelectedListing] = useState(null);
+    const requestedStatus = endpoint === ADMIN_SERVICE_LISTINGS_ENDPOINT && activeTab !== 'ALL' ? activeTab : '';
 
     const fetchListings = useCallback(async () => {
+        const fetchId = ++latestFetchId.current;
         setLoading(true);
         setFetchError('');
 
         try {
-            const response = await MainApi.get(endpoint);
+            const response = await MainApi.get(endpoint, requestedStatus ? { params: { status: requestedStatus } } : undefined);
             const normalized = normalizeListings(response?.data);
 
-            setListings(normalized.listings);
+            if (fetchId === latestFetchId.current) setListings(normalized.listings);
         } catch (error) {
-            setListings([]);
-            setFetchError(getApiErrorMessage(error, 'Unable to load service listings.'));
+            if (fetchId === latestFetchId.current) {
+                setListings([]);
+                setFetchError(getApiErrorMessage(error, 'Unable to load service listings.'));
+            }
         } finally {
-            setLoading(false);
+            if (fetchId === latestFetchId.current) setLoading(false);
         }
-    }, [endpoint]);
+    }, [endpoint, requestedStatus]);
 
     useEffect(() => {
         queueMicrotask(fetchListings);

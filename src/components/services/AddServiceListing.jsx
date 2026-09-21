@@ -80,6 +80,25 @@ function getApiMessage(payload, fallback) {
     return payload?.message || payload?.msg || payload?.data?.message || fallback;
 }
 
+function unwrapServiceListing(payload = {}) {
+    const data = payload?.data ?? payload ?? {};
+    const nestedData = data?.data ?? data ?? {};
+
+    return (
+        data?.serviceListing ||
+        data?.service_listing ||
+        data?.listing ||
+        data?.item ||
+        data?.result ||
+        nestedData?.serviceListing ||
+        nestedData?.service_listing ||
+        nestedData?.listing ||
+        nestedData?.item ||
+        nestedData?.result ||
+        nestedData
+    );
+}
+
 function getCategoryId(category) {
     return String(category?.serviceCategoryId || category?.categoryId || category?.id || category?._id || category?.uuid || '');
 }
@@ -96,6 +115,41 @@ function getServiceId(service) {
 function getServiceName(service) {
     if (typeof service === 'string') return service;
     return service?.name || service?.serviceName || service?.title || 'Unnamed Service';
+}
+
+function getListingCategoryId(listing) {
+    return String(
+        listing?.categoryId ||
+        listing?.serviceCategoryId ||
+        listing?.category?.serviceCategoryId ||
+        listing?.category?.categoryId ||
+        listing?.category?.id ||
+        listing?.category?._id ||
+        listing?.category?.uuid ||
+        listing?.serviceCategory?.serviceCategoryId ||
+        listing?.serviceCategory?.categoryId ||
+        listing?.serviceCategory?.id ||
+        listing?.serviceCategory?._id ||
+        listing?.serviceCategory?.uuid ||
+        ''
+    );
+}
+
+function getListingServiceId(listing) {
+    return String(
+        listing?.serviceId ||
+        listing?.service?.serviceId ||
+        listing?.service?.id ||
+        listing?.service?._id ||
+        listing?.service?.uuid ||
+        ''
+    );
+}
+
+function getPlainUrl(value) {
+    const text = String(value || '').trim();
+    const markdownMatch = text.match(/\((https?:\/\/[^)]+)\)/i);
+    return markdownMatch?.[1] || text;
 }
 
 function dedupeByIdOrName(items) {
@@ -320,11 +374,11 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
 
             try {
                 const response = await MainApi.get(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`);
-                const listing = response?.data?.data ?? response?.data ?? {};
+                const listing = unwrapServiceListing(response?.data);
                 const dynamicData = listing.dynamicData || listing.dynamic_data || {};
-                const categoryId = getCategoryId(listing.category || listing.serviceCategory || listing) || String(listing.categoryId || listing.serviceCategoryId || '');
-                const serviceId = getServiceId(listing.service || listing) || String(listing.serviceId || '');
-                const imageUrl = getUploadedImageUrl(listing) || getUploadedImageUrl(response?.data) || listing.imageUrl || listing.image_url || '';
+                const categoryId = getListingCategoryId(listing);
+                const serviceId = getListingServiceId(listing);
+                const imageUrl = getPlainUrl(getUploadedImageUrl(listing) || getUploadedImageUrl(response?.data) || listing.imageUrl || listing.image_url || '');
 
                 if (!isMounted) return;
 

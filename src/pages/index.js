@@ -8,6 +8,7 @@ import CountrySection from "../components/sections/home/CountrySection";
 import UniversitySection from "../components/sections/home/UniversitySection";
 import TopCitiesSection from "../components/sections/home/TopCitiesSection";
 import FreeQuoteSection from "../components/sections/home/FreeQuoteSection";
+import ImmigrationVendorsByLocationSection from "../components/sections/home/ImmigrationVendorsByLocationSection";
 
 function Home() {
   return (
@@ -23,6 +24,7 @@ function Home() {
         <CategorySection />
         <TopCitiesSection />
         <FreeQuoteSection />
+        <ImmigrationVendorsByLocationSection />
       </div>
     </main>
   );

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
 import MainApi from '@/util/MainApi';
 import { getVendorType, normalizeRole } from '@/util/authRouting';
+import { closeAuthLoading, showAuthLoading } from '@/util/authLoading';
 
 function getStoredRefreshToken() {
     if (typeof window === 'undefined') return '';
@@ -27,20 +28,6 @@ function clearAuthSession() {
     document.cookie = 'tripz_vendor_type=; path=/; max-age=0; SameSite=Lax';
     document.cookie = 'tripz_next_step=; path=/; max-age=0; SameSite=Lax';
     window.dispatchEvent(new Event('tripz-auth-change'));
-}
-
-function showLogoutRedirectLoader() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Logout success',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        showCancelButton: false,
-        didOpen: () => {
-            Swal.showLoading();
-        },
-    });
 }
 
 function readStoredJson(key) {
@@ -99,15 +86,19 @@ export default function LogoutButton({ onBeforeLogout, variant = 'menu', showTex
         if (!result.isConfirmed) return;
 
         const refreshToken = getStoredRefreshToken();
+        showAuthLoading('Signing out...');
 
         if (refreshToken) {
-            MainApi.post('/auth/logout', { refreshToken }, { keepalive: true }).catch(() => {});
+            try {
+                await MainApi.post('/auth/logout', { refreshToken }, { keepalive: true });
+            } catch {
+                // Local sign-out must still complete when the server session has expired.
+            }
         }
 
+        closeAuthLoading();
         clearAuthSession();
-        showLogoutRedirectLoader();
         await router.push(redirectPath);
-        Swal.close();
     };
 
     if (variant === 'list') {

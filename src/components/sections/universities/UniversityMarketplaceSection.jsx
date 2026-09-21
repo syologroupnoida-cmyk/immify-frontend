@@ -12,12 +12,15 @@ import {
   universityTypes,
 } from "./universityData";
 
+const universitiesPerPage = 9;
+
 export default function UniversityMarketplaceSection() {
   const [search, setSearch] = useState("");
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [maxTuition, setMaxTuition] = useState(35000);
+  const [currentPage, setCurrentPage] = useState(1);
   const [expanded, setExpanded] = useState({
     search: true,
     country: true,
@@ -45,11 +48,32 @@ export default function UniversityMarketplaceSection() {
     });
   }, [maxTuition, search, selectedCountries, selectedCourses, selectedTypes]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredUniversities.length / universitiesPerPage));
+  const activePage = Math.min(currentPage, totalPages);
+  const totalResults = filteredUniversities.length;
+  const paginatedUniversities = useMemo(() => {
+    const startIndex = (activePage - 1) * universitiesPerPage;
+
+    return filteredUniversities.slice(startIndex, startIndex + universitiesPerPage);
+  }, [activePage, filteredUniversities]);
+  const visiblePageNumbers = useMemo(() => {
+    const pageSet = new Set([1, totalPages]);
+    const start = Math.max(1, activePage - 2);
+    const end = Math.min(totalPages, activePage + 2);
+
+    for (let page = start; page <= end; page += 1) {
+      pageSet.add(page);
+    }
+
+    return [...pageSet].sort((a, b) => a - b);
+  }, [activePage, totalPages]);
+
   const toggleExpanded = (key) => {
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const toggleValue = (value, setter) => {
+    setCurrentPage(1);
     setter((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
   };
 
@@ -59,6 +83,7 @@ export default function UniversityMarketplaceSection() {
     setSelectedCourses([]);
     setSelectedTypes([]);
     setMaxTuition(35000);
+    setCurrentPage(1);
   };
 
   return (
@@ -84,7 +109,7 @@ export default function UniversityMarketplaceSection() {
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[300px_1fr]">
-          <aside className="sticky top-24 h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <aside className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h2 className="text-lg font-bold text-slate-900">Filter</h2>
               <button type="button" onClick={resetFilters} className="text-sm font-semibold text-blue-700">
@@ -92,7 +117,7 @@ export default function UniversityMarketplaceSection() {
               </button>
             </div>
 
-            <div className="divide-y divide-slate-200">
+            <div className="scrollbar-none min-h-0 flex-1 divide-y divide-slate-200 overflow-y-auto pr-1">
               <div className="py-4">
                 <button type="button" onClick={() => toggleExpanded("search")} className="flex w-full items-center justify-between text-left text-sm font-semibold text-slate-800">
                   Search
@@ -102,7 +127,10 @@ export default function UniversityMarketplaceSection() {
                   <div className="mt-3 flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3">
                     <input
                       value={search}
-                      onChange={(event) => setSearch(event.target.value)}
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                        setCurrentPage(1);
+                      }}
                       placeholder="University, city, course"
                       className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                     />
@@ -151,7 +179,10 @@ export default function UniversityMarketplaceSection() {
                       max="35000"
                       step="500"
                       value={maxTuition}
-                      onChange={(event) => setMaxTuition(Number(event.target.value))}
+                      onChange={(event) => {
+                        setMaxTuition(Number(event.target.value));
+                        setCurrentPage(1);
+                      }}
                       className="w-full accent-blue-700"
                     />
                     <div className="mt-1 flex justify-between text-xs text-slate-500">
@@ -167,15 +198,58 @@ export default function UniversityMarketplaceSection() {
           <section>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-600">
-                Showing {filteredUniversities.length} of {universities.length} universities
+                {totalResults > 0
+                  ? `Showing ${Math.min((activePage - 1) * universitiesPerPage + 1, totalResults)}-${Math.min(activePage * universitiesPerPage, totalResults)} of ${totalResults} universities`
+                  : `Showing 0 of ${universities.length} universities`}
               </p>
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredUniversities.map((university) => (
+              {paginatedUniversities.map((university) => (
                 <UniversityCard key={university.slug} university={university} />
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={activePage === 1}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+
+                {visiblePageNumbers.map((pageNumber, index) => (
+                  <div key={pageNumber} className="flex items-center gap-2">
+                    {index > 0 && pageNumber - visiblePageNumbers[index - 1] > 1 && (
+                      <span className="px-1 text-sm font-semibold text-slate-400">...</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`h-10 min-w-10 rounded-xl px-3 text-sm font-semibold transition ${
+                        pageNumber === activePage
+                          ? "bg-blue-600 text-white"
+                          : "border border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={activePage === totalPages}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
 
             {!filteredUniversities.length && (
               <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-8 text-center">

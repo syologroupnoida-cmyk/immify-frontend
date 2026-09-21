@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import {
   AccountCircleOutlined,
   HandshakeOutlined,
@@ -10,11 +10,20 @@ import {
   LocationOnOutlined,
   PaymentsOutlined,
   PersonAddAlt1Outlined,
+  SchoolOutlined,
   SupportAgentOutlined,
   SearchOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
 import ImmifyLogo from "@/images/immify-logo.png";
+import universityFallbackCampus from "@/images/university-fallback-campus.png";
+import {
+  universities,
+  universityCountries,
+  universityCountryMeta,
+  universityCourseCategories,
+  universityDegreeLevels,
+} from "@/components/sections/universities/universityData";
 
 const LOCATION_STORAGE_KEY = "immifySelectedLocation";
 const DEFAULT_LOCATION = "Moradabad";
@@ -47,8 +56,24 @@ export default function Header() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
   const [userOpen, setUserOpen] = useState(false);
+  const [universityMenuOpen, setUniversityMenuOpen] = useState(false);
+  const [activeUniversityCountry, setActiveUniversityCountry] = useState(universityCountries[0] || "");
+  const [activeCourseCategory, setActiveCourseCategory] = useState(universityCourseCategories[0]?.category || "");
   const userRef = useRef(null);
   const locationRef = useRef(null);
+  const activeCountryUniversities = useMemo(
+    () => universities.filter((university) => university.country === activeUniversityCountry),
+    [activeUniversityCountry]
+  );
+  const menuUniversities = useMemo(
+    () => (activeCountryUniversities.length ? activeCountryUniversities : universities.slice(0, 10)),
+    [activeCountryUniversities]
+  );
+  const activeCourseGroup = useMemo(
+    () => universityCourseCategories.find((group) => group.category === activeCourseCategory) || universityCourseCategories[0],
+    [activeCourseCategory]
+  );
+  const visibleCountries = universityCountryMeta.slice(0, 12);
 
   const selectLocation = useCallback((value) => {
     const nextLocation = value.trim();
@@ -168,7 +193,9 @@ export default function Header() {
     <header className="fixed top-0 left-0 z-50 w-full bg-[#1f2a77] text-white">
       <div className="border-b border-white/10 bg-[#17215f]">
         <div className="mx-auto flex min-w-[1120px] w-full items-center justify-end gap-2 px-4 py-1 text-xs font-medium sm:px-6 lg:px-8">
-          <span className="text-white/80">Call Us</span>
+          <a href="tel:+911234567890" className="text-white/80 transition hover:text-white" aria-label="Call Immify at +91 12345 67890">
+            Call Us: +91 12345 67890
+          </a>
           <span className="text-white/35">|</span>
           <Link href="/lead-generation" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Get Free Quote">
             <ForumOutlined sx={{ fontSize: 14 }} />
@@ -182,12 +209,27 @@ export default function Header() {
         </div>
       </div>
 
-      <div>
+      <div className="relative" onMouseLeave={() => setUniversityMenuOpen(false)}>
         <div className="mx-auto grid min-w-[1120px] w-full grid-cols-[auto_minmax(280px,620px)_auto] items-center gap-3 px-4 py-1 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 justify-start">
+        <div className="flex min-w-0 items-center justify-start gap-3">
           <Link href="/" className="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full transition hover:opacity-90" aria-label="Immify home">
             <Image src={ImmifyLogo} alt="Immify" width={56} height={56} className="h-full w-full scale-[1.9] rounded-full object-contain" priority />
           </Link>
+          <div
+            className="hidden lg:block"
+            onMouseEnter={() => setUniversityMenuOpen(true)}
+            onFocus={() => setUniversityMenuOpen(true)}
+          >
+            <Link
+              href="/marketplace/universities"
+              className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/50 bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm transition hover:border-sky-300 hover:text-[#1f2a77]"
+              aria-label="Explore universities"
+            >
+              <SchoolOutlined sx={{ fontSize: 15 }} />
+              <span className="whitespace-nowrap">Explore Universities</span>
+              <KeyboardArrowDown sx={{ fontSize: 14 }} />
+            </Link>
+          </div>
         </div>
 
         <div className="mx-auto flex w-full items-center gap-2 rounded-[10px] bg-white p-[4px] shadow-sm">
@@ -316,6 +358,134 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {universityMenuOpen && (
+        <div
+          className="absolute left-0 top-full z-50 w-full border-t-4 border-[#0875d1] bg-white text-slate-900 shadow-2xl"
+          onMouseEnter={() => setUniversityMenuOpen(true)}
+          onMouseLeave={() => setUniversityMenuOpen(false)}
+        >
+          <div className="mx-auto grid min-w-[1120px] grid-cols-[290px_1fr_320px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
+            <aside className="border-r border-slate-200 pr-4">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#0875d1]">Countries</p>
+              <div className="scrollbar-none max-h-[430px] space-y-1 overflow-y-auto pr-1">
+                {visibleCountries.map((countryMeta) => (
+                  <button
+                    key={countryMeta.country}
+                    type="button"
+                    onMouseEnter={() => setActiveUniversityCountry(countryMeta.country)}
+                    onFocus={() => setActiveUniversityCountry(countryMeta.country)}
+                    className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
+                      activeUniversityCountry === countryMeta.country
+                        ? "bg-sky-50 font-semibold text-[#0875d1]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-[#0875d1]"
+                    }`}
+                  >
+                    <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                      <Image
+                        src={countryMeta.flagUrl || universityFallbackCampus}
+                        alt={`${countryMeta.country} universities`}
+                        fill
+                        sizes="20px"
+                        className="object-cover"
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">Universities in {countryMeta.country}</span>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+            <section>
+              <div className="border-b border-sky-100 pb-3">
+                <h2 className="border-l-4 border-[#0875d1] pl-3 text-base font-bold text-[#0875d1]">
+                  Top Universities in {activeUniversityCountry}
+                </h2>
+              </div>
+              <div className="mt-4 grid gap-x-10 gap-y-2.5 md:grid-cols-2">
+                {menuUniversities.slice(0, 10).map((university) => (
+                  <Link
+                    key={university.slug}
+                    href={`/marketplace/universities/${university.slug}`}
+                    className="text-xs text-slate-700 transition hover:text-[#0875d1] hover:underline"
+                    onClick={() => setUniversityMenuOpen(false)}
+                  >
+                    {university.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Degree Levels</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {universityDegreeLevels.slice(0, 10).map((level) => (
+                    <span key={level} className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                      {level}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Link
+                href="/marketplace/universities"
+                className="mt-5 inline-flex rounded-full border border-sky-200 px-3.5 py-1.5 text-xs font-semibold text-[#0875d1] transition hover:bg-sky-50"
+                onClick={() => setUniversityMenuOpen(false)}
+              >
+                View All Universities
+              </Link>
+            </section>
+
+            <aside className="space-y-7">
+              <div>
+                <h3 className="border-b border-sky-100 pb-3 text-base font-bold text-[#0875d1]">
+                  Course Categories
+                </h3>
+                <div className="mt-4 grid max-h-36 grid-cols-2 gap-1 overflow-y-auto pr-1 text-[11px] text-slate-700">
+                  {universityCourseCategories.map((group) => (
+                    <button
+                      key={group.category}
+                      type="button"
+                      onMouseEnter={() => setActiveCourseCategory(group.category)}
+                      onFocus={() => setActiveCourseCategory(group.category)}
+                      className={`rounded-md px-2 py-1 text-left transition ${
+                        activeCourseCategory === group.category ? "bg-sky-50 font-semibold text-[#0875d1]" : "hover:bg-slate-50 hover:text-[#0875d1]"
+                      }`}
+                    >
+                      {group.category}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <p className="text-[11px] font-bold text-slate-500">{activeCourseGroup?.category}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {activeCourseGroup?.courses.slice(0, 10).map((course) => (
+                      <Link
+                        key={course}
+                        href="/marketplace/universities"
+                        className="rounded-full bg-slate-100 px-2 py-1 text-[11px] text-slate-700 transition hover:bg-sky-50 hover:text-[#0875d1]"
+                      >
+                        {course}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="border-b border-sky-100 pb-3 text-base font-bold text-[#0875d1]">
+                  Guides on {activeUniversityCountry}
+                </h3>
+                <div className="mt-4 space-y-2.5 text-xs text-slate-700">
+                  <Link href="/marketplace/universities" className="block transition hover:text-[#0875d1] hover:underline">
+                    Admission Process
+                  </Link>
+                  <Link href="/marketplace/universities" className="block transition hover:text-[#0875d1] hover:underline">
+                    Scholarships and Fees
+                  </Link>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      )}
       </div>
     </header>
   );

@@ -21,13 +21,13 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/user-login-img.png';
 import MainApi from '@/util/MainApi';
 import { getPostLoginPath, normalizeRole } from '@/util/authRouting';
 import { requestGoogleIdToken } from '@/util/googleAuth';
 import { getApiErrorMessage } from '@/util/profileHelpers';
+import { closeAuthLoading, showAuthLoading } from '@/util/authLoading';
 
 const theme = createTheme({
   palette: {
@@ -170,6 +170,7 @@ const Login = () => {
 
     setIsSubmitting(true);
     setSubmitError('');
+    showAuthLoading('Signing in...');
 
     try {
       const response = await MainApi.post('/auth/login', {
@@ -179,15 +180,11 @@ const Login = () => {
       const payload = response?.data || {};
       const { role, user } = persistAuthSession(payload);
       const redirectPath = getPostLoginPath(role, payload, user);
+      closeAuthLoading();
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Login successful',
-        showConfirmButton: false,
-        timer: 900,
-      });
       await router.push(redirectPath);
     } catch (error) {
+      closeAuthLoading();
       setSubmitError(getApiErrorMessage(error, 'Login failed. Please check your email and password.'));
     } finally {
       setIsSubmitting(false);
@@ -200,6 +197,7 @@ const Login = () => {
 
     try {
       const token = await requestGoogleIdToken();
+      showAuthLoading('Signing in...');
       const response = await MainApi.post('/auth/google/login', {
         token,
         role: 'CLIENT',
@@ -207,15 +205,11 @@ const Login = () => {
       const payload = response?.data || {};
       const { role, user } = persistAuthSession(payload);
       const redirectPath = getPostLoginPath(role, payload, user);
+      closeAuthLoading();
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Login successful',
-        showConfirmButton: false,
-        timer: 900,
-      });
       await router.push(redirectPath);
     } catch (error) {
+      closeAuthLoading();
       setSubmitError(getApiErrorMessage(error, 'Google login failed. Please try again.'));
     } finally {
       setIsGoogleSubmitting(false);

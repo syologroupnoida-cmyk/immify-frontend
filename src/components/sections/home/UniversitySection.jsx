@@ -15,7 +15,7 @@ export default function UniversitySection() {
               Explore Universities
             </p>
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-              Explore Dummy Partner Universities
+              Explore Partner Universities
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
               Compare sample universities by country, course, fee range, and intake before connecting with an advisor.

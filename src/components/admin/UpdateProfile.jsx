@@ -95,11 +95,7 @@ const dummyApi = {
     uploadFormData.append('file', imageFile);
     uploadFormData.append('purpose', 'avatar');
 
-    const response = await MainApi.post('/api/v1/uploads/image', uploadFormData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await MainApi.post('/uploads/image', uploadFormData);
 
     const responsePayload = response?.data || {};
     const imageUrl = extractUploadedImageUrl(responsePayload);
@@ -193,7 +189,6 @@ export default function Profile() {
         }
       } catch (err) {
         setError(getApiErrorMessage(err, 'Failed to upload image'));
-        console.error('Error uploading image:', err);
       } finally {
         setLoading(false);
       }
