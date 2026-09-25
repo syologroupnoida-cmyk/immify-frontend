@@ -511,7 +511,7 @@ export default function Header() {
                 {menuUniversities.slice(0, 10).map((university) => (
                   <Link
                     key={university.slug}
-                    href={`/marketplace/universities/${university.slug}`}
+                    href={`/universities/${university.slug}`}
                     className="text-xs text-slate-700 transition hover:text-[#0875d1] hover:underline"
                     onClick={() => setUniversityMenuOpen(false)}
                   >

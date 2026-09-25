@@ -543,10 +543,10 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const buildPayload = async () => {
+    const buildPayload = async ({ includeCategoryId = true } = {}) => {
         const imageUrl = formData.imageUrl || (imageFile ? await uploadServiceListingImage(imageFile) : '');
 
-        return {
+        const payload = {
             categoryId: formData.categoryId,
             serviceId: formData.serviceId,
             title: formData.title.trim(),
@@ -564,6 +564,12 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                 country: formData.country.trim(),
             },
         };
+
+        if (!includeCategoryId) {
+            delete payload.categoryId;
+        }
+
+        return payload;
     };
 
     const submitServiceListing = async (isDraft = false) => {
@@ -582,7 +588,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         setSubmitting(true);
         setSubmitMode(isDraft ? 'draft' : 'create');
         try {
-            const payload = await buildPayload();
+            const payload = await buildPayload({ includeCategoryId: !isEditMode });
             const response = isEditMode
                 ? await MainApi.patch(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`, payload, {
                     params: { draft: isDraft ? 'true' : 'false' },

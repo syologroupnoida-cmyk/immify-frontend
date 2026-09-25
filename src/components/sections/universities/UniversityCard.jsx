@@ -11,7 +11,7 @@ export default function UniversityCard({ university }) {
 
   return (
     <Link
-      href={`/marketplace/universities/${university.slug}`}
+      href={`/universities/${university.slug}`}
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.12)]"
     >
       <div className="relative h-48 overflow-hidden">
