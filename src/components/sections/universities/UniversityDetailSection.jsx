@@ -129,7 +129,7 @@ export default function UniversityDetailSection() {
     }
   };
 
-  if (!university) return <main className="min-h-screen bg-[#f7f9fc] px-4 py-28 text-center"><h1 className="text-2xl font-bold text-slate-900">University not found</h1><Link href="/marketplace/universities" className="mt-5 inline-block text-sm font-semibold text-blue-700">Back to Universities</Link></main>;
+  if (!university) return <main className="min-h-screen bg-[#f7f9fc] px-4 py-28 text-center"><h1 className="text-2xl font-bold text-slate-900">University not found</h1><Link href="/universities" className="mt-5 inline-block text-sm font-semibold text-blue-700">Back to Universities</Link></main>;
 
   const facts = [
     ["University", university.name], ["Location", `${university.city}, ${university.country}`],
@@ -141,7 +141,7 @@ export default function UniversityDetailSection() {
 
   return <main className="min-h-screen bg-white pb-16 pt-24 text-slate-800 sm:pt-28">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500"><Link href="/marketplace/universities" className="inline-flex items-center gap-1 text-blue-700 hover:underline"><ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Universities</Link><span>/</span><span>{university.country}</span><span>/</span><span className="text-slate-800">{university.name}</span></div>
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500"><Link href="/universities" className="inline-flex items-center gap-1 text-blue-700 hover:underline"><ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Universities</Link><span>/</span><span>{university.country}</span><span>/</span><span className="text-slate-800">{university.name}</span></div>
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           <header className="pb-4"><p className="mb-1 text-xs font-semibold uppercase text-teal-700">Study in {university.country}</p><h1 className="font-serif text-2xl font-bold leading-snug text-teal-800 sm:text-[30px]">{university.name}: Courses, Fees & Admission</h1></header>

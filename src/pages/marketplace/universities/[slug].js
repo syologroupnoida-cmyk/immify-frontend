@@ -1,7 +1,12 @@
-import UniversityDetailSection from "@/components/sections/universities/UniversityDetailSection";
-
-export default function MarketplaceUniversityDetailPage() {
-  return <UniversityDetailSection />;
+export default function LegacyMarketplaceUniversityDetailPage() {
+  return null;
 }
 
-MarketplaceUniversityDetailPage.useDefaultLayout = true;
+export function getServerSideProps({ params }) {
+  return {
+    redirect: {
+      destination: `/universities/${encodeURIComponent(params.slug)}`,
+      permanent: true,
+    },
+  };
+}
