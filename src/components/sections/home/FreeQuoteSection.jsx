@@ -168,10 +168,10 @@ export default function FreeQuoteSection() {
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-center">
         <div className="relative z-10 max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#1f2a77]">Get Free Quote</p>
-          <h2 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl lg:text-3xl">
             Tell us what you need and get a quick expert response.
           </h2>
-          <p className="mt-4 text-base leading-8 text-slate-600 sm:text-lg">
+          <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
             Share your goal, destination, and timeline. Our team will review your request and help you find the right service provider.
           </p>
 
@@ -194,7 +194,7 @@ export default function FreeQuoteSection() {
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#1f2a77]">Get in Touch</p>
-              <h3 className="mt-1 text-2xl font-bold text-slate-900">Send your quote request</h3>
+              <h3 className="mt-1 text-xl font-bold text-slate-900">Send your quote request</h3>
             </div>
             <div className="hidden h-12 w-12 items-center justify-center rounded-full bg-[#1f2a77] text-[#f5c542] sm:flex">
               <MessageRoundedIcon className="h-5 w-5" />

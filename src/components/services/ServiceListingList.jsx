@@ -332,6 +332,7 @@ function DetailSection({ title, items }) {
 
 function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, onClose, onApprove, onReject }) {
     const [reason, setReason] = useState('');
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
     const listingId = getListingId(listing);
     const imageUrl = getImageUrl(listing);
     const listingStatus = getListingStatus(listing);
@@ -377,7 +378,14 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
     ] : [];
 
     useEffect(() => {
-        if (open) queueMicrotask(() => setReason(''));
+        if (open) {
+            queueMicrotask(() => {
+                setReason('');
+                setRejectDialogOpen(false);
+            });
+        } else {
+            queueMicrotask(() => setRejectDialogOpen(false));
+        }
     }, [open, listingId]);
 
     const handleReject = () => {
@@ -385,128 +393,165 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
     };
 
     return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            maxWidth="md"
-            fullWidth
-            disableScrollLock
-            PaperProps={{ sx: { maxWidth: 1120, borderRadius: 1, overflow: 'hidden' } }}
-        >
-            <DialogTitle sx={{ borderBottom: '1px solid #e2e8f0', p: 0 }}>
-                <Box sx={{ bgcolor: '#fff', color: '#172b4d', px: 2, py: 1.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="h6" fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>
-                            {listing?.title || 'Service Listing Details'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 0.25, color: '#64748b' }}>
-                            {listingId ? `ID: ${listingId}` : 'Listing details'}
-                        </Typography>
-                    </Box>
-                    <IconButton onClick={onClose} size="small" sx={{ color: '#172b4d', bgcolor: '#f1f5f9', '&:hover': { bgcolor: '#e2e8f0' } }}>
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-            </DialogTitle>
-
-            <DialogContent sx={{ px: 0, pt: 0, pb: 0, bgcolor: '#fff', maxHeight: '64vh', overflowY: 'auto' }}>
-                {!listing ? (
-                    <Box sx={{ p: 2 }}>
-                        <Alert severity="info">No listing selected.</Alert>
-                    </Box>
-                ) : (
-                    <Box sx={{ px: 3, py: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: 1.5 }}>
-                            <StatusChip label={formatStatus(listingStatus)} status={listingStatus} size="small" />
-                            <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                Created: {formatDate(listing.createdAt)}
+        <>
+            <Dialog
+                open={open}
+                onClose={onClose}
+                maxWidth="md"
+                fullWidth
+                disableScrollLock
+                PaperProps={{ sx: { maxWidth: 1120, borderRadius: 1, overflow: 'hidden' } }}
+            >
+                <DialogTitle sx={{ borderBottom: '1px solid #e2e8f0', p: 0 }}>
+                    <Box sx={{ bgcolor: '#fff', color: '#172b4d', px: 2, py: 1.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="h6" fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>
+                                {listing?.title || 'Service Listing Details'}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mt: 0.25, color: '#64748b' }}>
+                                {listingId ? `ID: ${listingId}` : 'Listing details'}
                             </Typography>
                         </Box>
-
-                        {imageUrl && (
-                            <Box
-                                component="img"
-                                src={imageUrl}
-                                alt={listing.title || 'Service listing'}
-                                sx={{
-                                    width: { xs: '100%', sm: 260 },
-                                    height: 150,
-                                    minHeight: 150,
-                                    objectFit: 'cover',
-                                    borderRadius: 1,
-                                    border: '1px solid #e2e8f0',
-                                    mb: 2,
-                                    display: 'block',
-                                }}
-                            />
-                        )}
-
-                        <Box sx={{ display: 'grid', gap: 2 }}>
-                            {detailSections.map((section) => (
-                                <DetailSection key={section.title} title={section.title} items={section.items} />
-                            ))}
-                        </Box>
-
-                        {Array.isArray(listing.includes) && listing.includes.length > 0 && (
-                            <Box sx={{ mt: 1, borderBottom: '1px solid #e5e7eb', pb: 1.5 }}>
-                                <Typography sx={{ color: '#1f2a77', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                                    Includes
-                                </Typography>
-                                <Stack direction="row" columnGap={1.5} rowGap={1} flexWrap="wrap" sx={{ mt: 1.5 }}>
-                                    {listing.includes.map((item) => (
-                                        <Chip key={String(item)} label={String(item)} size="small" sx={{ bgcolor: '#f1f5f9', color: '#334155' }} />
-                                    ))}
-                                </Stack>
-                            </Box>
-                        )}
-
-                        {canReview && (
-                            <Box sx={{ mt: 2 }}>
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    minRows={2}
-                                    size="small"
-                                    label="Reject Reason"
-                                    placeholder="Enter reason before rejecting the listing"
-                                    value={reason}
-                                    onChange={(event) => setReason(event.target.value)}
-                                    disabled={actionLoading}
-                                />
-                            </Box>
-                        )}
+                        <IconButton onClick={onClose} size="small" sx={{ color: '#172b4d', bgcolor: '#f1f5f9', '&:hover': { bgcolor: '#e2e8f0' } }}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
-                )}
-            </DialogContent>
+                </DialogTitle>
 
-            <DialogActions sx={{ p: 2, borderTop: '1px solid #e2e8f0', gap: 1, flexWrap: 'wrap' }}>
-                <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }} disabled={actionLoading}>
-                    Close
-                </Button>
-                {canReview && (
-                    <>
-                        <Button
-                            variant="contained"
-                            startIcon={actionLoading ? <CircularProgress color="inherit" size={16} /> : <CheckCircleIcon />}
-                            onClick={onApprove}
-                            disabled={!listingId || actionLoading}
-                            sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, textTransform: 'none' }}
-                        >
-                            Approve Listing
-                        </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<CancelIcon />}
-                            onClick={handleReject}
-                            disabled={!listingId || actionLoading}
-                            sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' }, textTransform: 'none' }}
-                        >
-                            Reject Listing
-                        </Button>
-                    </>
-                )}
-            </DialogActions>
-        </Dialog>
+                <DialogContent sx={{ px: 0, pt: 0, pb: 0, bgcolor: '#fff', maxHeight: '64vh', overflowY: 'auto' }}>
+                    {!listing ? (
+                        <Box sx={{ p: 2 }}>
+                            <Alert severity="info">No listing selected.</Alert>
+                        </Box>
+                    ) : (
+                        <Box sx={{ px: 3, py: 2 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', mb: 1.5 }}>
+                                <StatusChip label={formatStatus(listingStatus)} status={listingStatus} size="small" />
+                                <Typography variant="body2" sx={{ color: '#64748b' }}>
+                                    Created: {formatDate(listing.createdAt)}
+                                </Typography>
+                            </Box>
+
+                            {imageUrl && (
+                                <Box
+                                    component="img"
+                                    src={imageUrl}
+                                    alt={listing.title || 'Service listing'}
+                                    sx={{
+                                        width: { xs: '100%', sm: 260 },
+                                        height: 150,
+                                        minHeight: 150,
+                                        objectFit: 'cover',
+                                        borderRadius: 1,
+                                        border: '1px solid #e2e8f0',
+                                        mb: 2,
+                                        display: 'block',
+                                    }}
+                                />
+                            )}
+
+                            <Box sx={{ display: 'grid', gap: 2 }}>
+                                {detailSections.map((section) => (
+                                    <DetailSection key={section.title} title={section.title} items={section.items} />
+                                ))}
+                            </Box>
+
+                            {Array.isArray(listing.includes) && listing.includes.length > 0 && (
+                                <Box sx={{ mt: 1, borderBottom: '1px solid #e5e7eb', pb: 1.5 }}>
+                                    <Typography sx={{ color: '#1f2a77', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                                        Includes
+                                    </Typography>
+                                    <Stack direction="row" columnGap={1.5} rowGap={1} flexWrap="wrap" sx={{ mt: 1.5 }}>
+                                        {listing.includes.map((item) => (
+                                            <Chip key={String(item)} label={String(item)} size="small" sx={{ bgcolor: '#f1f5f9', color: '#334155' }} />
+                                        ))}
+                                    </Stack>
+                                </Box>
+                            )}
+                        </Box>
+                    )}
+                </DialogContent>
+
+                <DialogActions sx={{ p: 2, borderTop: '1px solid #e2e8f0', gap: 1, flexWrap: 'wrap' }}>
+                    <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }} disabled={actionLoading}>
+                        Close
+                    </Button>
+                    {canReview && (
+                        <>
+                            <Button
+                                variant="contained"
+                                startIcon={actionLoading ? <CircularProgress color="inherit" size={16} /> : <CheckCircleIcon />}
+                                onClick={onApprove}
+                                disabled={!listingId || actionLoading}
+                                sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' }, textTransform: 'none' }}
+                            >
+                                Approve Listing
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<CancelIcon />}
+                                onClick={() => setRejectDialogOpen(true)}
+                                disabled={!listingId || actionLoading}
+                                sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' }, textTransform: 'none' }}
+                            >
+                                Reject Listing
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={rejectDialogOpen}
+                onClose={() => {
+                    if (!actionLoading) setRejectDialogOpen(false);
+                }}
+                maxWidth="xs"
+                fullWidth
+                disableScrollLock
+                PaperProps={{ sx: { borderRadius: 1 } }}
+            >
+                <DialogTitle sx={{ borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <Typography variant="h6" fontWeight={700}>
+                        Reject Service Listing
+                    </Typography>
+                    <IconButton size="small" onClick={() => setRejectDialogOpen(false)} disabled={actionLoading}>
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 2.5 }}>
+                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1.5 }}>
+                        Add a reason before rejecting this service listing.
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        autoFocus
+                        size="small"
+                        label="Reject Reason"
+                        placeholder="Enter rejection reason"
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        disabled={actionLoading}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ p: 2, borderTop: '1px solid #e2e8f0', gap: 1 }}>
+                    <Button onClick={() => setRejectDialogOpen(false)} variant="outlined" sx={{ textTransform: 'none' }} disabled={actionLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={actionLoading ? <CircularProgress color="inherit" size={16} /> : <CancelIcon />}
+                        onClick={handleReject}
+                        disabled={!listingId || actionLoading}
+                        sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' }, textTransform: 'none' }}
+                    >
+                        Reject Listing
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 }
 

@@ -19,6 +19,10 @@ export const serviceListingCategories = [
 
 export const SERVICE_FILTER_EVENT = "immify-service-filter";
 
+function getFirstArray(...values) {
+  return values.find((value) => Array.isArray(value) && value.length > 0) || [];
+}
+
 function findListings(value) {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== "object") return [];
@@ -36,6 +40,91 @@ function nameOf(value) {
   return typeof value === "string" ? value : value?.name || value?.title || value?.serviceName || value?.categoryName || "";
 }
 
+function getCategoryId(category) {
+  return String(category?.serviceCategoryId || category?.categoryId || category?.id || category?._id || category?.uuid || "");
+}
+
+function getCategoryName(category) {
+  return category?.name || category?.categoryName || category?.serviceCategoryName || category?.title || "Unnamed Category";
+}
+
+function getServiceId(service) {
+  if (typeof service === "string") return "";
+  return String(service?.serviceId || service?.id || service?._id || service?.uuid || "");
+}
+
+function getServiceName(service) {
+  if (typeof service === "string") return service;
+  return service?.name || service?.serviceName || service?.title || "Unnamed Service";
+}
+
+function dedupeByIdOrName(items) {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const key = item.id ? `id:${item.id}` : `name:${item.name.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export function normalizeCategoryServices(payload = {}) {
+  const data = payload?.data ?? payload ?? {};
+  const nestedData = data?.data ?? data ?? {};
+  const services = getFirstArray(
+    data?.services,
+    data?.service,
+    data?.serviceList,
+    data?.serviceItems,
+    data?.service_items,
+    data?.children,
+    data?.data?.services,
+    data?.data?.service,
+    data?.data?.serviceList,
+    data?.data?.serviceItems,
+    nestedData?.services,
+    nestedData?.service,
+    nestedData?.serviceList,
+    nestedData?.serviceItems,
+    Array.isArray(data) ? data : [],
+    Array.isArray(nestedData) ? nestedData : []
+  );
+
+  return dedupeByIdOrName(services.map((service) => ({
+    id: getServiceId(service),
+    name: getServiceName(service),
+    raw: service,
+  })).filter((service) => service.id && service.name));
+}
+
+function normalizeServiceCategories(responseData) {
+  const data = responseData?.data ?? responseData ?? {};
+  const categories = getFirstArray(
+    data,
+    data?.content,
+    data?.items,
+    data?.results,
+    data?.categories,
+    data?.serviceCategories,
+    data?.rows,
+    data?.list,
+    data?.data,
+    data?.data?.content,
+    data?.data?.items,
+    data?.data?.results,
+    data?.data?.categories,
+    data?.data?.serviceCategories
+  );
+
+  return dedupeByIdOrName(categories.map((category) => ({
+    id: getCategoryId(category),
+    name: getCategoryName(category),
+    services: normalizeCategoryServices(category),
+    raw: category,
+  })).filter((category) => category.id && category.name));
+}
+
 function normalizeImageUrl(value) {
   if (typeof value !== "string") return value?.url || fallbackImage;
   const markdownLink = value.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/);
@@ -45,6 +134,8 @@ function normalizeImageUrl(value) {
 export function normalizeServiceListing(item) {
   const id = item.serviceListingId || item.listingId || item.id || item._id || item.uuid;
   if (!id) return null;
+  const categoryId = item.categoryId || item.serviceCategoryId || item.category?.id || item.serviceCategory?.id || item.category?._id || item.serviceCategory?._id || "";
+  const serviceId = item.serviceId || item.service?.id || item.service?._id || item.serviceListingServiceId || "";
   const categoryName = nameOf(item.category) || nameOf(item.serviceCategory) || item.categoryName || "Services";
   const service = item.title || item.serviceTitle || item.serviceName || nameOf(item.service) || "Service listing";
   const priceValue = Number(item.priceInPaise ?? 0) / 100;
@@ -53,8 +144,11 @@ export function normalizeServiceListing(item) {
   const city = item.dynamicData?.city || item.dynamicData?.country || item.city || item.location || "Online";
   return {
     id: String(id),
+    vendorUserId: item.vendorUserId || item.vendor_user_id || item.vendor?.userId || item.vendor?.id || "",
+    categoryId: categoryId ? String(categoryId) : "",
+    serviceId: serviceId ? String(serviceId) : "",
     detailSlug: `listing-${id}`,
-    categorySlug: String(item.categoryId || item.category?.id || categoryName).toLowerCase(),
+    categorySlug: String(categoryId || categoryName).toLowerCase(),
     categoryName,
     category: item.category || null,
     categoryDescription: item.category?.description || "",
@@ -94,16 +188,50 @@ function normalizeListingCollection(responseData) {
     .filter((listing) => listing && !seen.has(listing.id) && seen.add(listing.id));
 }
 
-export async function fetchServiceListings({ categoryName = "" } = {}) {
+export async function fetchServiceListings({ categoryName = "", vendorUserId = "" } = {}) {
   const apiCategoryName = categoryName.trim() === "Immigration Services" ? "Immigration" : categoryName.trim();
-  const endpoint = apiCategoryName
-    ? `/service-listings?categoryName=${encodeURIComponent(apiCategoryName)}`
-    : "/service-listings";
-  const response = await MainApi.get(endpoint, {
+  const response = await MainApi.get("/service-listings", {
+    params: {
+      categoryName: apiCategoryName,
+      vendorUserId,
+    },
     skipAuth: true,
     suppressAuthRedirect: true,
   });
   return normalizeListingCollection(response.data);
+}
+
+export async function fetchServiceListingsByCategoryId(serviceCategoryId) {
+  if (!serviceCategoryId) return [];
+
+  const response = await MainApi.get(`/service-listings/category/${encodeURIComponent(serviceCategoryId)}`, {
+    skipAuth: true,
+    suppressAuthRedirect: true,
+  });
+
+  return normalizeListingCollection(response.data);
+}
+
+export async function fetchServiceCategories() {
+  const response = await MainApi.get("/service-categories", {
+    skipAuth: true,
+    suppressAuthRedirect: true,
+  });
+  return normalizeServiceCategories(response.data);
+}
+
+export async function fetchCategoryServices(serviceCategoryId) {
+  if (!serviceCategoryId) return [];
+
+  const response = await MainApi.get(`/service-categories/${encodeURIComponent(serviceCategoryId)}`, {
+    skipAuth: true,
+    suppressAuthRedirect: true,
+  });
+  const categories = normalizeServiceCategories(response.data);
+  const detailCategory = categories[0] || null;
+  const services = normalizeCategoryServices(response.data);
+
+  return detailCategory?.services?.length ? detailCategory.services : services;
 }
 
 export async function fetchServiceListingById(id) {

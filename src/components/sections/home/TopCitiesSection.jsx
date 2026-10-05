@@ -2,13 +2,15 @@ import Link from "next/link";
 import LeadGenerationButton from "../../common/LeadGenerationButton";
 import { topCities } from "./homeData";
 
+const fallbackImage = "/images/services/service-dummy.svg";
+
 export default function TopCitiesSection() {
   return (
     <section id="cities" className="w-full bg-[#f7f9ff] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 text-center">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#1f2a77]">Explore India</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Top cities in India</h2>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900 sm:text-2xl">Top cities in India</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
             Find local consultants and support teams in leading migration cities.
           </p>
@@ -25,11 +27,11 @@ export default function TopCitiesSection() {
           >
             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl">
               <img
-                src={city.image}
+                src={city.image || fallbackImage}
                 alt={city.name}
                 className="h-full w-full object-cover"
                 onError={(event) => {
-                  event.currentTarget.src = "/images/services/service-dummy.svg";
+                  event.currentTarget.src = fallbackImage;
                 }}
               />
             </div>
