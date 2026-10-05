@@ -4,6 +4,7 @@ export const heroSlides = [
     subtitle:
       "From visas and study abroad guidance to relocation and documentation, Immify helps you plan every step with confidence.",
     image: "/images/home/home-hero-immigration.png",
+    imagePosition: "62% center",
     badge: "Trusted by aspiring global movers",
   },
   {
@@ -11,6 +12,7 @@ export const heroSlides = [
     subtitle:
       "Explore PR pathways, skilled migration options, family sponsorship, and immigration consultations in one place.",
     image: "/images/home/home-hero-documentation.png",
+    imagePosition: "64% center",
     badge: "Expert-led support",
   },
   {
@@ -18,6 +20,7 @@ export const heroSlides = [
     subtitle:
       "Get help with admissions, test prep, relocation, and documentation for a smoother transition abroad.",
     image: "/images/home/home-hero-study.png",
+    imagePosition: "62% center",
     badge: "End-to-end assistance",
   },
   {
@@ -25,6 +28,7 @@ export const heroSlides = [
     subtitle:
       "Connect with trusted experts for work visas, global opportunities, and smooth relocation support.",
     image: "/images/home/home-hero-work.png",
+    imagePosition: "64% center",
     badge: "Career migration support",
   },
 ];

@@ -42,21 +42,21 @@ export default function PremiumServicesSection() {
           <div className="p-2 sm:p-4">
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-500">What We Offer</p>
-              <h2 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Premium Immigration Services</h2>
+              <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Premium Immigration Services</h2>
               <div className="mx-auto mt-2 h-1 w-14 rounded-full bg-amber-400" />
-              <p className="mt-4 text-sm leading-8 text-slate-600 sm:text-xl">
+              <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
                 Dedicated high-priority support tailored for clients who need speed, precision, and personalized service.
               </p>
             </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {premiumServiceItems.map((service) => (
                 <article
                   key={service.slug}
                   className="group rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.10)]"
                 >
                   <div className="mb-4 flex items-start justify-between gap-3">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 text-4xl">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 text-3xl">
                       {service.icon}
                     </div>
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
@@ -64,7 +64,7 @@ export default function PremiumServicesSection() {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-semibold text-slate-900">{service.title}</h3>
+                  <h3 className="text-base font-semibold text-slate-900">{service.title}</h3>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{service.description}</p>
 
                   <Link href={`/premium-services/${service.slug}`} className="mt-5 inline-flex items-center gap-3 text-sm font-semibold text-blue-700">
@@ -82,7 +82,7 @@ export default function PremiumServicesSection() {
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-500">Latest News</p>
                 <div className="mt-2 h-1 w-12 rounded-full bg-amber-400" />
-                <h3 className="mt-4 text-3xl font-bold leading-tight text-slate-900">Stay Updated with Important Immigration News</h3>
+                <h3 className="mt-3 text-xl font-bold leading-tight text-slate-900">Stay Updated with Important Immigration News</h3>
               </div>
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
                 ▦
@@ -100,7 +100,7 @@ export default function PremiumServicesSection() {
                       {item.badge && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase text-amber-600">{item.badge}</span>}
                       <span>{item.date}</span>
                     </div>
-                    <h4 className="mt-3 text-xl font-semibold leading-tight text-slate-900">{item.title}</h4>
+                    <h4 className="mt-3 text-base font-semibold leading-tight text-slate-900">{item.title}</h4>
                     <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
                   </article>
                 ))}

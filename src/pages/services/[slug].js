@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import LeadGenerationButton from "../../components/common/LeadGenerationButton";
 import { serviceCategories } from "../../components/sections/home/homeData";
+import {
+  fetchServiceCategories,
+  fetchServiceListingsByCategoryId,
+} from "../../util/serviceListings";
 
 const serviceDummyImage = "/images/services/service-detail-dummy.png";
 
@@ -23,10 +28,55 @@ export async function getStaticProps({ params }) {
 
 function ServiceDetailPage({ category }) {
   const moreCategories = serviceCategories.filter((item) => item.slug !== category.slug).slice(0, 4);
+  const [categoryListings, setCategoryListings] = useState([]);
+  const [categoryListingsLoading, setCategoryListingsLoading] = useState(true);
+  const [categoryListingsError, setCategoryListingsError] = useState("");
   const handleImageFallback = (event) => {
     if (event.currentTarget.src.includes(serviceDummyImage)) return;
     event.currentTarget.src = serviceDummyImage;
   };
+
+  useEffect(() => {
+    let active = true;
+
+    queueMicrotask(() => {
+      if (active) {
+        setCategoryListingsLoading(true);
+        setCategoryListingsError("");
+      }
+    });
+
+    fetchServiceCategories()
+      .then((categories) => {
+        const matchedCategory = categories.find((item) => (
+          item.name?.toLowerCase() === category.name.toLowerCase()
+          || item.raw?.slug === category.slug
+          || item.id === category.slug
+        ));
+
+        if (!matchedCategory?.id) {
+          throw new Error("Service category was not found.");
+        }
+
+        return fetchServiceListingsByCategoryId(matchedCategory.id);
+      })
+      .then((items) => {
+        if (active) setCategoryListings(items);
+      })
+      .catch((error) => {
+        if (active) {
+          setCategoryListings([]);
+          setCategoryListingsError(error?.message || "Unable to load vendors for this service.");
+        }
+      })
+      .finally(() => {
+        if (active) setCategoryListingsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [category.name, category.slug]);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,_#f8faff_0%,_#f3f6fb_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -137,6 +187,64 @@ function ServiceDetailPage({ category }) {
               ))}
             </div>
           </div>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-700">Available vendors</p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">Vendors for {category.name}</h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  Live listings loaded from this service category so users can compare providers, prices, and locations.
+                </p>
+              </div>
+              <Link href={{ pathname: "/marketplace/vendors", query: { category: category.slug } }} className="text-sm font-semibold text-sky-700 hover:text-sky-800">
+                View all vendors
+              </Link>
+            </div>
+
+            {categoryListingsLoading ? (
+              <p className="py-10 text-center text-sm text-slate-500">Loading vendors for this service...</p>
+            ) : categoryListings.length ? (
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {categoryListings.map((listing) => {
+                  const vendorName = [listing.vendor?.firstName, listing.vendor?.lastName].filter(Boolean).join(" ") || listing.vendor?.name || "Verified provider";
+
+                  return (
+                    <Link
+                      key={listing.id}
+                      href={`/marketplace/${listing.detailSlug}`}
+                      className="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 transition hover:border-sky-200 hover:bg-white hover:shadow-md"
+                    >
+                      <img
+                        src={listing.image || serviceDummyImage}
+                        alt={listing.title}
+                        className="h-36 w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        onError={handleImageFallback}
+                      />
+                      <div className="p-4">
+                        <p className="text-xs font-semibold uppercase text-sky-700">{listing.serviceName || listing.categoryName}</p>
+                        <h4 className="mt-2 line-clamp-2 min-h-11 text-base font-bold leading-6 text-slate-900">{listing.title}</h4>
+                        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
+                          {listing.description || listing.overview || "Explore provider details, service process, and package information."}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {[listing.city, vendorName, listing.priceLabel].filter(Boolean).slice(0, 3).map((chip) => (
+                            <span key={chip} className="rounded-full border border-sky-100 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-800">
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="py-10 text-center text-sm text-slate-500">
+                {categoryListingsError || "No vendors are available for this service category right now."}
+              </p>
+            )}
+          </section>
 
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_36px_rgba(15,23,42,0.06)] sm:p-8">

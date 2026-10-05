@@ -4,6 +4,7 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import { destinations } from "../mbbs/mbbsData";
 
 const admissionSupport = ["Eligibility review", "University shortlist", "Application support", "Visa guidance"];
+const fallbackImage = "/images/services/service-detail-dummy.png";
 
 export default function CountrySection() {
   return (
@@ -12,7 +13,7 @@ export default function CountrySection() {
         <div className="text-center">
           <div className="mx-auto max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Medical education overseas</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">MBBS Study Abroad</h2>
+            <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">MBBS Study Abroad</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
               Explore medical study destinations and compare indicative tuition and course duration in one place.
             </p>
@@ -32,11 +33,11 @@ export default function CountrySection() {
             >
               <div className="aspect-[16/10] overflow-hidden bg-slate-200">
                 <img
-                  src={destination.image}
+                  src={destination.image || fallbackImage}
                   alt=""
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   onError={(event) => {
-                    event.currentTarget.src = "/images/services/service-detail-dummy.png";
+                    event.currentTarget.src = fallbackImage;
                   }}
                 />
               </div>

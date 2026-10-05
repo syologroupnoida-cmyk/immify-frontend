@@ -2,42 +2,44 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import { fetchServiceListings, serviceListingFallbackImage } from "@/util/serviceListings";
-import { marketplaceTabs } from "../home/homeData";
+import {
+  fetchCategoryServices,
+  fetchServiceCategories,
+  fetchServiceListings,
+  serviceListingFallbackImage,
+} from "@/util/serviceListings";
 
 const pageSize = 8;
-const categoryLabels = {
-  "test-prepation": "Test Preparation",
-  "document-attention-services": "Document Attestation Services",
-  "helth-insurance": "Health Insurance",
-  "legal-and-complance": "Legal and Compliance",
-};
-const serviceTypes = marketplaceTabs.map(({ slug, name }) => ({ slug, name: categoryLabels[slug] || name }));
 
-function getServiceType(item) {
-  const name = item.categoryName.toLowerCase();
-  if (/business setup|corporate immigration/.test(name)) return "business-setup-services-and-immigration";
-  if (/family relocation/.test(name)) return "family-relocation-services";
-  if (/study abroad|overseas education/.test(name)) return "study-abroad-services";
-  if (/test prep|language training/.test(name)) return "test-prepation";
-  if (/document|attestation/.test(name)) return "document-attention-services";
-  if (/health|helth|insurance/.test(name)) return "helth-insurance";
-  if (/legal|complian/.test(name)) return "legal-and-complance";
-  if (/financial|finance/.test(name)) return "financial-services";
-  if (/forex|foreign exchange/.test(name)) return "forex-services";
-  if (/international|global mobility/.test(name)) return "international-services";
-  if (/immigration/.test(name)) return "immigration-services";
-  if (/visa/.test(name)) return "visa-services";
-  return serviceTypes.find((type) => type.slug === item.categorySlug)?.slug || "";
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function matchesCategory(item, category) {
+  if (!category) return true;
+  return item.categoryId === category.id
+    || item.categorySlug === category.id
+    || slugify(item.categoryName) === slugify(category.name)
+    || slugify(item.categorySlug) === slugify(category.name);
 }
 
 export default function MarketplaceMainSection() {
   const router = useRouter();
   const [listings, setListings] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  const [serviceLoading, setServiceLoading] = useState(false);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedTypes, setSelectedTypes] = useState(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [location, setLocation] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [page, setPage] = useState(1);
@@ -54,6 +56,24 @@ export default function MarketplaceMainSection() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    fetchServiceCategories()
+      .then((items) => {
+        if (!active) return;
+        setCategories(items);
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      })
+      .finally(() => {
+        if (active) setCategoryLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     const element = resultsRef.current;
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => setResultsHeight(entry.borderBoxSize?.[0]?.blockSize || entry.contentRect.height));
@@ -61,31 +81,86 @@ export default function MarketplaceMainSection() {
     return () => observer.disconnect();
   }, []);
 
-  const categoryKey = selectedTypes === null
-    ? (typeof router.query.category === "string" ? router.query.category : "")
-    : selectedTypes.join("|");
-  const selectedCategories = useMemo(() => categoryKey ? categoryKey.split("|") : [], [categoryKey]);
-  const typeCounts = useMemo(() => listings.reduce((counts, item) => {
-    const type = getServiceType(item);
-    if (type) counts[type] = (counts[type] || 0) + 1;
+  useEffect(() => {
+    if (!router.isReady || !categories.length || selectedCategoryId) return;
+
+    const requestedCategory = typeof router.query.categoryId === "string"
+      ? router.query.categoryId
+      : typeof router.query.category === "string"
+        ? router.query.category
+        : "";
+    if (!requestedCategory) return;
+
+    const matchedCategory = categories.find((category) => (
+      category.id === requestedCategory || slugify(category.name) === slugify(requestedCategory)
+    ));
+
+    if (matchedCategory) {
+      queueMicrotask(() => {
+        setSelectedCategoryId(matchedCategory.id);
+      });
+    }
+  }, [categories, router.isReady, router.query.category, router.query.categoryId, selectedCategoryId]);
+
+  useEffect(() => {
+    let active = true;
+    const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+    const fallbackServices = selectedCategory?.services || [];
+
+    if (!selectedCategoryId) {
+      queueMicrotask(() => {
+        if (!active) return;
+        setServices([]);
+        setServiceLoading(false);
+      });
+      return () => { active = false; };
+    }
+
+    queueMicrotask(() => {
+      if (!active) return;
+      setServices(fallbackServices);
+      setServiceLoading(true);
+    });
+    fetchCategoryServices(selectedCategoryId)
+      .then((items) => {
+        if (active) setServices(items.length ? items : fallbackServices);
+      })
+      .catch(() => {
+        if (active) setServices(fallbackServices);
+      })
+      .finally(() => {
+        if (active) setServiceLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [categories, selectedCategoryId]);
+
+  const selectedCategory = useMemo(() => (
+    categories.find((category) => category.id === selectedCategoryId) || null
+  ), [categories, selectedCategoryId]);
+  const categoryCounts = useMemo(() => listings.reduce((counts, item) => {
+    const category = categories.find((entry) => matchesCategory(item, entry));
+    if (category?.id) counts[category.id] = (counts[category.id] || 0) + 1;
     return counts;
-  }, {}), [listings]);
-  const toggleType = (slug) => {
-    setSelectedTypes(selectedCategories.includes(slug) ? selectedCategories.filter((type) => type !== slug) : [...selectedCategories, slug]);
+  }, {}), [categories, listings]);
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setSelectedServiceId("");
     setPage(1);
   };
   const filtered = useMemo(() => listings.filter((item) => {
     const query = search.trim().toLowerCase();
     return (!query || `${item.service} ${item.categoryName} ${item.description}`.toLowerCase().includes(query))
-      && (!selectedCategories.length || selectedCategories.includes(getServiceType(item)))
+      && (!selectedCategory || matchesCategory(item, selectedCategory))
+      && (!selectedServiceId || item.serviceId === selectedServiceId)
       && (!location || item.city.toLowerCase().includes(location.trim().toLowerCase()))
       && (!maxPrice || item.priceValue <= Number(maxPrice));
-  }), [listings, search, selectedCategories, location, maxPrice]);
+  }), [listings, search, selectedCategory, selectedServiceId, location, maxPrice]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const activePage = Math.min(page, totalPages);
   const visible = filtered.slice((activePage - 1) * pageSize, activePage * pageSize);
 
-  const reset = () => { setSearch(""); setSelectedTypes([]); setLocation(""); setMaxPrice(""); setPage(1); };
+  const reset = () => { setSearch(""); setSelectedCategoryId(""); setSelectedServiceId(""); setLocation(""); setMaxPrice(""); setPage(1); };
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] pb-12 pt-6 sm:pt-8">
@@ -108,20 +183,36 @@ export default function MarketplaceMainSection() {
             <input id="service-search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search services" className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none" />
             <SearchRoundedIcon className="h-4 w-4 text-slate-400" />
           </div>
-          <fieldset className="mt-5">
-            <legend className="text-sm font-semibold text-slate-800">Service types</legend>
-            <div className="mt-2 space-y-1">
-              {serviceTypes.map((type) => (
-                <label key={type.slug} className="flex cursor-pointer items-start justify-between gap-2 rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-white">
-                  <span className="flex min-w-0 items-start gap-2">
-                    <input type="checkbox" checked={selectedCategories.includes(type.slug)} onChange={() => toggleType(type.slug)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-700" />
-                    <span>{type.name}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-slate-500">{typeCounts[type.slug] || 0}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-category">Category</label>
+          <select
+            id="service-category"
+            value={selectedCategoryId}
+            onChange={(event) => handleCategoryChange(event.target.value)}
+            disabled={categoryLoading}
+            className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
+          >
+            <option value="">{categoryLoading ? "Loading categories..." : "All categories"}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}{categoryCounts[category.id] ? ` (${categoryCounts[category.id]})` : ""}
+              </option>
+            ))}
+          </select>
+          <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-filter">Services</label>
+          <select
+            id="service-filter"
+            value={selectedServiceId}
+            onChange={(event) => { setSelectedServiceId(event.target.value); setPage(1); }}
+            disabled={!selectedCategoryId || serviceLoading}
+            className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
+          >
+            <option value="">
+              {!selectedCategoryId ? "Select category first" : serviceLoading ? "Loading services..." : "All services"}
+            </option>
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>{service.name}</option>
+            ))}
+          </select>
           <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-location">Location</label>
           <input id="service-location" value={location} onChange={(event) => { setLocation(event.target.value); setPage(1); }} placeholder="City or country" className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm" />
           <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="service-price">Maximum price</label>

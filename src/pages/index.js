@@ -6,7 +6,6 @@ import PremiumServicesSection from "../components/sections/home/PremiumServicesS
 import CategorySection from "../components/sections/home/CategorySection";
 import CountrySection from "../components/sections/home/CountrySection";
 import UniversitySection from "../components/sections/home/UniversitySection";
-import TopCitiesSection from "../components/sections/home/TopCitiesSection";
 import FreeQuoteSection from "../components/sections/home/FreeQuoteSection";
 import ImmigrationVendorsByLocationSection from "../components/sections/home/ImmigrationVendorsByLocationSection";
 
@@ -19,10 +18,9 @@ function Home() {
         <CountrySection />
         <UniversitySection />
         <ServicesSection />
+        <CategorySection />
         <JobsSection />
         <PremiumServicesSection />
-        <CategorySection />
-        <TopCitiesSection />
         <FreeQuoteSection />
         <ImmigrationVendorsByLocationSection />
       </div>
