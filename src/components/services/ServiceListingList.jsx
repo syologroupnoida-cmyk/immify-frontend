@@ -53,6 +53,7 @@ const tabs = [
     { value: 'DRAFT', label: 'Draft', status: 'DRAFT', color: 'default' },
     { value: 'PENDING_REVIEW', label: 'Pending', status: 'PENDING_REVIEW', color: 'warning' },
     { value: 'APPROVED', label: 'Approved', status: 'APPROVED', color: 'success' },
+    { value: 'REJECTED', label: 'Rejected', status: 'REJECTED', color: 'error' },
 ];
 
 const StyledTableRow = styled(TableRow)(() => ({
@@ -494,7 +495,7 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
                                 disabled={!listingId || actionLoading}
                                 sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' }, textTransform: 'none' }}
                             >
-                                Reject Listing
+                                Reject Service
                             </Button>
                         </>
                     )}
@@ -513,7 +514,7 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
             >
                 <DialogTitle sx={{ borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
                     <Typography variant="h6" fontWeight={700}>
-                        Reject Service Listing
+                        Reject Service
                     </Typography>
                     <IconButton size="small" onClick={() => setRejectDialogOpen(false)} disabled={actionLoading}>
                         <CloseIcon fontSize="small" />
@@ -521,7 +522,7 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
                 </DialogTitle>
                 <DialogContent sx={{ pt: 2.5 }}>
                     <Typography variant="body2" sx={{ color: '#64748b', mb: 1.5 }}>
-                        Add a reason before rejecting this service listing.
+                        Add a reason before rejecting this service.
                     </Typography>
                     <TextField
                         fullWidth
@@ -547,7 +548,7 @@ function ServiceListingDetailsModal({ open, listing, actionLoading, canReview, o
                         disabled={!listingId || actionLoading}
                         sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' }, textTransform: 'none' }}
                     >
-                        Reject Listing
+                        Reject Service
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -579,7 +580,15 @@ export default function ServiceListingList({
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [selectedListing, setSelectedListing] = useState(null);
     const isServerPaginated = endpoint === ADMIN_SERVICE_LISTINGS_ENDPOINT;
+    const isVendorListingTable = endpoint === VENDOR_SERVICE_LISTINGS_ENDPOINT;
     const requestedStatus = endpoint === ADMIN_SERVICE_LISTINGS_ENDPOINT && activeTab !== 'ALL' ? activeTab : '';
+    const canDeleteListing = (listing) => {
+        if (!canManage) return false;
+        if (!isVendorListingTable) return true;
+
+        const listingStatus = String(getListingStatus(listing) || '').toUpperCase();
+        return listingStatus === 'DRAFT' || listingStatus === 'REJECTED';
+    };
 
     const fetchListings = useCallback(async () => {
         const fetchId = ++latestFetchId.current;
@@ -673,7 +682,10 @@ export default function ServiceListingList({
 
         setActionLoading(true);
         try {
-            const response = await MainApi.delete(`${endpoint}/${listingId}`);
+            const deleteEndpoint = isVendorListingTable
+                ? `${VENDOR_SERVICE_LISTINGS_ENDPOINT}/${listingId}`
+                : `${endpoint}/${listingId}`;
+            const response = await MainApi.delete(deleteEndpoint);
             await Swal.fire({
                 icon: 'success',
                 title: 'Deleted',
@@ -726,16 +738,18 @@ export default function ServiceListingList({
             return;
         }
 
-        const endpoint = `${ADMIN_SERVICE_LISTINGS_ENDPOINT}/${listingId}/${action}`;
+        const actionEndpoint = action === 'reject'
+            ? `${ADMIN_SERVICE_LISTINGS_ENDPOINT}/${listingId}/reject`
+            : `${ADMIN_SERVICE_LISTINGS_ENDPOINT}/${listingId}/${action}`;
         const payload = action === 'reject' ? { reason: reason.trim() } : {};
 
         setActionLoading(true);
         try {
-            const response = await MainApi.post(endpoint, payload);
+            const response = await MainApi.post(actionEndpoint, payload);
             await Swal.fire({
                 icon: 'success',
-                title: action === 'approve' ? 'Listing Approved' : 'Listing Rejected',
-                text: getApiMessage(response?.data, action === 'approve' ? 'Service listing approved successfully.' : 'Service listing rejected successfully.'),
+                title: action === 'approve' ? 'Listing Approved' : 'Service Rejected',
+                text: getApiMessage(response?.data, action === 'approve' ? 'Service listing approved successfully.' : 'Service rejected successfully.'),
                 confirmButtonColor: '#f79f03',
             });
 
@@ -987,7 +1001,7 @@ export default function ServiceListingList({
                             <ListItemText>Edit</ListItemText>
                         </MenuItem>
                     )}
-                    {canManage && (
+                    {canDeleteListing(menuListing) && (
                         <MenuItem onClick={() => handleDeleteListing(menuListing)}>
                             <ListItemIcon>
                                 <DeleteIcon color="error" />

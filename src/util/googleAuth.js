@@ -42,6 +42,84 @@ function loadGoogleIdentityScript() {
     return googleScriptPromise;
 }
 
+function createGoogleButtonDialog({ onClose }) {
+    const overlay = document.createElement('div');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:9999',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'background:rgba(15,23,42,0.48)',
+        'padding:20px',
+    ].join(';');
+
+    const panel = document.createElement('div');
+    panel.style.cssText = [
+        'width:min(360px,100%)',
+        'border-radius:12px',
+        'background:#fff',
+        'box-shadow:0 24px 60px rgba(15,23,42,0.25)',
+        'padding:22px',
+        'font-family:Inter,Roboto,Arial,sans-serif',
+        'text-align:center',
+    ].join(';');
+
+    const title = document.createElement('div');
+    title.textContent = 'Continue with Google';
+    title.style.cssText = 'color:#0f172a;font-size:18px;font-weight:700;margin-bottom:8px';
+
+    const subtitle = document.createElement('div');
+    subtitle.textContent = 'Choose your Google account to continue.';
+    subtitle.style.cssText = 'color:#64748b;font-size:14px;margin-bottom:18px';
+
+    const buttonHost = document.createElement('div');
+    buttonHost.style.cssText = 'display:flex;justify-content:center;min-height:44px';
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.textContent = 'Cancel';
+    closeButton.style.cssText = [
+        'margin-top:16px',
+        'border:1px solid #cbd5e1',
+        'border-radius:8px',
+        'background:#fff',
+        'color:#334155',
+        'font-size:14px',
+        'font-weight:600',
+        'padding:8px 14px',
+        'cursor:pointer',
+    ].join(';');
+
+    const close = () => {
+        overlay.remove();
+    };
+
+    closeButton.addEventListener('click', () => {
+        close();
+        onClose?.();
+    });
+
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+            close();
+            onClose?.();
+        }
+    });
+
+    panel.appendChild(title);
+    panel.appendChild(subtitle);
+    panel.appendChild(buttonHost);
+    panel.appendChild(closeButton);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    return { buttonHost, close };
+}
+
 export async function requestGoogleIdToken() {
     const clientId = getGoogleClientId();
 
@@ -53,11 +131,13 @@ export async function requestGoogleIdToken() {
 
     return new Promise((resolve, reject) => {
         let settled = false;
+        let dialog;
 
         const finish = (handler, value) => {
             if (settled) return;
             settled = true;
             window.clearTimeout(timeoutId);
+            dialog?.close();
             handler(value);
         };
 
@@ -73,7 +153,10 @@ export async function requestGoogleIdToken() {
             finish(reject, new Error('Google login timed out. Please try again.'));
         }, 120000);
 
-        window.google.accounts.id.cancel();
+        dialog = createGoogleButtonDialog({
+            onClose: () => finish(reject, new Error('Google login was cancelled.')),
+        });
+
         window.google.accounts.id.initialize({
             client_id: clientId,
             auto_select: false,
@@ -89,29 +172,18 @@ export async function requestGoogleIdToken() {
             },
         });
 
-        window.google.accounts.id.prompt((notification) => {
-            if (notification.isNotDisplayed?.()) {
-                finish(reject, getPromptError(
-                    notification.getNotDisplayedReason?.(),
-                    'Google login could not be displayed.'
-                ));
-                return;
-            }
-
-            if (notification.isSkippedMoment?.()) {
-                finish(reject, getPromptError(
-                    notification.getSkippedReason?.(),
-                    'Google login was skipped.'
-                ));
-                return;
-            }
-
-            if (notification.isDismissedMoment?.()) {
-                finish(reject, getPromptError(
-                    notification.getDismissedReason?.(),
-                    'Google login was cancelled.'
-                ));
-            }
-        });
+        try {
+            window.google.accounts.id.renderButton(dialog.buttonHost, {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with',
+                shape: 'rectangular',
+                logo_alignment: 'left',
+                width: 280,
+            });
+        } catch (error) {
+            finish(reject, getPromptError(error?.message, GOOGLE_LOGIN_SETUP_ERROR));
+        }
     });
 }

@@ -23,7 +23,7 @@ import Swal from 'sweetalert2';
 import SiteLogo from '@/images/site-logo.png';
 import SignUpImage from '@/images/login-form-img.png';
 import MainApi from '@/util/MainApi';
-import { getKycStatus, getPostLoginPath, isAwaitingApproval, normalizeRole } from '@/util/authRouting';
+import { getKycStatus, getPostLoginPath, isAwaitingApproval, isKycComplete, normalizeRole } from '@/util/authRouting';
 import { requestGoogleIdToken } from '@/util/googleAuth';
 import { getApiErrorMessage } from '@/util/profileHelpers';
 import { closeAuthLoading, showAuthLoading } from '@/util/authLoading';
@@ -40,15 +40,6 @@ const theme = createTheme({
 });
 
 const reviewMessage = 'Your application is under review. We will email you once your account is approved.';
-const DASHBOARD_KYC_COMPLETE_STATUSES = new Set([
-  'approved',
-  'approved_by_admin',
-  'completed',
-  'complete',
-  'verified',
-  'true',
-]);
-
 function isReviewMessage(message = '') {
   const normalizedMessage = String(message).toLowerCase();
   return normalizedMessage.includes('under review') ||
@@ -125,39 +116,7 @@ const Login = () => {
 
   const getFirstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
 
-  const isDashboardKycComplete = (payload, user) => {
-    const data = payload?.data || {};
-    const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
-    const kyc = user?.kyc || user?.kycDetails || user?.vendorKyc || vendorProfile?.kyc || data?.kyc || data?.vendorKyc || payload?.kyc || {};
-    const status = String(getKycStatus(payload, user)).trim().toLowerCase();
-
-    return DASHBOARD_KYC_COMPLETE_STATUSES.has(status) || [
-      user?.kycCompleted,
-      user?.isKycCompleted,
-      user?.kycVerified,
-      user?.isKycVerified,
-      user?.hasCompletedKyc,
-      vendorProfile?.kycCompleted,
-      vendorProfile?.isKycCompleted,
-      vendorProfile?.kycVerified,
-      vendorProfile?.isKycVerified,
-      vendorProfile?.hasCompletedKyc,
-      kyc?.completed,
-      kyc?.isCompleted,
-      kyc?.verified,
-      kyc?.isVerified,
-      data?.kycCompleted,
-      data?.isKycCompleted,
-      data?.kycVerified,
-      data?.isKycVerified,
-      data?.hasCompletedKyc,
-      payload?.kycCompleted,
-      payload?.isKycCompleted,
-      payload?.kycVerified,
-      payload?.isKycVerified,
-      payload?.hasCompletedKyc,
-    ].some((value) => value === true || value === 1 || String(value).trim().toLowerCase() === 'true');
-  };
+  const isDashboardKycComplete = (payload, user) => isKycComplete(payload, user);
 
   const persistAuthSession = (payload) => {
     if (typeof window === 'undefined') return { role: 'partner', user: {} };

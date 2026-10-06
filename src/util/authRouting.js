@@ -13,6 +13,16 @@ export const ROLE_DASHBOARD_PATHS = {
 const KYC_COMPLETE_STATUSES = [
     'approved',
     'approved_by_admin',
+    'completed',
+    'complete',
+    'verified',
+    'true',
+];
+
+const KYC_COMPLETE_STEPS = [
+    'dashboard',
+    'complete',
+    'completed',
 ];
 
 const KYC_INCOMPLETE_STEPS = [
@@ -271,7 +281,7 @@ export function shouldUseDefaultLayout(Component, pathname = '') {
     return false;
 }
 
-export function getKycStatus(payload = {}, userOverride = {}) {
+export function getKycStatus(payload = {}, userOverride = null) {
     const data = payload?.data || {};
     const user = userOverride || payload?.user || data?.user || {};
     const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
@@ -313,7 +323,7 @@ export function getKycStatus(payload = {}, userOverride = {}) {
     ) || '';
 }
 
-export function getNextStep(payload = {}, userOverride = {}) {
+export function getNextStep(payload = {}, userOverride = null) {
     const data = payload?.data || {};
     const user = userOverride || payload?.user || data?.user || {};
 
@@ -333,7 +343,7 @@ export function getNextStep(payload = {}, userOverride = {}) {
     ) || '';
 }
 
-export function isKycComplete(payload = {}, userOverride = {}) {
+export function isKycComplete(payload = {}, userOverride = null) {
     const data = payload?.data || {};
     const user = userOverride || payload?.user || data?.user || {};
     const vendorProfile = user?.vendorProfile || data?.vendorProfile || data?.user?.vendorProfile || {};
@@ -342,6 +352,10 @@ export function isKycComplete(payload = {}, userOverride = {}) {
     const nextStep = normalizeKycValue(getNextStep(payload, user));
 
     if (KYC_COMPLETE_STATUSES.includes(status)) {
+        return true;
+    }
+
+    if (KYC_COMPLETE_STEPS.includes(nextStep)) {
         return true;
     }
 

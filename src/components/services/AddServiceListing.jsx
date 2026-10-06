@@ -589,18 +589,30 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
         setSubmitMode(isDraft ? 'draft' : 'create');
         try {
             const payload = await buildPayload({ includeCategoryId: !isEditMode });
-            const response = isEditMode
-                ? await MainApi.patch(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`, payload, {
-                    params: { draft: isDraft ? 'true' : 'false' },
-                })
-                : await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload, {
-                    params: { draft: isDraft ? 'true' : 'false' },
+            let response;
+
+            if (isEditMode) {
+                response = await MainApi.patch(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}`, payload, {
+                    params: { draft: 'true' },
+                    suppressAuthRedirect: true,
                 });
+
+                if (!isDraft) {
+                    response = await MainApi.post(`${SERVICE_LISTINGS_ENDPOINT}/${listingId}/submit`, {}, {
+                        suppressAuthRedirect: true,
+                    });
+                }
+            } else {
+                response = await MainApi.post(SERVICE_LISTINGS_ENDPOINT, payload, {
+                    params: { draft: isDraft ? 'true' : 'false' },
+                    suppressAuthRedirect: true,
+                });
+            }
 
             await Swal.fire({
                 icon: 'success',
-                title: isDraft ? 'Draft Saved' : isEditMode ? 'Service Listing Updated' : 'Service Listing Created',
-                text: getApiMessage(response?.data, isDraft ? 'Service listing draft saved successfully.' : isEditMode ? 'Service listing updated successfully.' : 'Service listing created successfully.'),
+                title: isDraft ? 'Draft Saved' : isEditMode ? 'Submitted for Review' : 'Service Listing Created',
+                text: getApiMessage(response?.data, isDraft ? 'Service listing draft saved successfully.' : isEditMode ? 'Service listing submitted for admin review successfully.' : 'Service listing created successfully.'),
                 confirmButtonColor: '#f79f03',
             });
 
@@ -611,7 +623,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                 resetForm();
             }
         } catch (error) {
-            const message = getApiErrorMessage(error, 'Failed to create service listing.');
+            const message = getApiErrorMessage(error, isEditMode && !isDraft ? 'Failed to submit service listing for review.' : 'Failed to create service listing.');
             setApiError(message);
             await Swal.fire({
                 icon: 'error',
@@ -1011,7 +1023,7 @@ export default function AddServiceListing({ onSubmit, onCancel }) {
                                 startIcon={submitting && submitMode === 'create' ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
                                 sx={{ bgcolor: '#f79f03', '&:hover': { bgcolor: '#e08a02' }, textTransform: 'none' }}
                             >
-                                {submitting && submitMode === 'create' ? (isEditMode ? 'Updating...' : 'Creating...') : isEditMode ? 'Update Service Listing' : 'Create Service Listing'}
+                                {submitting && submitMode === 'create' ? (isEditMode ? 'Submitting...' : 'Creating...') : isEditMode ? 'Submit for Review' : 'Create Service Listing'}
                             </Button>
                         </Stack>
                     </Box>
