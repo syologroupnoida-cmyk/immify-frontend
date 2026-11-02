@@ -1,0 +1,11 @@
+version: 1
+id: 92e75531-e569-4007-bb80-ccc41749a6b4
+name: homepage-geocoding
+slug: homepage-geocoding
+protocol: http
+interceptRequests: true
+port: 4500
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true

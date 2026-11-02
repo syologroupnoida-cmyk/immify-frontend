@@ -1,0 +1,11 @@
+version: 1
+id: 2a53a00b-4fda-49df-88db-4e69a106854b
+name: homepage-api
+slug: homepage-api
+protocol: http
+interceptRequests: true
+port: 4500
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true

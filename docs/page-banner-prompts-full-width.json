@@ -1,0 +1,70 @@
+{
+  "tool": "Built-in image_gen",
+  "assets": [
+    {
+      "page": "about",
+      "asset": "public/images/page-banners/full-width/about.webp",
+      "prompt": "Use case: photorealistic-natural. Create ONE panoramic 6:1 website hero background photo, wide horizontal landscape. Immify About page: a contemporary global mobility consultancy with Indian and international adults collaborating at a long table in a bright modern office. Compose a continuous fully detailed real environment from LEFT EDGE TO RIGHT EDGE, with people and office details distributed on BOTH sides, natural scenery through windows across the whole width. Avoid large empty sky, empty walls, blank blue zones, negative space, fades, gradients, colored panels, collages, text, watermarks and logos. Heading will be centered in HTML; do not reserve a blank area for text. Wide establishing photograph with adults relatively small in frame, all heads entirely inside the middle horizontal third to survive a shallow 240px tall full-width crop. Natural daylight, warm approachable editorial photography, realistic skin and hands. Edge to edge full bleed photo. Deliver image and save output file for this project."
+    },
+    {
+      "page": "contact",
+      "asset": "public/images/page-banners/full-width/contact.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Friendly Indian support advisors listening to visitors in a contemporary mobility consultation office, several welcoming consultation desks distributed across a sunlit room, laptops, notebooks, plants, subtle international skyline visible through windows."
+    },
+    {
+      "page": "faq",
+      "asset": "public/images/page-banners/full-width/faq.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian young adults asking practical travel and education questions of advisors at a long consultation desk in a bright contemporary education office; multiple natural conversations across the scene, open notebooks, attentive expressions."
+    },
+    {
+      "page": "become-a-provider",
+      "asset": "public/images/page-banners/full-width/become-a-provider-v2.webp",
+      "prompt": "Photorealistic panoramic website banner photograph, aspect 3:1. Bright contemporary consultancy office, four Indian business professionals ALL SEATED at the SAME DISTANCE from camera around a long meeting desk, planning their services with laptops and open unlettered notebooks. Very wide establishing shot so people are SMALL within the room. IMPORTANT SHALLOW BANNER CROP: all four heads must fit entirely within a narrow strip from 35% to 60% of image height, all sitting at the same eye level, no standing people anywhere, no large foreground faces. Rich real office details across the ENTIRE LEFT, CENTER AND RIGHT, no empty left space, no blue zones or gradients. Warm natural daylight, realistic editorial photo. No text, logos, watermarks or books with visible titles."
+    },
+    {
+      "page": "free-eligibility-check",
+      "asset": "public/images/page-banners/full-width/free-eligibility-check.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian adults and professional advisors carefully reviewing blank application checklists and travel planning materials at consultation tables in a contemporary office, thoughtful preparation, closed unbranded passports, no legal outcome implied."
+    },
+    {
+      "page": "be-a-global-indian",
+      "asset": "public/images/page-banners/full-width/be-a-global-indian.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian students and young professionals connecting on a lively international city riverside promenade, small groups distributed naturally across the frame, buildings, riverside railings and greenery edge to edge, warm sense of community."
+    },
+    {
+      "page": "success-stories",
+      "asset": "public/images/page-banners/full-width/success-stories.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian students and professionals sharing their global travel experiences in a bright contemporary urban cafe, friendly candid conversations across several tables, international city visible outside. No implied visa approval or legal outcome."
+    },
+    {
+      "page": "news",
+      "asset": "public/images/page-banners/full-width/news.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: A modern editorial research desk extending across the whole frame with laptop showing an abstract unlettered screen, neatly folded blank newspapers, globe, notebook, pens, international city and bookshelves in the background, calm factual journalistic atmosphere."
+    },
+    {
+      "page": "blog",
+      "asset": "public/images/page-banners/full-width/blog-v2.webp",
+      "prompt": "Photorealistic panoramic 3:1 website banner photo of a contemporary university library with four Indian students ALL SEATED in one row at a long reading table, working on laptops and OPEN blank notebooks. Wide establishing shot, people SMALL relative to library room, faces aligned at the SAME height entirely within a narrow band between 35% and 60% of the canvas height to fit a short panoramic hero. Eye level candid photography. Full photo detail across the entire left and right edges with shelving, plants and architectural detail. No text anywhere: absolutely no book titles or readable book spines, no front-facing book covers, no letters, typography, logos, watermarks, collage, fades, solid blue panels, or blank left side. Natural daylight and warm editorial realism."
+    },
+    {
+      "page": "legal",
+      "asset": "public/images/page-banners/full-width/legal.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: An understated professional policy review desk extending across the whole width, neatly arranged unlettered documents, closed navy folders, pens, reading glasses, laptop and plants, modern consultancy office shelves in the background. Transparency, careful review and privacy theme. No judge, gavel, government seal, or readable text."
+    },
+    {
+      "page": "services",
+      "asset": "public/images/page-banners/full-width/services.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian and international adults discussing travel, study and family relocation planning with advisors in a contemporary welcoming consultation office, several small service conversations distributed across the whole frame, long table with laptops, notebooks and small globe, city architecture through windows."
+    },
+    {
+      "page": "providers",
+      "asset": "public/images/page-banners/full-width/providers.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Indian professional immigration and overseas education advisors welcoming clients in a bright contemporary consultation office, several separate advisor desks spread across a warm detailed modern interior, trustworthy professional service directory atmosphere, natural candid interaction."
+    },
+    {
+      "page": "pricing",
+      "asset": "public/images/page-banners/full-width/pricing.webp",
+      "prompt": "Use case: photorealistic-natural. ONE panoramic 6:1 full-bleed website hero background photograph for Immify. Continuous real scene richly detailed across the ENTIRE width, including left and right edges. Distribute subjects and relevant objects across both sides and center. No blank left space, large empty sky or wall, blue color panel, gradient, fade, vignette, text, brands, logos, collage, watermark, or fake approval stamps. HTML title will be centered over image. Wide establishing shot, people relatively small in frame, heads comfortably within the central horizontal band so the photo survives a shallow 240px banner crop. Natural daylight and realistic warm editorial photography. Scene: Small Indian consultancy business owners comparing unlettered plan documents and abstract laptop screens with colleagues at a long shared office desk, budget planning and subscription choices, papers and calculators naturally distributed across the full scene, professional modern office."
+    }
+  ]
+}

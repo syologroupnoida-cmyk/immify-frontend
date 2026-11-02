@@ -1,3 +1,5 @@
+import PortalHero from "@/components/common/PortalHero";
+import PortalFaqs from "@/components/common/PortalFaqs";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
@@ -15,10 +17,10 @@ import MainApi from "@/util/MainApi";
 const SUBSCRIPTION_PLANS_ENDPOINT = "/api/v1/subscription-plans";
 
 const trustStats = [
-  { label: "Included credits", value: "100+" },
-  { label: "Package slots", value: "5-50" },
-  { label: "Lead access", value: "Direct" },
-  { label: "Billing", value: "Monthly" },
+  { label: "Included credits", value: "Compare plans" },
+  { label: "Package slots", value: "Plan dependent" },
+  { label: "Lead access", value: "Review inclusions" },
+  { label: "Billing", value: "See each plan" },
 ];
 
 const processSteps = [
@@ -46,20 +48,7 @@ const planHighlights = [
   { title: "Support levels", description: "Move from email support to priority or dedicated assistance.", icon: SupportAgentOutlinedIcon },
 ];
 
-const faqs = [
-  {
-    question: "Can I compare plans before signing up?",
-    answer: "Yes. This page shows available subscription plans, pricing, included credits, and important features.",
-  },
-  {
-    question: "Where do I purchase a plan?",
-    answer: "Plan purchase happens inside the agent dashboard after login, so the subscription is attached to the correct vendor account.",
-  },
-  {
-    question: "Are credits included in every plan?",
-    answer: "Plans can include wallet credits. The exact amount is shown on each pricing card from the live subscription API.",
-  },
-];
+
 
 function parseJsonObject(value) {
   if (!value || typeof value !== "string") return value;
@@ -288,25 +277,23 @@ export default function PricingPageSections() {
   const featuredPlanName = useMemo(() => plans.find((plan) => plan.featured)?.name || plans[1]?.name || "the right plan", [plans]);
 
   return (
-    <main className="min-h-screen bg-white pt-16">
-      <section className="relative isolate overflow-hidden bg-slate-950 px-4 py-20 text-white sm:px-6 lg:px-8 lg:py-24">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-cover bg-center opacity-35"
-          style={{ backgroundImage: "url(https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1800&q=80)" }}
-        />
-        <div className="absolute inset-0 -z-10 bg-slate-950/65" />
-        <div className="mx-auto max-w-5xl text-center">
-          <p className="text-sm font-semibold uppercase text-sky-200">Immify pricing</p>
-          <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">Subscription Plans</h1>
-          <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-100 sm:text-lg">
-            Compare plans for marketplace packages, wallet credits, job access, lead pricing, and agency visibility.
+    <main className="min-h-screen bg-white pt-[88px]">
+      <PortalHero
+        heading="Choose a Plan to Grow Your Presence on Immify"
+        label="Provider Plans"
+        imageSrc="/images/page-banners/full-width/pricing.webp"
+      />
+
+      <section className="bg-white px-4 pt-8 text-left sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+            Select a provider plan that matches your service catalogue, enquiry volume and growth goals. Review exactly what is included before subscribing.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="#pricing-plans" className="inline-flex h-11 items-center justify-center rounded-lg bg-white px-6 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+            <Link href="#pricing-plans" className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1f2a77] px-6 text-sm font-semibold text-white transition hover:bg-[#17215f]">
               View plans
             </Link>
-            <Link href="/agent/sign-up" className="inline-flex h-11 items-center justify-center rounded-lg border border-white/40 px-6 text-sm font-semibold text-white transition hover:bg-white/10">
+            <Link href="/agent/sign-up" className="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               Register as agent
             </Link>
           </div>
@@ -324,13 +311,13 @@ export default function PricingPageSections() {
         </div>
       </section>
 
-      <section id="pricing-plans" className="bg-[#f6f8fb] px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <section id="pricing-plans" className="bg-white px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase text-blue-700">Live subscription plans</p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">Pick the plan that fits your agency</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
-              These cards load from the subscription plans API, so pricing and included features stay current.
+              Compare current prices, plan inclusions and billing periods below. Confirm taxes, renewal, credit expiry and cancellation terms before activating a subscription.
             </p>
           </div>
 
@@ -366,7 +353,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
               <p className="text-sm font-semibold uppercase text-emerald-700">What plans unlock</p>
@@ -393,7 +380,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase text-sky-200">How it works</p>
@@ -423,19 +410,8 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.9fr]">
-          <div>
-            <p className="text-sm font-semibold uppercase text-blue-700">Questions</p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950">Pricing FAQ</h2>
-            <div className="mt-7 space-y-4">
-              {faqs.map((faq) => (
-                <div key={faq.question} className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="text-base font-semibold text-slate-950">{faq.question}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{faq.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mx-auto max-w-6xl space-y-8">
+          <PortalFaqs pageKey="pricing" title="Questions about provider plans" standalone />
           <div className="rounded-lg bg-blue-700 p-7 text-white">
             <RocketLaunchOutlinedIcon className="h-10 w-10" />
             <h2 className="mt-5 text-3xl font-bold">Ready to grow your agency on Immify?</h2>

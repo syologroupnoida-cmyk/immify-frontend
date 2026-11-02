@@ -1,0 +1,110 @@
+.hero {
+  margin-top: 88px;
+  overflow: hidden;
+  color: #061b43;
+  background: linear-gradient(135deg, #e2f5ff 0%, #e9f1ff 57%, #eef7ff 100%);
+}
+
+.stage { position: relative; min-height: 430px; }
+.stage::after {
+  position: absolute; inset: auto 0 -34px; height: 100px; border-radius: 0 0 50% 50%;
+  background: #c8e7ff; content: ""; opacity: 0.45; pointer-events: none; z-index: 0;
+}
+.content { position: relative; z-index: 2; display: flex; align-items: center; min-height: 430px; max-width: 1440px; margin: 0 auto; padding: 48px 48px 76px; pointer-events: none; }
+.copy { width: 48%; max-width: 600px; pointer-events: auto; }
+.eyebrow { display: inline-block; margin-bottom: 18px; padding: 8px 12px; border-radius: 12px; background: linear-gradient(90deg, #c7e8ff, #d9e1ff); color: #0548df; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.title { color: #041b42; font-size: 36px; font-weight: 700; line-height: 1.22; letter-spacing: -0.025em; }
+.title span { color: #0646ef; }
+.description { max-width: 490px; margin-top: 20px; font-size: 16px; line-height: 1.75; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.primary, .secondary { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 11px 20px; border: 1.5px solid #0747f3; border-radius: 9px; font-size: 14px; font-weight: 600; transition: background 160ms, box-shadow 160ms; }
+.primary { color: #fff; background: #0645ee; box-shadow: 0 5px 16px #0645ee15; }
+.secondary { color: #0645ee; background: #ffffffcc; }
+.primary:hover, .searchButton:hover { background: #0538cb; }
+.secondary:hover { background: #fff; }
+.primary svg, .secondary svg { font-size: 21px; }
+.photo { position: absolute; inset: 0 0 0 auto; z-index: 1; width: 55%; overflow: hidden; border-radius: 53% 0 0 10% / 80% 0 0 20%; }
+.airportImage { object-fit: cover; object-position: center 25%; }
+.map { position: absolute; z-index: 0; top: 25px; left: 30%; width: 36%; max-width: 560px; color: #6db5ef; opacity: 0.27; }
+.floatBadge { position: absolute; z-index: 3; display: flex; min-height: 52px; align-items: center; gap: 9px; padding: 8px 14px; border: 1px solid #eef7ff; border-radius: 15px; background: #fff; box-shadow: 0 6px 22px #123f6c14; font-size: 14px; font-weight: 700; }
+.floatBadge { animation: badgeFloat 4.8s ease-in-out infinite; }
+.floatBadge:hover, .floatBadge:focus-visible { animation-play-state: paused; }
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.floatBadge > span { display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 50%; background: #e8f4ff; color: #0748eb; }
+.floatBadge svg { font-size: 22px; }
+.studyBadge { top: 34px; left: 58%; }
+.visaBadge { left: 50%; bottom: 86px; animation-delay: -1.6s; }
+.careerBadge { right: 56px; bottom: 110px; animation-delay: -3.2s; }
+.bottom { position: relative; z-index: 4; max-width: 1440px; margin: -34px auto 0; padding: 0 48px 30px; }
+.search { display: grid; grid-template-columns: 1fr 1fr 0.85fr; gap: 20px; align-items: center; max-width: 1160px; margin: 0 auto; padding: 10px 20px; border: 1px solid #fff; border-radius: 18px; background: #fff; box-shadow: 0 14px 40px #153b6b12; }
+.field { display: flex; min-width: 0; align-items: center; gap: 14px; }
+.fieldIcon { display: flex; width: 40px; height: 40px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 50%; background: #f0f5ff; color: #0645df; }
+.fieldIcon svg { font-size: 25px; }
+.destinationField { padding-left: 20px; border-left: 1px solid #e3eaf4; }
+.selectGroup { flex: 1; min-width: 0; }
+.selectGroup label { display: block; margin-bottom: 2px; color: #0a204c; font-size: 12px; font-weight: 700; }
+.searchButton { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 9px; border-radius: 11px; background: #0645ee; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 160ms; }
+.searchButton:disabled { cursor: wait; opacity: 0.7; }
+.searchButton svg { font-size: 23px; }
+.shortcuts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-top: 30px; }
+.shortcut { display: flex; min-width: 0; min-height: 65px; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid #edf5ff; border-radius: 16px; background: #ffffffd9; box-shadow: 0 5px 12px #102d5810; font-size: 14px; font-weight: 600; transition: border-color 160ms, background 160ms; }
+.shortcut:hover { border-color: #b8d4ff; background: #fff; }
+.shortcutIcon { display: flex; width: 38px; height: 38px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 50%; background: #e8f4ff; color: #0645ee; }
+.shortcutIcon svg { font-size: 23px; }
+.shortcut .shortcutArrow { margin-left: auto; font-size: 16px; }
+.hero a:focus-visible, .hero button:focus-visible { outline: 2px solid #0645ee; outline-offset: 4px; }
+
+@media (min-width: 1440px) {
+  .content { min-height: 480px; }
+  .stage { min-height: 480px; }
+}
+@media (max-width: 1100px) {
+  .content { padding-left: 28px; padding-right: 28px; }
+  .bottom { padding-left: 28px; padding-right: 28px; }
+  .shortcuts { gap: 10px; }
+  .shortcut { padding: 11px 10px; gap: 7px; font-size: 12px; }
+  .shortcutIcon { width: 32px; height: 32px; }
+  .title { font-size: 36px; }
+  .floatBadge { padding: 7px 10px; font-size: 12px; }
+}
+@media (max-width: 1023px) {
+  .stage { display: flex; flex-direction: column; min-height: 0; padding-bottom: 0; }
+  .stage::after { display: none; }
+  .content { order: 0; min-height: 0; width: 100%; padding: 32px 20px 25px; }
+  .copy { width: 100%; max-width: 520px; }
+  .title { font-size: 30px; }
+  .description { margin-top: 15px; font-size: 16px; }
+  .eyebrow { margin-bottom: 15px; font-size: 10px; padding: 7px 10px; }
+  .actions { gap: 10px; margin-top: 20px; }
+  .primary, .secondary { padding: 10px 14px; font-size: 13px; }
+  .photo { position: relative; inset: auto; order: 1; width: calc(100% - 20px); height: auto; max-height: 360px; aspect-ratio: 16 / 10; margin-left: 20px; border-radius: 36% 0 0 8% / 48% 0 0 12%; }
+  .airportImage { object-position: center; }
+  .map { top: 25px; left: 35%; width: 65%; }
+  .floatBadge { min-height: 42px; gap: 6px; border-radius: 12px; padding: 5px 9px; font-size: 11px; }
+  .floatBadge > span { width: 28px; height: 28px; }
+  .floatBadge svg { font-size: 19px; }
+  .studyBadge { top: auto; bottom: clamp(100px, 43vw, 245px); left: 15px; }
+  .visaBadge { left: 12px; bottom: 65px; }
+  .careerBadge { bottom: 42px; right: 24px; }
+  .bottom { margin-top: -14px; padding: 0 16px 24px; }
+  .search { grid-template-columns: 1fr; gap: 10px; padding: 12px; border-radius: 16px; }
+  .destinationField { border-left: 0; border-top: 1px solid #edf1f7; padding-left: 0; padding-top: 10px; }
+  .searchButton { min-height: 44px; }
+  .shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+  .shortcut { min-height: 62px; font-size: 12px; }
+  .shortcut:last-child { grid-column: 1 / -1; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .title { font-size: 36px; }
+  .copy { max-width: 640px; }
+  .studyBadge { bottom: 270px; }
+  .shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .shortcut:last-child { grid-column: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero * { transition: none; }
+  .floatBadge { animation: none; }
+}

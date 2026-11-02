@@ -1,0 +1,606 @@
+{
+  "/": {
+    "title": "Immify | Find Immigration, Visa & Study Abroad Services",
+    "description": "Explore immigration, visa, study abroad, jobs and relocation services on Immify. Discover providers, compare options and send an enquiry for your global journey.",
+    "heading": "Your Global Journey Starts Here.",
+    "intro": "From visa applications and permanent residency to study abroad, international careers and relocation, Immify helps you discover services and connect with providers who can guide your next step.",
+    "sections": [
+      {
+        "heading": "How Immify works",
+        "items": [
+          "1. Tell us your goal: choose a destination, service category and timeline.",
+          "2. Discover providers: browse relevant services and review the information available on each listing.",
+          "3. Compare and enquire: ask questions, request a quote or book a consultation where offered.",
+          "4. Decide with clarity: confirm credentials, scope, fees, timelines and terms directly with the provider before paying."
+        ]
+      },
+      {
+        "heading": "Trust and transparency",
+        "items": [
+          "Immify is a discovery and connection platform. Service availability, provider credentials, final fees, eligibility and outcomes depend on the individual provider and the relevant authority. Review all details before making a decision."
+        ]
+      }
+    ]
+  },
+  "/services": {
+    "title": "Explore Immigration & Global Mobility Services | Immify",
+    "description": "Browse immigration, visa, study abroad, coaching, jobs, relocation, documentation and other global mobility services. Find options and contact providers on Immify.",
+    "heading": "Explore Services for Your Global Journey",
+    "intro": "Every journey is different. Explore service categories designed to help you plan a move abroad, study internationally, find career support or manage practical tasks before and after relocation.",
+    "sections": []
+  },
+  "/services/immigration-services": {
+    "title": "Immigration Services & PR Guidance | Immify",
+    "description": "Explore immigration services including permanent residency, skilled migration, family sponsorship, citizenship and application support. Connect with relevant providers through Immify.",
+    "heading": "Find Immigration Services for Your Next Chapter",
+    "intro": "Planning to live in another country can involve several decisions: which pathway fits your profile, what documents are required and which deadlines matter. Explore immigration service providers on Immify to understand your options and request support suited to your circumstances.",
+    "sections": [
+      {
+        "heading": "Services to explore",
+        "items": [
+          "Permanent Residency (PR) and settlement pathways",
+          "Skilled migration and points-based pathways",
+          "Canada Express Entry and Provincial Nominee Program support",
+          "Australia skilled and nominated migration guidance",
+          "Family, spouse, parent and child sponsorship",
+          "Citizenship and naturalisation applications",
+          "Residency renewal or extension guidance",
+          "Immigration documentation and case management",
+          "Eligibility assessment and profile creation",
+          "Refusal review or appeal support, where legally authorised"
+        ]
+      },
+      {
+        "heading": "How to choose a provider",
+        "items": [
+          "Review the provider’s destination expertise, service scope, professional authorisation where required, written fees, communication process and contract. Ask who will handle the case and whether the provider is authorised to provide the service in the destination jurisdiction."
+        ]
+      },
+      {
+        "heading": "Disclaimer",
+        "items": [
+          "Immify helps users discover services and connect with providers. An eligibility estimate is not a visa decision or a guarantee of approval. Immigration rules and authorised-representative requirements vary by country."
+        ]
+      }
+    ]
+  },
+  "/services/visa-services": {
+    "title": "Visa Services for Work, Study, Travel & Family | Immify",
+    "description": "Explore visa service providers for visitor, work, student, business, dependent and transit visas. Compare service details and contact providers through Immify.",
+    "heading": "Find Visa Support for Work, Study, Travel or Family",
+    "intro": "Different travel and migration goals require different visa routes. Use Immify to discover providers offering guidance with visitor visas, study permits, work authorisation, business routes and family applications.",
+    "sections": [
+      {
+        "heading": "Visa categories",
+        "items": [
+          "Visitor, tourist and family visit visas",
+          "Student visas and study permits",
+          "Work permits and employer-sponsored visas",
+          "Skilled worker and temporary work routes",
+          "Job seeker and opportunity-based routes where available",
+          "Business, startup, entrepreneur and investor visas",
+          "Spouse, partner and dependent visas",
+          "Transit and short-stay visas",
+          "Graduate and post-study work routes",
+          "Digital nomad or remote-work visas where offered"
+        ]
+      },
+      {
+        "heading": "Before you enquire",
+        "items": [
+          "Prepare your destination, nationality/citizenship, current residence, purpose of travel, intended dates and relevant background. Share sensitive documents only through a provider’s appropriate secure process and only when necessary."
+        ]
+      },
+      {
+        "heading": "Disclaimer",
+        "items": [
+          "Visa categories, eligibility, application processes and fees differ by destination and change over time. Confirm current rules with official authorities and verify any provider’s authorisation before engaging."
+        ]
+      }
+    ]
+  },
+  "/free-eligibility-check": {
+    "title": "Free Immigration Eligibility Check | Explore Options on Immify",
+    "description": "Start an initial immigration eligibility check on Immify. Share your profile and destination goals to explore possible pathways and next steps with a relevant provider.",
+    "heading": "Explore Your Immigration Options with a Free Initial Check",
+    "intro": "Not sure where to begin? Send an enquiry with your background and destination goals to request an initial discussion with a relevant provider. Confirm any consultation fees and service terms before proceeding.",
+    "sections": [
+      {
+        "heading": "Important information",
+        "items": [
+          "An online check is an initial screening aid only. It does not establish legal eligibility, predict an immigration decision or replace advice from an appropriately authorised professional. Results depend on the accuracy of the information entered and current program rules."
+        ]
+      }
+    ]
+  },
+  "/services/study-abroad-services": {
+    "title": "Study Abroad Services & University Admission Support | Immify",
+    "description": "Explore study abroad providers for course selection, university applications, scholarships, student visas and pre-departure planning. Compare options on Immify.",
+    "heading": "Find Study Abroad Support That Fits Your Goals",
+    "intro": "Choosing where and what to study is a major decision. Explore providers who can help you compare destinations and courses, shortlist institutions, prepare applications and understand student visa requirements.",
+    "sections": [
+      {
+        "heading": "Services",
+        "items": [
+          "Country and course selection",
+          "University and college shortlisting",
+          "Application preparation and submission support",
+          "Statement of Purpose (SOP) and Letter of Recommendation (LOR) guidance",
+          "Scholarship and education-loan assistance",
+          "Offer letter and tuition-payment guidance",
+          "Student visa documentation and filing support",
+          "Accommodation, insurance, forex and pre-departure guidance"
+        ]
+      },
+      {
+        "heading": "Popular study goals",
+        "items": [
+          "Explore undergraduate, postgraduate, diploma, certificate, doctoral and professional-study options. Institution admission rules and professional recognition vary by course and country."
+        ]
+      },
+      {
+        "heading": "Student checklist",
+        "items": [
+          "Compare total tuition and living costs, institution recognition, course outcomes, refund policies, visa conditions and any agent fees. Verify key information directly with the institution and relevant government authority."
+        ]
+      }
+    ]
+  },
+  "/services/test-preparation": {
+    "title": "IELTS, PTE, TOEFL & Language Coaching | Immify",
+    "description": "Find test-preparation providers for IELTS, PTE, TOEFL, GRE, GMAT, CELPIP, OET and language courses. Explore coaching options on Immify.",
+    "heading": "Prepare with the Right Test or Language Coach",
+    "intro": "Language proficiency and standardised tests may be part of your study, work or migration plan. Explore coaching providers and compare course format, class size, practice resources, trainer experience and schedule.",
+    "sections": [
+      {
+        "heading": "Courses",
+        "items": [
+          "IELTS coaching and registration guidance",
+          "PTE Academic preparation",
+          "TOEFL preparation",
+          "GRE and GMAT preparation",
+          "CELPIP and OET preparation",
+          "Duolingo English Test preparation",
+          "German, French and other language training"
+        ]
+      },
+      {
+        "heading": "What to compare",
+        "items": [
+          "Course curriculum, diagnostic assessment, mock tests, feedback frequency, trainer credentials, online/offline format, batch timings, fees and refund policy."
+        ]
+      },
+      {
+        "heading": "Note",
+        "items": [
+          "Test formats, accepted scores and language requirements vary by institution, employer and immigration program. Confirm requirements with the relevant official organisation."
+        ]
+      }
+    ]
+  },
+  "/services/career-employment-services": {
+    "title": "International Jobs & Career Support Services | Immify",
+    "description": "Explore international job-search support, CV writing, career guidance and recruitment services. Discover career opportunities and providers on Immify.",
+    "heading": "Take the Next Step in Your Global Career",
+    "intro": "Explore overseas career opportunities and career-support services in one place. Whether you need help preparing an international CV, identifying target markets or finding relevant vacancies, Immify can help you discover providers and resources.",
+    "sections": [
+      {
+        "heading": "Candidate services",
+        "items": [
+          "International job search support",
+          "CV/resume writing and review",
+          "LinkedIn profile optimisation",
+          "Career strategy and target-country research",
+          "Interview preparation",
+          "Skills and credential guidance",
+          "Relocation and work-visa support through relevant providers"
+        ]
+      },
+      {
+        "heading": "Employer and recruiter services",
+        "items": [
+          "Recruiters and employers can explore ways to present genuine vacancies, connect with suitable candidates and promote recruitment services, subject to platform rules and applicable law."
+        ]
+      },
+      {
+        "heading": "Safety note",
+        "items": [
+          "A job listing or recruiter profile is not a guarantee of employment or visa sponsorship. Verify employer identity, written offers, recruitment fees and work authorisation. Never pay an unverified person for a promised job or visa."
+        ]
+      }
+    ]
+  },
+  "/services/family-relocation-services": {
+    "title": "Family Relocation & Settlement Services | Immify",
+    "description": "Find relocation and settlement support for moving abroad, from destination orientation and accommodation assistance to practical arrival planning.",
+    "heading": "Make Your Move Abroad Easier to Plan",
+    "intro": "Moving countries involves more than travel. Explore providers who can help with practical preparation, destination orientation and settlement-related tasks for individuals and families.",
+    "sections": [
+      {
+        "heading": "Support options",
+        "items": [
+          "Relocation planning and checklists",
+          "Destination and cultural orientation",
+          "Temporary accommodation search assistance",
+          "School and family transition guidance where offered",
+          "Local transport and arrival planning",
+          "Banking, connectivity and everyday-settlement guidance where legally and practically available",
+          "Pre-departure and post-arrival support"
+        ]
+      },
+      {
+        "heading": "Note",
+        "items": [
+          "Confirm the exact scope, service area, fees and any third-party charges with each provider. Immigration permission and residence rights must be confirmed separately with the relevant authorities or authorised professionals."
+        ]
+      }
+    ]
+  },
+  "/services/documentation-services": {
+    "title": "Document, Translation & Attestation Services | Immify",
+    "description": "Explore providers for passport assistance, document translation, police clearance and attestation-related services for international travel, study and migration.",
+    "heading": "Get Help Organising Your Travel and Immigration Documents",
+    "intro": "Applications often require carefully prepared records. Find providers offering document-related services and confirm the exact format, certification and submission requirements for your destination.",
+    "sections": [
+      {
+        "heading": "Services to explore",
+        "items": [
+          "Passport assistance and renewal guidance",
+          "Police clearance certificate support",
+          "Document translation and certified translation",
+          "Educational and civil document attestation",
+          "Apostille or legalisation guidance where applicable",
+          "Application document organisation and checklist support"
+        ]
+      },
+      {
+        "heading": "Before you submit",
+        "items": [
+          "Ask which original documents are required, what certification is accepted, expected turnaround, courier arrangements, fees and how sensitive documents are protected."
+        ]
+      },
+      {
+        "heading": "Note",
+        "items": [
+          "Requirements vary by authority and document type. Verify official requirements before ordering translations, notarisation, attestation or legalisation."
+        ]
+      }
+    ]
+  },
+  "/services/business-setup-immigration": {
+    "title": "Business Setup & Investor Immigration Services | Immify",
+    "description": "Explore providers for overseas business setup, entrepreneur pathways and investor immigration guidance. Compare service scope and request a consultation on Immify.",
+    "heading": "Explore Global Business and Investor Pathways",
+    "intro": "Entrepreneurs and business owners may need coordinated support for business planning, company setup and immigration-related questions. Discover relevant providers and clarify the legal, financial and operational requirements before committing.",
+    "sections": [
+      {
+        "heading": "Service areas",
+        "items": [
+          "Business setup and company registration support",
+          "Entrepreneur and startup immigration guidance",
+          "Investor immigration information where programs are available",
+          "Business plan development support",
+          "Cross-border compliance and professional referrals",
+          "Tax, legal and financial advice from appropriately qualified providers"
+        ]
+      },
+      {
+        "heading": "Disclaimer",
+        "items": [
+          "Investment, residency and citizenship programs change and may involve substantial financial, legal and tax consequences. No investment or immigration outcome is guaranteed. Obtain independent advice and verify all program details with official sources."
+        ]
+      }
+    ]
+  },
+  "/services/financial-services": {
+    "title": "Forex, Loans & Overseas Insurance Services | Immify",
+    "description": "Explore financial support options for overseas study and relocation, including education loans, forex and insurance services from relevant providers.",
+    "heading": "Plan the Financial Side of Your Global Journey",
+    "intro": "International travel, study and relocation can involve tuition, living costs, currency exchange and insurance. Explore relevant providers and compare terms before making a financial commitment.",
+    "sections": [
+      {
+        "heading": "Categories",
+        "items": [
+          "Education loan and funding support",
+          "Forex and currency exchange",
+          "International money transfer",
+          "Overseas medical and student insurance",
+          "Travel insurance",
+          "Other financial services relevant to international mobility"
+        ]
+      },
+      {
+        "heading": "What to compare",
+        "items": [
+          "Eligibility, fees, exchange rates, interest rates, policy coverage, exclusions, claims process, cancellation terms and provider authorisation."
+        ]
+      },
+      {
+        "heading": "Disclaimer",
+        "items": [
+          "Immify listings are not a substitute for independent financial or insurance advice. Verify product terms, regulatory status and suitability directly with the provider."
+        ]
+      }
+    ]
+  },
+  "/services/legal-compliance-services": {
+    "title": "Immigration Legal & Compliance Services | Immify",
+    "description": "Discover legal and compliance service providers for immigration questions, visa refusal support, appeals and related matters. Verify professional authorisation before engaging.",
+    "heading": "Find Legal and Compliance Support for Your Case",
+    "intro": "Some immigration matters require advice or representation from a qualified and authorised legal professional. Explore listings and confirm the provider’s jurisdiction, licence, scope of service and fees before proceeding.",
+    "sections": [
+      {
+        "heading": "Potential service areas",
+        "items": [
+          "Immigration legal consultation",
+          "Visa refusal review and next-step guidance",
+          "Appeals or administrative review where available",
+          "Document and case review",
+          "Deportation or status-related legal support",
+          "Business and cross-border compliance referrals"
+        ]
+      },
+      {
+        "heading": "Important note",
+        "items": [
+          "Availability of appeals, review rights and deadlines depends on the country and case. If you have received a refusal or legal notice, check the official deadline promptly and seek appropriately qualified advice."
+        ]
+      }
+    ]
+  },
+  "/providers": {
+    "title": "Find Immigration & Visa Service Providers | Immify",
+    "description": "Browse immigration, visa, education, career and relocation providers by service, destination and location. Review listings and contact providers through Immify.",
+    "heading": "Discover Providers for Your Global Plans",
+    "intro": "Find service providers across immigration, visas, study abroad, coaching, jobs, documentation, relocation and related services. Use available listing details to shortlist options and ask informed questions.",
+    "sections": []
+  },
+  "/become-a-provider": {
+    "title": "Become an Immify Partner | List Your Immigration Services",
+    "description": "Join Immify as a service provider. Create a business profile, publish relevant services and connect with people looking for immigration, visa, study and relocation support.",
+    "heading": "Grow Your Global Services Business with Immify",
+    "intro": "Make your services easier to discover. Immify helps connect service providers with people exploring immigration, visas, study abroad, career support, documentation and relocation.",
+    "sections": [
+      {
+        "heading": "Benefits",
+        "items": [
+          "Create a provider profile and describe your services clearly.",
+          "Publish service listings for relevant categories and destinations.",
+          "Receive enquiries from people looking for support.",
+          "Present your scope, process, pricing approach and contact options.",
+          "Explore paid visibility or lead options if available in your selected plan."
+        ]
+      },
+      {
+        "heading": "How to join",
+        "items": [
+          "1. Register your business account.",
+          "2. Complete business and contact details.",
+          "3. Add services, destinations, pricing or quote process, and supporting information.",
+          "4. Submit required credentials for review where applicable.",
+          "5. Review the plan, listing rules and lead terms before activating paid features."
+        ]
+      },
+      {
+        "heading": "Information to prepare",
+        "items": [
+          "Legal business or trading name",
+          "Business email and phone",
+          "Service categories and destinations",
+          "Business address or service area where appropriate",
+          "Relevant licences, registrations or professional credentials where required",
+          "Service descriptions, fees, terms and cancellation rules",
+          "Privacy and document-handling practices"
+        ]
+      }
+    ]
+  },
+  "/pricing": {
+    "title": "Immify Pricing & Plans for Service Providers",
+    "description": "Compare Immify provider plans, listing capacity, lead access, visibility features and support options. Review current plan details before activating a subscription.",
+    "heading": "Choose a Plan to Grow Your Presence on Immify",
+    "intro": "Select a provider plan that matches your service catalogue, enquiry volume and growth goals. Review exactly what is included before subscribing.",
+    "sections": []
+  },
+  "/jobs": {
+    "title": "International Jobs & Overseas Career Opportunities | Immify",
+    "description": "Explore international job opportunities and career services. Search by role, destination and sector, and review each employer’s requirements before applying.",
+    "heading": "Explore International Job Opportunities",
+    "intro": "Looking for your next role abroad? Browse available opportunities and explore career-support services that can help you prepare for an international job search.",
+    "sections": [
+      {
+        "heading": "Candidate resources",
+        "items": [
+          "Prepare an international CV tailored to the role and market.",
+          "Check qualification recognition and language requirements.",
+          "Understand whether the role offers sponsorship; do not assume it does.",
+          "Research the employer and confirm offer terms before sharing sensitive information.",
+          "Review the relevant work authorisation requirements through official sources."
+        ]
+      }
+    ]
+  },
+  "/success-stories": {
+    "title": "Immify Success Stories | Global Journeys & Experiences",
+    "description": "Explore the Immify community and learn how to share your immigration, study, career or relocation experience. Published stories will appear here when available.",
+    "heading": "Every Global Journey Has a Story",
+    "intro": "Moving, studying or working abroad can involve many decisions. Explore stories from people willing to share their experiences and learn what helped them prepare, compare options and move forward.",
+    "sections": []
+  },
+  "/be-a-global-indian": {
+    "title": "Be a Global Indian | Stories, Resources & Global Opportunities",
+    "description": "Explore resources and stories for Indians planning to study, work, live or build a business abroad. Discover practical guidance and services for your next step.",
+    "heading": "Be a Global Indian",
+    "intro": "Your roots are part of your story. Your next opportunity may be anywhere in the world. Discover experiences, resources and service connections for Indians exploring international education, careers, relocation and long-term settlement.",
+    "sections": [
+      {
+        "heading": "Explore",
+        "items": [
+          "Stories from Indians studying and working overseas",
+          "Practical checklists for planning a move abroad",
+          "International career and education resources",
+          "Community insights on adapting to a new country",
+          "Family relocation and settlement topics",
+          "Business and entrepreneurship across borders"
+        ]
+      }
+    ]
+  },
+  "/news": {
+    "title": "Immigration News & Visa Updates | Immify",
+    "description": "Find the Immify immigration and global mobility updates section. Check official sources for current policy requirements before making decisions.",
+    "heading": "Immigration News and Global Mobility Updates",
+    "intro": "Immigration policies, visa rules and education requirements can change. Immify’s news and update section should help readers understand what has changed, who may be affected and where to verify the official details.",
+    "sections": []
+  },
+  "/blog": {
+    "title": "Immigration Guides, Visa Tips & Study Abroad Resources | Immify",
+    "description": "Explore practical guides on immigration, visas, study abroad, international careers and relocation. Use clear checklists and official sources to plan your next step.",
+    "heading": "Guides to Help You Plan with More Confidence",
+    "intro": "Use the Immify resource centre to understand common steps, compare options and prepare better questions before contacting a service provider.",
+    "sections": [
+      {
+        "heading": "Content clusters",
+        "items": [
+          "Immigration basics and PR pathways",
+          "Visa documents and application preparation",
+          "Study abroad and university selection",
+          "IELTS, PTE and language tests",
+          "International CVs and job searches",
+          "Relocation and settling abroad",
+          "Document attestation and translations",
+          "Budgeting, insurance and forex",
+          "Provider selection and fraud awareness"
+        ]
+      }
+    ]
+  },
+  "/about": {
+    "title": "About Immify | Connecting Aspirants with Global Service Providers",
+    "description": "Learn how Immify helps people exploring immigration, visas, study abroad, careers and relocation discover services and connect with providers.",
+    "heading": "A Better Way to Discover Support for Your Global Journey",
+    "intro": "Immify is a global immigration and mobility services platform designed to connect immigration aspirants with relevant service providers. Whether someone is exploring a visa, permanent residency, overseas education, international work or relocation, Immify brings service discovery and enquiry options together in one place.\n\nOur aim is to make the early stages of planning easier: help people understand the types of support available, discover providers by category and destination, and ask clearer questions before making a decision.\n\nFor service providers, Immify offers a marketplace presence to describe services and connect with people looking for help. The platform experience should be built around clear information, transparent listings and responsible communication.",
+    "sections": [
+      {
+        "heading": "Our principles",
+        "items": [
+          "Clarity: explain service scope and next steps in plain language.",
+          "Choice: help users explore relevant options before contacting a provider.",
+          "Transparency: distinguish listing information from verified credentials and official decisions.",
+          "Responsibility: encourage users to confirm fees, terms and qualifications before engaging.",
+          "Global perspective: support a range of immigration, education, career and relocation needs."
+        ]
+      }
+    ]
+  },
+  "/contact": {
+    "title": "Contact Immify | Request an Immigration or Visa Service Quote",
+    "description": "Tell Immify what service you need and where you plan to go. Submit an enquiry to explore relevant providers and next steps.",
+    "heading": "Tell Us What You Need Help With",
+    "intro": "Share your goal, destination and timeline. Immify can help route your request toward relevant service categories and providers, where available.",
+    "sections": []
+  },
+  "/faq": {
+    "title": "Immify FAQs | Services, Providers, Enquiries & Listings",
+    "description": "Find answers about using Immify to discover immigration services, contact providers, check eligibility and list services as a provider.",
+    "heading": "Frequently Asked Questions",
+    "intro": "",
+    "sections": [
+      {
+        "heading": "What is Immify?",
+        "items": [
+          "Immify is a platform for discovering immigration, visa, study abroad, career, relocation and related services, and connecting with service providers."
+        ]
+      },
+      {
+        "heading": "Does Immify issue visas or decide eligibility?",
+        "items": [
+          "No. Visa and immigration decisions are made by the relevant government authorities. Immify helps users discover services and providers; an online screening tool is not an official decision."
+        ]
+      },
+      {
+        "heading": "How do I find a provider?",
+        "items": [
+          "Browse a service category, search by destination or keyword, review available listing information and contact a provider through the options shown."
+        ]
+      },
+      {
+        "heading": "How can I compare providers?",
+        "items": [
+          "Review service scope, destination expertise, qualifications or authorisation where required, written fees, contract terms and communication arrangements. Verify important details independently."
+        ]
+      },
+      {
+        "heading": "Can I get a free eligibility check?",
+        "items": [
+          "If the eligibility tool is available, it can provide an initial indication based on submitted details. It is not a guarantee of eligibility or approval."
+        ]
+      },
+      {
+        "heading": "How do I become a provider?",
+        "items": [
+          "Register a business account, complete your profile, add service listings and submit requested verification details. Review the current plan and listing terms."
+        ]
+      },
+      {
+        "heading": "Does Immify guarantee a job or visa?",
+        "items": [
+          "No. Employment, visa decisions, admission and immigration outcomes depend on employers, institutions, service providers and relevant authorities."
+        ]
+      },
+      {
+        "heading": "Are providers verified?",
+        "items": [
+          "Check the information shown on each listing and independently confirm professional authorisation, qualifications and destination expertise. A marketplace listing alone does not establish that a provider is licensed or verified."
+        ]
+      },
+      {
+        "heading": "How are provider fees charged?",
+        "items": [
+          "Provider plans and included features are shown on the Pricing page. Individual service fees are set out in the listing or quoted by the provider. Confirm taxes, renewal and cancellation terms before paying."
+        ]
+      },
+      {
+        "heading": "What should I include in an enquiry?",
+        "items": [
+          "Share your goal, destination and the information needed to describe your request. Confirm who will receive your details and how documents will be handled before sharing sensitive information."
+        ]
+      },
+      {
+        "heading": "How do I report a suspicious listing?",
+        "items": [
+          "Use the Contact page to send an enquiry with the listing link, provider name and a description of your concern. Avoid including passwords, payment card details or unnecessary identity documents."
+        ]
+      }
+    ]
+  },
+  "/legal": {
+    "title": "Platform Role & Service Disclaimer | Immify",
+    "description": "Understand Immify?s role as a service discovery platform and what to check before contacting a provider or submitting an enquiry.",
+    "heading": "Clear Information. Responsible Connections.",
+    "intro": "Immify helps users discover services and connect with providers. Unless explicitly stated in a specific service agreement, Immify is not the government authority deciding immigration or visa applications and does not guarantee visa approval, employment, university admission, residency, citizenship or any other outcome. Users should independently verify provider credentials, service scope, fees, contracts and current official requirements.",
+    "sections": []
+  },
+  "/services/healthcare-insurance": {
+    "title": "Overseas Healthcare & Insurance Services | Immify",
+    "description": "Explore travel, student and overseas medical insurance providers. Compare coverage, exclusions, fees and claims processes before choosing a policy.",
+    "heading": "Explore Healthcare and Insurance for Your Time Abroad",
+    "intro": "Travel, study and relocation can involve different healthcare and insurance needs. Discover relevant providers and confirm that any policy meets your destination and institution requirements.",
+    "sections": [
+      {
+        "heading": "Services to explore",
+        "items": [
+          "Overseas medical insurance",
+          "Student and travel insurance",
+          "Health registration and medical fitness guidance where available"
+        ]
+      },
+      {
+        "heading": "What to compare",
+        "items": [
+          "Review policy coverage, exclusions, waiting periods, provider authorisation, claims procedures and cancellation terms directly with the provider. Listings do not replace independent insurance advice."
+        ]
+      }
+    ]
+  }
+}
