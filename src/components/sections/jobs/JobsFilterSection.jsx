@@ -360,10 +360,11 @@ export default function JobSearchPage() {
         />
         <div className="absolute inset-0 bg-slate-950/55" />
         <div className="relative mx-auto flex min-h-[260px] max-w-7xl flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white sm:text-5xl">Jobs Marketplace</h1>
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Explore International Job Opportunities</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/90 sm:text-lg">
-            Browse active overseas openings by role, location, experience, and salary.
+            Looking for your next role abroad? Browse available opportunities and explore career-support services to prepare for an international job search.
           </p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/80">Confirm job availability and sponsorship for each role. Verify employer identity and written offer terms before sharing sensitive information.</p>
         </div>
       </section>
 

@@ -1,7 +1,9 @@
+import PageSeo from "@/components/common/PageSeo";
+import content from "@/content/portalContent.json";
 import PricingPageSections from "@/components/sections/pricing/PricingPageSections";
 
 function Pricing() {
-  return <PricingPageSections />;
+  return <><PageSeo title={content["/pricing"].title} description={content["/pricing"].description} /><PricingPageSections /></>;
 }
 
 Pricing.useDefaultLayout = true;

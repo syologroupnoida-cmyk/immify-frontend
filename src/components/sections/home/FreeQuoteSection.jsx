@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Link from "next/link";
+import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import MessageRoundedIcon from "@mui/icons-material/MessageRounded";
@@ -38,11 +40,12 @@ function splitName(name) {
   }
 }
 
-export default function FreeQuoteSection() {
+export default function FreeQuoteSection({ appearance = "default" }) {
   const [formState, setFormState] = useState(initialFormState)
   const [leadDocument, setLeadDocument] = useState(initialLeadDocument)
   const [formErrors, setFormErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -68,6 +71,7 @@ export default function FreeQuoteSection() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (submittingRef.current) return
 
     const nextErrors = {}
 
@@ -97,6 +101,7 @@ export default function FreeQuoteSection() {
       return
     }
 
+    submittingRef.current = true
     setSubmitting(true)
 
     try {
@@ -133,7 +138,7 @@ export default function FreeQuoteSection() {
       await Swal.fire({
         icon: "success",
         title: "Request sent",
-        text: response?.data?.message || "We have received your quote request.",
+        text: response?.data?.message || "Thank you for contacting Immify. Your request has been submitted. This is an enquiry, not a confirmed booking or a guarantee that a provider will accept the case. Review provider terms and fees before proceeding.",
         confirmButtonColor: "#1f2a77",
       })
 
@@ -147,6 +152,7 @@ export default function FreeQuoteSection() {
         confirmButtonColor: "#1f2a77",
       })
     } finally {
+      submittingRef.current = false
       setSubmitting(false)
     }
   }
@@ -160,7 +166,7 @@ export default function FreeQuoteSection() {
   return (
     <section
       id="free-quote"
-      className="relative w-full overflow-hidden bg-slate-100 px-4 py-10 text-slate-900 sm:px-6 lg:px-8 lg:py-14"
+      className={`relative w-full overflow-hidden text-slate-900 ${appearance === "page" ? "bg-white py-6 text-left" : "bg-slate-100 px-4 py-10 sm:px-6 lg:px-8 lg:py-14"}`}
     >
       <div className="pointer-events-none absolute left-0 top-0 h-56 w-56 rounded-full bg-[#1f2a77]/10 blur-3xl" />
       <div className="pointer-events-none absolute right-0 top-20 h-72 w-72 rounded-full bg-[#f5c542]/15 blur-3xl" />
@@ -169,19 +175,19 @@ export default function FreeQuoteSection() {
         <div className="relative z-10 max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#1f2a77]">Get Free Quote</p>
           <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl lg:text-3xl">
-            Tell us what you need and get a quick expert response.
+            Tell Us What You Need Help With
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-            Share your goal, destination, and timeline. Our team will review your request and help you find the right service provider.
+            Share your goal, destination and timeline. Immify can help route your request toward relevant service categories and providers, where available.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-semibold text-slate-900">Fast response</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Most inquiries receive a reply within one business day.</p>
+              <p className="text-sm font-semibold text-slate-900">Your next step</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Ask about service availability, scope and next steps.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-semibold text-slate-900">Trusted guidance</p>
+              <p className="text-sm font-semibold text-slate-900">Compare with clarity</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">Compare options and choose the right service with confidence.</p>
             </div>
           </div>
@@ -189,6 +195,8 @@ export default function FreeQuoteSection() {
 
         <form
           onSubmit={handleSubmit}
+          aria-busy={submitting}
+          aria-label="Quote request"
           className="relative z-10 rounded-[10px] border border-slate-200 bg-white p-4 text-slate-900 shadow-[0_18px_60px_rgba(15,23,42,0.12)] sm:p-5 lg:p-6"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -335,17 +343,17 @@ export default function FreeQuoteSection() {
             </button>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <p className="text-xs leading-6 text-slate-500">
-              By submitting this form, you agree to be contacted regarding your request.
+              By submitting, you agree to be contacted about this enquiry. Include only information needed to describe your request; avoid uploading sensitive identity documents at this stage. Read our <Link href="/privacy-policy" className="font-semibold text-blue-700 underline underline-offset-2">Privacy Policy</Link>.
             </p>
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-[rgb(31,42,119)] px-6 text-sm font-semibold text-white transition hover:bg-[rgb(24,33,95)] disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex min-h-12 w-full shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-[#1f2a77] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#18215f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:min-w-[175px]"
             >
-              <MessageRoundedIcon className="h-4 w-4" />
-              {submitting ? "Submitting..." : "Get Free Quote"}
+              {submitting ? <CircularProgress size={16} color="inherit" aria-label="Sending request" /> : <MessageRoundedIcon className="h-4 w-4" />}
+              <span aria-live="polite">{submitting ? "Sending..." : "Send My Enquiry"}</span>
             </button>
           </div>
         </form>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { HomeCardImage, HomeCardSkeletons } from "./HomeLoading";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
@@ -7,9 +7,6 @@ import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import { fetchServiceCategories, serviceListingCategories } from "@/util/serviceListings";
 import { fetchVendors, vendorFallbackImage } from "@/util/vendors";
-import { featuredVendorProfiles } from "../vendor-marketplace/vendorMarketplaceData";
-
-const fallbackVendorCards = featuredVendorProfiles.slice(0, 4);
 
 export default function CategorySection() {
   const sliderRef = useRef(null);
@@ -18,6 +15,8 @@ export default function CategorySection() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vendorsFetchFailed, setVendorsFetchFailed] = useState(false);
+  const [loadedCategoryId, setLoadedCategoryId] = useState(null);
+  const isLoading = loading || loadedCategoryId !== activeCategoryId;
 
   const vendorTabs = useMemo(() => {
     const dynamicTabs = serviceCategories
@@ -28,7 +27,7 @@ export default function CategorySection() {
     return dynamicTabs.length ? dynamicTabs : fallbackTabs;
   }, [serviceCategories]);
   const activeCategory = vendorTabs.find((category) => category.id === activeCategoryId) || null;
-  const visibleVendorCards = vendorsFetchFailed ? fallbackVendorCards : vendors.slice(0, 4);
+  const visibleVendorCards = vendors.slice(0, 4);
 
   useEffect(() => {
     let active = true;
@@ -71,7 +70,7 @@ export default function CategorySection() {
         }
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) { setLoadedCategoryId(activeCategoryId); setLoading(false); }
       });
 
     return () => {
@@ -92,7 +91,7 @@ export default function CategorySection() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">Explore vendors</p>
             <h2 className="mt-2 max-w-2xl text-xl font-semibold text-slate-900 sm:text-3xl">
-              Compare verified immigration vendors by service, city, and response time.
+              Discover providers by service and city, then compare the available listing details.
             </h2>
           </div>
         </div>
@@ -124,13 +123,14 @@ export default function CategorySection() {
           })}
         </div>
 
-        <div className="relative mt-7 overflow-hidden rounded-[1.6rem] bg-transparent p-0">
+        <div aria-busy={isLoading} className="relative mt-7 overflow-hidden rounded-[1.6rem] bg-transparent p-0">
+          {isLoading ? <HomeCardSkeletons compact label="Loading providers…" /> : (
           <div
             ref={sliderRef}
             className="mx-auto flex max-w-[1220px] snap-x snap-mandatory justify-start gap-4 overflow-x-auto pb-3 pl-1 pr-1 scrollbar-none scroll-smooth lg:justify-center"
           >
-            {!loading && !visibleVendorCards.length && (
-              <p className="w-full py-10 text-center text-sm font-semibold text-slate-500">No vendors are available for this category right now.</p>
+            {!visibleVendorCards.length && (
+              <p role="status" className="w-full py-10 text-center text-sm font-semibold text-slate-500">{vendorsFetchFailed ? "Unable to load providers. Please try another category or reload the page." : "No vendors are available for this category right now."}</p>
             )}
 
             {visibleVendorCards.map((vendor, index) => (
@@ -141,11 +141,10 @@ export default function CategorySection() {
               >
                 <div className="group flex h-full min-h-[270px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-transparent transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10 hover:ring-blue-100">
                   <div className="relative h-36 overflow-hidden bg-slate-100">
-                    <Image
+                    <HomeCardImage
                       src={vendor.image || vendorFallbackImage}
+                      fallback={vendorFallbackImage}
                       alt={vendor.name}
-                      fill
-                      unoptimized
                       sizes="(min-width: 1024px) 260px, 82vw"
                       className="object-cover transition duration-500 group-hover:scale-105"
                     />
@@ -173,7 +172,7 @@ export default function CategorySection() {
 
                     <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3">
                       <span className="text-xs font-semibold text-slate-500">
-                        {loading ? "Loading vendors" : vendor.responseTime || "Same day"}
+                        {vendor.responseTime || "Same day"}
                       </span>
                       <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-700">
                         Details
@@ -185,6 +184,7 @@ export default function CategorySection() {
               </Link>
             ))}
           </div>
+          )}
         </div>
 
         <div className="mt-8 flex justify-center">

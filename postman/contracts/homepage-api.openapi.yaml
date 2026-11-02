@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Homepage quote and listings dependency
+  version: 1.0.0
+  description: Caller-derived subset of the existing frontend API contract. It does not assert database persistence or undocumented upstream validation rules.
+servers:
+  - url: https://api.immify.in/api/v1
+paths:
+  /leads:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName, email, phone, servicesRequired, destinationCountries, message]
+              properties:
+                firstName: {type: string}
+                lastName: {type: string}
+                email: {type: string}
+                phone: {type: string}
+                servicesRequired: {type: array, items: {type: string}}
+                destinationCountries: {type: array, items: {type: string}}
+                message: {type: string}
+      responses:
+        '201':
+          description: Enquiry accepted
+          content:
+            application/json:
+              example: {message: Your enquiry has been received.}
+        '503':
+          description: Temporary service failure
+  /service-listings:
+    get:
+      responses:
+        '200':
+          description: Available listings
+          content:
+            application/json:
+              example: {data: []}

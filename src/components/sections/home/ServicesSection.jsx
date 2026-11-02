@@ -37,7 +37,7 @@ export default function ServicesSection() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">Explore services</p>
             <h2 className="mt-2 max-w-2xl text-xl font-semibold text-slate-900 sm:text-2xl">
-              Browse services with smart recommendations and fast discovery.
+              Explore Services for Your Global Journey
             </h2>
           </div>
         </div>

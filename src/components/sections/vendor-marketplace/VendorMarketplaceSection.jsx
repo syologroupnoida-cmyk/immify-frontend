@@ -1,8 +1,11 @@
+import PortalHero from "@/components/common/PortalHero";
+import PortalFaqs from "@/components/common/PortalFaqs";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import FormControl from "@mui/material/FormControl";
+import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import ChatRoundedIcon from "@mui/icons-material/ChatRounded";
@@ -13,6 +16,7 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import PhoneAndroidRoundedIcon from "@mui/icons-material/PhoneAndroidRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
@@ -306,31 +310,37 @@ export default function VendorMarketplaceSection() {
   const categoryName = firstCategory?.title || "Immigration Vendors";
 
   return (
-    <main className="min-h-screen bg-white pb-12">
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-[1800px] flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:px-8">
-          <Link href="/" className="text-3xl font-extrabold tracking-tight text-blue-700">
-            Immify
-          </Link>
-          <div className="grid flex-1 gap-3 md:grid-cols-[310px_1fr]">
-            <div className="flex h-12 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 shadow-sm">
-              <LocationOnOutlinedIcon className="h-5 w-5 text-slate-400" />
-              <select
+    <main className="min-h-screen bg-white pb-12 pt-[88px]">
+      <PortalHero
+        heading={`Discover Providers for Your Global Plans in ${locationName}`}
+        label="Provider Directory"
+        imageSrc="/images/page-banners/full-width/providers.webp"
+      />
+
+      <section aria-label="Find vendors" className="relative z-10 mx-auto -mt-[70px] grid w-[calc(100%-2rem)] max-w-3xl gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/10 sm:-mt-10 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+            <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
+              <Select
+                displayEmpty
+                inputProps={{ "aria-label": "Vendor location" }}
+                IconComponent={KeyboardArrowDownRoundedIcon}
+                startAdornment={<InputAdornment position="start"><LocationOnOutlinedIcon sx={{ fontSize: 20, color: "#94a3b8" }} /></InputAdornment>}
                 value={selectedLocationValues[0] || ""}
                 onChange={(event) => {
                   setSelectedLocations(event.target.value ? [event.target.value] : []);
                   setCurrentPage(1);
                 }}
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none"
+                sx={{ height: 48, borderRadius: 1.5, fontSize: 14, color: "#0f172a", ".MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" } }}
+                MenuProps={{ disableScrollLock: true, slotProps: { paper: { sx: { maxHeight: 320 } } } }}
               >
-                <option value="">All India</option>
+                <MenuItem value="">All India</MenuItem>
                 {vendorMarketplaceLocations.slice(0, 30).map((location) => (
-                  <option key={location.slug} value={location.slug}>{location.name}</option>
+                  <MenuItem key={location.slug} value={location.slug}>{location.name}</MenuItem>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormControl>
             <div className="flex h-12 items-center overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
               <input
+                aria-label="Search vendor, service or city"
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
@@ -339,36 +349,10 @@ export default function VendorMarketplaceSection() {
                 placeholder="Search vendor, service or city"
                 className="min-w-0 flex-1 px-4 text-sm font-medium text-slate-900 outline-none"
               />
-              <button type="button" className="flex h-12 w-14 items-center justify-center bg-orange-600 text-white transition hover:bg-orange-700" aria-label="Search vendors">
+              <button type="button" className="flex h-12 w-14 shrink-0 items-center justify-center bg-orange-600 text-white transition hover:bg-orange-700" aria-label="Search vendors">
                 <SearchRoundedIcon className="h-6 w-6" />
               </button>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-700">
-            <span className="text-blue-700">EN</span>
-            <Link href="/lead-generation" className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-50">Leads</Link>
-            <Link href="/pricing" className="hover:text-blue-700">Advertise</Link>
-            <Link href="/agent/sign-up" className="rounded-md bg-blue-700 px-4 py-2 text-white hover:bg-blue-800">Login / Sign Up</Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-[1800px] px-4 pt-5 sm:px-6 lg:px-8">
-        <div className="relative isolate overflow-hidden rounded-xl px-4 py-8 text-white sm:px-6">
-          <Image
-            src="/images/marketplace-banner.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="absolute inset-0 -z-20 object-cover"
-          />
-          <div className="absolute inset-0 -z-10 bg-slate-950/75" />
-          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Vendor Marketplace</p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Explore Trusted Immigration Vendors in {locationName}</h1>
-          </div>
-        </div>
       </section>
 
       <section className="mx-auto max-w-[1800px] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -380,7 +364,7 @@ export default function VendorMarketplaceSection() {
           <span>{totalResults}+ Listings</span>
         </div>
 
-        <div className="scrollbar-none mt-6 flex gap-3 overflow-x-auto pb-2">
+        <div className="mt-6 flex flex-wrap items-center gap-3 pb-2">
           <FilterChip label="Sort by" hasArrow />
           <SelectFilterChip
             label="Category"
@@ -389,7 +373,7 @@ export default function VendorMarketplaceSection() {
             options={dynamicCategoryOptions}
             getValue={(category) => category.slug}
             getLabel={(category) => category.title}
-            emptyLabel={categoryLoading ? "Loading..." : "All"}
+            emptyLabel={categoryLoading ? "Loading categories..." : "All categories"}
             disabled={categoryLoading}
             minWidth={260}
           />
@@ -400,7 +384,7 @@ export default function VendorMarketplaceSection() {
             options={dynamicServiceOptions}
             getValue={(service) => service.slug}
             getLabel={(service) => service.title}
-            emptyLabel={!selectedCategoryValues[0] ? "Select category first" : serviceLoading ? "Loading..." : "All"}
+            emptyLabel={!selectedCategoryValues[0] ? "Select category first" : serviceLoading ? "Loading services..." : "All services"}
             disabled={!selectedCategoryValues[0] || serviceLoading}
             minWidth={230}
           />
@@ -489,6 +473,7 @@ export default function VendorMarketplaceSection() {
           </aside>
         </div>
       </section>
+      <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8"><PortalFaqs pageKey="providers" /></div>
     </main>
   );
 }
@@ -527,10 +512,9 @@ function SelectFilterChip({
   getLabel = (item) => item,
 }) {
   return (
-    <div className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-950">
-      <span className="shrink-0">{label}</span>
-      <FormControl size="small" sx={{ minWidth }}>
+      <FormControl size="small" sx={{ width: { xs: "100%", sm: minWidth }, maxWidth: "100%", flexShrink: 0 }}>
         <Select
+          inputProps={{ "aria-label": label }}
           displayEmpty
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -541,7 +525,7 @@ function SelectFilterChip({
             return selectedOption ? getLabel(selectedOption) : selected;
           }}
           sx={{
-            height: 26,
+            height: 36,
             fontSize: 12,
             fontWeight: 700,
             color: "#334155",
@@ -565,7 +549,6 @@ function SelectFilterChip({
           })}
         </Select>
       </FormControl>
-    </div>
   );
 }
 
@@ -667,8 +650,8 @@ function LeadPanel({ categoryName }) {
         <span>I Agree to <Link href="/lead-generation" className="underline">T&amp;C&apos;s Privacy Policy</Link></span>
       </label>
 
-      <Link href="/lead-generation" className="mt-5 flex h-11 items-center justify-center rounded-md bg-blue-700 text-sm font-bold text-white hover:bg-blue-800">
-        Send Enquiry &gt;&gt;&gt;
+      <Link href="/lead-generation" className="mt-5 flex h-11 items-center justify-center gap-2 rounded-md bg-blue-700 text-sm font-bold text-white hover:bg-blue-800">
+        Send Enquiry <SendRoundedIcon aria-hidden="true" sx={{ fontSize: 20 }} />
       </Link>
     </div>
   );

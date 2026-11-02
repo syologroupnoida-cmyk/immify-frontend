@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { HomeCardImage, HomeCardSkeletons } from "./HomeLoading";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import { fetchServiceListings, serviceListingFallbackImage } from "@/util/serviceListings";
@@ -10,12 +10,13 @@ const universityCategory = "Study Abroad Services";
 export default function UniversitySection() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
     fetchServiceListings({ categoryName: universityCategory })
       .then((items) => { if (active) setServices(items.slice(0, 4)); })
-      .catch(() => { if (active) setServices([]); })
+      .catch(() => { if (active) { setServices([]); setError("Unable to load study abroad services. Please reload the page to try again."); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -29,12 +30,13 @@ export default function UniversitySection() {
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">Explore university admission and study-abroad services from our providers.</p>
         </div>
 
-        {loading ? <p className="py-12 text-center text-sm text-slate-500">Loading university services...</p> : services.length ? (
+        <div aria-busy={loading}>
+        {loading ? <HomeCardSkeletons label="Loading university services…" /> : services.length ? (
           <div className="scrollbar-none mt-8 flex snap-x snap-mandatory justify-start gap-4 overflow-x-auto pb-3 pl-1 pr-1 scroll-smooth lg:justify-center">
             {services.map((service) => (
               <Link key={service.id} href={`/marketplace/${service.detailSlug}`} className="group flex min-h-[270px] w-[min(82vw,260px)] min-w-[230px] snap-center flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-transparent transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10 hover:ring-blue-100 sm:min-w-[245px] lg:min-w-[260px]">
                 <div className="relative h-36 overflow-hidden bg-slate-100">
-                  <Image src={service.image || serviceListingFallbackImage} alt="" fill unoptimized sizes="(min-width: 1024px) 260px, 82vw" className="object-cover transition duration-500 group-hover:scale-105" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = serviceListingFallbackImage; }} />
+                  <HomeCardImage src={service.image || serviceListingFallbackImage} fallback={serviceListingFallbackImage} className="object-cover transition duration-500 group-hover:scale-105" />
                   <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/80 to-transparent" />
                   <span className="absolute bottom-2.5 left-2.5 rounded-full bg-slate-950/80 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur">
                     {service.priceLabel}
@@ -56,7 +58,8 @@ export default function UniversitySection() {
               </Link>
             ))}
           </div>
-        ) : <p className="py-12 text-center text-sm text-slate-500">No study abroad services are available right now.</p>}
+        ) : <p role="status" className="py-12 text-center text-sm text-slate-500">{error || "No study abroad services are available right now."}</p>}
+        </div>
 
         <div className="mt-8 flex justify-center">
           <Link href={{ pathname: "/marketplace", query: { category: "study-abroad-services" } }} className="inline-flex items-center gap-2 rounded-md border border-blue-300 px-6 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">Show More <ArrowForwardRoundedIcon className="h-4 w-4" /></Link>

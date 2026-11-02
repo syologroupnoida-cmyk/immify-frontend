@@ -1,129 +1,64 @@
 import Link from "next/link";
+import WorkOutlineRoundedIcon from "@mui/icons-material/WorkOutlineRounded";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
+import FlightTakeoffRoundedIcon from "@mui/icons-material/FlightTakeoffRounded";
+import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { premiumServiceItems } from "./homeData";
 
-const latestNews = [
-  {
-    id: 1,
-    date: "May 20, 2025",
-    title: "Canada Express Entry Draw #325: More Invitations Issued",
-    description: "IRCC invites 3,000 candidates in the latest Express Entry draw with a CRS score of 486.",
-    badge: "New",
-  },
-  {
-    id: 2,
-    date: "May 18, 2025",
-    title: "Australia Increases Skilled Migration Quota for 2025-26",
-    description: "The Australian Government has increased the skilled migration quota to address labor shortages.",
-  },
-  {
-    id: 3,
-    date: "May 15, 2025",
-    title: "UK Updates Dependent Visa Rules for International Students",
-    description: "New rules will impact dependent visa applications starting January 2026.",
-  },
-  {
-    id: 4,
-    date: "May 12, 2025",
-    title: "New Zealand Simplifies Work Visa Process",
-    description: "Changes aim to make the work visa process faster and easier for skilled workers.",
-  },
-];
-
-const verticalNewsItems = [...latestNews, ...latestNews];
+const servicePresentation = {
+  "work-visa": { icon: WorkOutlineRoundedIcon, label: "Work & careers", description: "Explore support for work visa preparation, employer documents and interview planning." },
+  "study-visa": { icon: SchoolOutlinedIcon, label: "Study abroad", description: "Plan your study journey with help choosing courses and preparing student visa documents." },
+  "family-sponsorship": { icon: GroupsOutlinedIcon, label: "Family & relocation", description: "Find guidance on the documents and planning involved in family sponsorship." },
+  "permanent-residency": { icon: PublicOutlinedIcon, label: "Long-term plans", description: "Compare residency pathways and explore support with your profile and application." },
+  "visitor-visa": { icon: FlightTakeoffRoundedIcon, label: "Travel & visits", description: "Prepare travel-purpose documents, itineraries and supporting records for your visit." },
+  "canada-immigration": { icon: MapOutlinedIcon, label: "Destination support", description: "Explore Canada-focused planning, profile preparation and immigration service options." },
+  "citizenship-services": { icon: DescriptionOutlinedIcon, label: "Application support", description: "Find help organising residency records, reviewing documents and preparing your application." },
+  consultation: { icon: SupportAgentOutlinedIcon, label: "Personal guidance", description: "Discuss your goals, understand the options and plan your next steps with a provider." },
+};
 
 export default function PremiumServicesSection() {
   return (
-    <section
-      id="premium-services"
-      className="w-full bg-[radial-gradient(circle_at_top,_#f8fbff_0%,_#ffffff_55%)] px-4 py-10 sm:px-6 lg:px-8 lg:py-14"
-    >
+    <section id="premium-services" aria-labelledby="home-premium-heading" className="bg-[#f5f7fc] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-4 lg:grid-cols-[1.95fr_1fr]">
-          <div className="p-2 sm:p-4">
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-500">What We Offer</p>
-              <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Premium Immigration Services</h2>
-              <div className="mx-auto mt-2 h-1 w-14 rounded-full bg-amber-400" />
-              <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-                Dedicated high-priority support tailored for clients who need speed, precision, and personalized service.
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {premiumServiceItems.map((service) => (
-                <article
-                  key={service.slug}
-                  className="group rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.10)]"
-                >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 text-3xl">
-                      {service.icon}
-                    </div>
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
-                      ›
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-semibold text-slate-900">{service.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">{service.description}</p>
-
-                  <Link href={`/premium-services/${service.slug}`} className="mt-5 inline-flex items-center gap-3 text-sm font-semibold text-blue-700">
-                    Learn More
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                </article>
-              ))}
-            </div>
-
-          </div>
-
-          <aside className="flex h-full flex-col p-2 sm:p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-amber-500">Latest News</p>
-                <div className="mt-2 h-1 w-12 rounded-full bg-amber-400" />
-                <h3 className="mt-3 text-xl font-bold leading-tight text-slate-900">Stay Updated with Important Immigration News</h3>
-              </div>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
-                ▦
-              </div>
-            </div>
-
-            <div className="mt-8 h-[850px] overflow-hidden pr-2">
-              <div className="vertical-news-track space-y-6">
-                {verticalNewsItems.map((item, index) => (
-                  <article key={`${item.id}-${index}`} className="relative pl-6">
-                    <span className="absolute left-0 top-1.5 h-3 w-3 rounded-full border-2 border-amber-400 bg-white" />
-                    <span className="absolute left-[5px] top-5 h-[calc(100%+14px)] w-px bg-amber-200" />
-
-                    <div className="flex items-center gap-3 text-sm text-slate-500">
-                      {item.badge && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase text-amber-600">{item.badge}</span>}
-                      <span>{item.date}</span>
-                    </div>
-                    <h4 className="mt-3 text-base font-semibold leading-tight text-slate-900">{item.title}</h4>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </aside>
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
+            <WorkspacePremiumOutlinedIcon aria-hidden="true" sx={{ fontSize: 19 }} />
+            What We Offer
+          </p>
+          <h2 id="home-premium-heading" className="mt-3 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Premium Immigration Services</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">Focused support for your work, study, family and relocation plans. Explore the services that match your next step.</p>
         </div>
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 lg:mt-8">
+          {premiumServiceItems.map((service) => {
+            const details = servicePresentation[service.slug];
+            const Icon = details.icon;
+            return (
+              <article key={service.slug} data-home-premium-service={service.slug} className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-300 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5 motion-safe:hover:-translate-y-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#eef2ff] text-[#1f2a77]">
+                    <Icon aria-hidden="true" sx={{ fontSize: 20 }} />
+                  </span>
+                  <span className="text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-slate-500">{details.label}</span>
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-slate-900">{service.title}</h3>
+                <p className="mb-4 mt-1.5 text-xs leading-5 text-slate-600">{details.description}</p>
+                <Link href={`/premium-services/${service.slug}`} aria-label={`Explore ${service.title}`} className="mt-auto flex min-h-11 items-center justify-between gap-3 border-t border-slate-100 pt-2 text-xs font-semibold text-[#1f2a77] transition hover:text-blue-700 focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
+                  Explore service
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 text-blue-700 transition group-hover:bg-blue-50"><ArrowForwardRoundedIcon aria-hidden="true" sx={{ fontSize: 16 }} /></span>
+                </Link>
+              </article>
+            );
+          })}
+        </div>
+
       </div>
-
-      <style jsx>{`
-        .vertical-news-track {
-          animation: premium-news-vertical 24s linear infinite;
-        }
-
-        @keyframes premium-news-vertical {
-          0% {
-            transform: translateY(0);
-          }
-          100% {
-            transform: translateY(-50%);
-          }
-        }
-      `}</style>
     </section>
   );
 }

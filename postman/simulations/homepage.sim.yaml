@@ -1,0 +1,7 @@
+simulation: homepage-location-and-quote
+routing: path
+mocks:
+  - routeKey: geocoding
+    path: ../mocks/homepage-geocoding/config.yaml
+  - routeKey: immify
+    path: ../mocks/homepage-api/config.yaml

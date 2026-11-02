@@ -1,0 +1,5 @@
+simulation: marketplace-filters
+routing: path
+mocks:
+  - routeKey: immify
+    path: ../mocks/marketplace-api/config.yaml

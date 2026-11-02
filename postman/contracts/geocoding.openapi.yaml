@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: Homepage geocoding dependency
+  version: 1.0.0
+  description: Subset of the Nominatim search and reverse contracts used by the location picker. Examples are local QA fixtures.
+servers:
+  - url: https://nominatim.openstreetmap.org
+paths:
+  /search:
+    get:
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Matching places
+          content:
+            application/json:
+              example:
+                - place_id: 101
+                  display_name: Delhi, India
+                  address: {city: Delhi, state: Delhi, country: India}
+  /reverse:
+    get:
+      parameters:
+        - in: query
+          name: lat
+          required: true
+          schema: {type: number}
+        - in: query
+          name: lon
+          required: true
+          schema: {type: number}
+      responses:
+        '200':
+          description: Place at the supplied coordinates
+          content:
+            application/json:
+              example:
+                place_id: 102
+                display_name: Moradabad, Uttar Pradesh, India
+                address: {city: Moradabad, state: Uttar Pradesh, country: India}

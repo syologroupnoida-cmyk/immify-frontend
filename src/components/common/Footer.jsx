@@ -13,38 +13,31 @@ const importantLinks = [
   { label: "Marketplace", href: "/marketplace" },
   { label: "Vendors", href: "/marketplace/vendors" },
   { label: "Universities", href: "/marketplace/universities" },
-  { label: "Services", href: "#services" },
+  { label: "Services", href: "/services" },
   { label: "Premium Services", href: "/premium-services" },
+  { label: "Be a Global Indian", href: "/be-a-global-indian" },
+  { label: "Success Stories", href: "/success-stories" },
+  { label: "Platform Disclaimer", href: "/legal" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
 ];
 
 const mainPageLinks = [
   { label: "Home", href: "/" },
-  { label: "Visa Services", href: "#services" },
-  { label: "Immigration News", href: "#about" },
-  { label: "Resources", href: "#about" },
-];
+  { label: "Visa Services", href: "/services/visa-services" },
+  { label: "Immigration News", href: "/news" },
+  { label: "Resources", href: "/blog" },
 
-const aboutCompanyLinks = [
-  { label: "About Immify", href: "#about" },
-  { label: "Contact Us", href: "#about" },
-  { label: "Privacy Policy", href: "#about" },
-  { label: "Terms & Conditions", href: "#about" },
+  { label: "About Immify", href: "/about" },
+  { label: "Contact Us", href: "/contact" },
+  { label: "FAQs", href: "/faq" },
+  { label: "Become a Provider", href: "/become-a-provider" },
+  { label: "Provider Plans", href: "/pricing" },
 ];
-
-const serviceDetailSlugMap = {
-  "test-prepation": "test-preparation",
-  "international-services": "career-employment-services",
-  "document-attention-services": "documentation-services",
-  "business-setup-services-and-immigration": "business-setup-immigration",
-  "helth-insurance": "healthcare-insurance",
-  "forex-services": "financial-services",
-  "legal-and-complance": "legal-compliance-services",
-};
 
 export default function Footer() {
   const [openServiceGroups, setOpenServiceGroups] = useState({});
   const serviceGroups = marketplaceTabs.map((tab) => ({
-    slug: serviceDetailSlugMap[tab.slug] || tab.slug,
+    slug: tab.slug,
     heading: tab.name,
     services: tab.services,
   }));
@@ -99,17 +92,11 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 pb-8 pt-56 sm:px-6 sm:pt-44 lg:px-8 lg:pt-32">
         <div className="grid gap-10 border-b border-white/10 pb-10 lg:grid-cols-[1.35fr_0.8fr_0.8fr_0.9fr] xl:gap-12">
           <div className="min-w-0">
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-                <Image src={ImmifyLogo} alt="Immify" width={80} height={80} className="h-full w-full scale-[1.9] rounded-full object-contain" priority />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">Immify</p>
-                <p className="mt-1 text-sm text-white/65">Visa, study, relocation, and vendor discovery.</p>
-              </div>
-            </div>
+            <Link href="/" className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full transition hover:opacity-90 sm:h-24 sm:w-24" aria-label="Immify home">
+              <Image src={ImmifyLogo} alt="Immify" width={96} height={96} className="h-full w-full scale-[1.9] rounded-full object-contain" />
+            </Link>
             <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
-              We connect aspiring movers with trusted consultants, practical guidance, and end-to-end planning for visas, education, and relocation.
+              Immify connects people exploring immigration, visas, study abroad, careers and relocation with relevant service providers. Compare service scope, credentials, fees and terms before engaging.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <LeadGenerationButton label="Get Quote" variant="light" />
@@ -124,19 +111,10 @@ export default function Footer() {
 
           <div className="min-w-0">
             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-white">Company</h3>
-            <ul className="mt-4 space-y-3 text-sm">
-              {aboutCompanyLinks.map((link) => (
-                <li key={link.label}>
-                  <Link href={link.href} className="text-white/75 transition hover:text-white">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
             <div className="mt-5 space-y-3 text-sm text-white/70">
               <p className="flex items-center gap-2">
                 <EmailRoundedIcon className="h-4 w-4 text-sky-200" />
-                support@immify.example
+                <Link href="/contact" className="hover:text-white">Send a support enquiry</Link>
               </p>
               <p className="flex items-center gap-2">
                 <LocationOnRoundedIcon className="h-4 w-4 text-sky-200" />
@@ -184,7 +162,7 @@ function ServiceDropdown({ group, isOpen, onToggle }) {
         <ul aria-hidden={!isOpen} className={`mt-3 min-h-0 overflow-hidden space-y-1 text-xs leading-6 text-white/70 ${isOpen ? "" : "pointer-events-none"}`}>
           {group.services.map((service) => (
             <li key={`${group.heading}-${service}`}>
-              <Link href={`/services/${group.slug}`} className="transition hover:text-white">
+              <Link href={{ pathname: "/marketplace", query: { category: group.slug, service } }} tabIndex={isOpen ? 0 : -1} className="transition hover:text-white">
                 {service}
               </Link>
             </li>

@@ -1,0 +1,17 @@
+# Marketplace filters simulation
+
+The local mock is derived from the response fields consumed by `src/util/serviceListings.js` and the existing homepage API contract. No published owner mock was used; this checks frontend behavior, not the production API contract or data completeness.
+
+Start with `postman simulation run postman/simulations/marketplace.sim.yaml --port 4901 --output ndjson --no-history`. Read the listening event for the actual address. Set `NEXT_PUBLIC_API_BASE_URL=http://localhost:4901/immify` for a separate Next dev process (`npm run dev -- --port 3018`); do not edit `.env.local`.
+
+The mock supplies 64 listings across Work Visa, Tourist Visa and Permanent Residency, with category IDs, service IDs, labels, locations and prices. The category collection intentionally omits nested services, so the frontend must load category detail endpoints. Other paths return 501.
+
+2026-10-26: CLI 1.76.0 served the frontend's actual GET requests for `/service-listings`, `/service-categories` and both category detail endpoints, all HTTP 200, with OPTIONS 204. The only member was `immify`; no member stayed silent. `node tests/marketplace.browser.cjs` passed direct footer URLs, a second footer link on the same page, refresh, checkbox multiselect, clearing filters, previous/next/last-page controls and browser back. Desktop and 390px mobile screenshots were inspected. Five Node unit tests also passed, including pagination across every page of 1–100-page result sets.
+
+The browser script uses Node's built-in WebSocket client (Node 22), the frontend on port 3018, and a headless Chromium/Edge instance with a temporary profile and remote debugging on port 9224. It closes that browser on completion and writes screenshots to `tmp/marketplace-preview`. If another Next development server already owns this checkout, use an isolated temporary copy for QA; do not stop the existing server. No `.env.local` changes are needed. This run proves UI behavior against caller-derived responses; real API data, naming conventions and completeness remain unverified.
+
+The production build also passed for all 332 pages in the isolated copy. Seven concurrent static-generation workers exhausted available memory while the existing development server was running; stopping the QA processes and setting `experimental.cpus: 1` only in the temporary copy allowed it to finish. The project's Next configuration was not changed.
+
+2026-10-26, banner-search follow-up: the fixture now honors `categoryName` and records requests at `/_test/requests`. Browser assertions confirmed that selecting Immigration in the sidebar requests `/service-listings?categoryName=Immigration` and refreshes `/service-categories/immigration-id`; selecting Work Visa in the MUI autocomplete requests `/service-listings?categoryName=Visa+Services`, checks the matching sidebar option, and displays only Work Visa listings. This uses the same collection API and category-name translation as the home page tabs. All mock requests returned 200/204 and the `immify` member served traffic. Six unit tests and the browser flow passed. The compact form measured at most 54px tall at desktop and 390px mobile widths, and category overflow was `visible`.
+
+The QA webpack server hit an UNKNOWN file-access error reading its generated manifest in the sandbox; restarting only that isolated server outside the sandbox resolved it. This did not require changing or stopping the user's development server. The browser helper wraps wait expressions in Boolean to avoid serializing DOM elements through CDP.

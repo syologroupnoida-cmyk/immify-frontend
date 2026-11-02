@@ -32,7 +32,7 @@ import { getDashboardPath, getVendorType, normalizeRole } from "@/util/authRouti
 import { readStoredUserFromStorage } from "@/util/profileHelpers";
 import { SERVICE_FILTER_EVENT, serviceListingCategories } from "@/util/serviceListings";
 
-const LOCATION_STORAGE_KEY = "immifySelectedLocation";
+import { detectLocation, LOCATION_CHANGED_EVENT, readSavedLocation, saveLocation, searchLocations } from "@/util/locations";
 const DEFAULT_LOCATION = "Moradabad";
 const FALLBACK_LOCATIONS = ["Moradabad", "Delhi", "Mumbai", "Bengaluru", "Hyderabad"];
 
@@ -54,25 +54,6 @@ function getHeaderUser() {
   return { firstName, fullName: [firstName, lastName].filter(Boolean).join(" "), profileImage, dashboardPath, profilePath };
 }
 
-function getCityFromAddress(address = {}) {
-  return address.city || address.town || address.village || address.municipality || address.county || address.state_district || "";
-}
-
-function formatLocationLabel(address = {}) {
-  const city = getCityFromAddress(address);
-  const state = address.state || "";
-  const country = address.country || "";
-
-  return [city, state, country].filter(Boolean).slice(0, 3).join(", ");
-}
-
-function formatSuggestion(place) {
-  const address = place?.address || {};
-  const label = formatLocationLabel(address);
-
-  return label || place?.display_name || "";
-}
-
 export default function Header() {
   const router = useRouter();
   const [location, setLocation] = useState(DEFAULT_LOCATION);
@@ -91,6 +72,7 @@ export default function Header() {
   const [activeCourseCategory, setActiveCourseCategory] = useState(universityCourseCategories[0]?.category || "");
   const userRef = useRef(null);
   const locationRef = useRef(null);
+  const locationRequestRef = useRef(null);
   const serviceSearchRef = useRef(null);
   const activeCountryUniversities = useMemo(
     () => universities.filter((university) => university.country === activeUniversityCountry),
@@ -134,46 +116,42 @@ export default function Header() {
     setLocationOpen(false);
     setLocationSuggestions([]);
     setLocationStatus("");
-    if (typeof window !== "undefined") localStorage.setItem(LOCATION_STORAGE_KEY, nextLocation);
+    locationRequestRef.current?.abort();
+    saveLocation(nextLocation);
   }, []);
 
-  const detectCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("Location is not supported in this browser.");
-      return;
-    }
-
+  const detectCurrentLocation = useCallback(async () => {
+    locationRequestRef.current?.abort();
+    const controller = new AbortController();
+    locationRequestRef.current = controller;
     setLocationLoading(true);
     setLocationStatus("Detecting your city...");
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1&accept-language=en`
-          );
-          const data = await response.json();
-          const detectedLocation = formatLocationLabel(data?.address) || data?.display_name || "";
-
-          if (detectedLocation) {
-            selectLocation(detectedLocation);
-          } else {
-            setLocationStatus("Unable to detect city. Search manually.");
-          }
-        } catch {
-          setLocationStatus("Unable to detect city. Search manually.");
-        } finally {
-          setLocationLoading(false);
-        }
-      },
-      () => {
-        setLocationLoading(false);
-        setLocationStatus("Allow location access or search manually.");
-      },
-      { enableHighAccuracy: false, timeout: 9000, maximumAge: 30 * 60 * 1000 }
-    );
+    try {
+      const place = await detectLocation(controller.signal);
+      if (!controller.signal.aborted) selectLocation(place.label);
+    } catch (error) {
+      if (!controller.signal.aborted) setLocationStatus(error.message);
+    } finally {
+      if (locationRequestRef.current === controller) setLocationLoading(false);
+    }
   }, [selectLocation]);
+
+  const searchHeaderLocations = async () => {
+    if (locationSearch.trim().length < 2) { setLocationStatus("Enter at least two characters to search."); return; }
+    locationRequestRef.current?.abort();
+    const controller = new AbortController();
+    locationRequestRef.current = controller;
+    setLocationLoading(true);
+    setLocationStatus("");
+    try {
+      const places = await searchLocations(locationSearch, controller.signal);
+      if (!controller.signal.aborted) { setLocationSuggestions(places.map(place => place.label)); setLocationStatus(places.length ? "" : "No city found. Try another name."); }
+    } catch (error) {
+      if (!controller.signal.aborted) setLocationStatus(error.message);
+    } finally {
+      if (locationRequestRef.current === controller) setLocationLoading(false);
+    }
+  };
 
   useEffect(() => {
     const syncUser = () => setAuthenticatedUser(getHeaderUser());
@@ -203,7 +181,7 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+    const storedLocation = readSavedLocation();
 
     if (storedLocation) {
       queueMicrotask(() => setLocation(storedLocation));
@@ -214,44 +192,11 @@ export default function Header() {
   }, [detectCurrentLocation]);
 
   useEffect(() => {
-    const query = locationSearch.trim();
-
-    if (query.length < 2) {
-      return undefined;
-    }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setLocationLoading(true);
-      setLocationStatus("");
-
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&featuretype=city&accept-language=en&q=${encodeURIComponent(query)}`,
-          { signal: controller.signal }
-        );
-        const data = await response.json();
-        const suggestions = Array.isArray(data)
-          ? data
-            .map((place) => formatSuggestion(place))
-            .filter(Boolean)
-            .filter((value, index, list) => list.indexOf(value) === index)
-          : [];
-
-        setLocationSuggestions(suggestions);
-        setLocationStatus(suggestions.length ? "" : "No city found.");
-      } catch (error) {
-        if (error.name !== "AbortError") setLocationStatus("Unable to load city suggestions.");
-      } finally {
-        setLocationLoading(false);
-      }
-    }, 350);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [locationSearch]);
+    const sync = event => { const label = typeof event?.detail === "string" ? event.detail : readSavedLocation(); if (label) setLocation(label); };
+    window.addEventListener(LOCATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => { locationRequestRef.current?.abort(); window.removeEventListener(LOCATION_CHANGED_EVENT, sync); window.removeEventListener("storage", sync); };
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-[#1f2a77] text-white">
@@ -266,9 +211,9 @@ export default function Header() {
             <span>Get Free Quote</span>
           </Link>
           <span className="text-white/35">|</span>
-          <Link href="/partner/sign-up" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Become Our Partner">
+          <Link href="/become-a-provider" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Become a Service Provider">
             <HandshakeOutlined sx={{ fontSize: 14 }} />
-            <span>Become Our Partner</span>
+            <span>Become a Service Provider</span>
           </Link>
         </div>
       </div>
@@ -320,15 +265,20 @@ export default function Header() {
                       value={locationSearch}
                       onChange={(event) => {
                         const value = event.target.value;
+                        locationRequestRef.current?.abort();
+                        setLocationLoading(false);
+                        setLocationSuggestions([]);
                         setLocationSearch(value);
                         if (value.trim().length < 2) {
                           setLocationSuggestions([]);
                           setLocationStatus("");
                         }
                       }}
+                      onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); event.stopPropagation(); searchHeaderLocations(); } }}
                       placeholder="Search city"
                       className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                     />
+                    <button type="button" onClick={searchHeaderLocations} disabled={locationLoading} className="rounded-md bg-[#1f2a77] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50">Search</button>
                   </div>
                   <button
                     type="button"
@@ -355,6 +305,7 @@ export default function Header() {
                   ))}
                 </div>
 
+                <p className="px-3 py-2 text-[10px] text-slate-500">Location data: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">OpenStreetMap contributors</a></p>
                 {(locationLoading || locationStatus) && (
                   <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
                     {locationLoading ? "Loading location..." : locationStatus}

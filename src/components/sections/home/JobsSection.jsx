@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -16,6 +14,7 @@ import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import WorkHistoryOutlinedIcon from "@mui/icons-material/WorkHistoryOutlined";
 import { fetchJobListings, getJobCategoryLabel, getJobFallbackImage } from "@/util/jobListings";
+import { HomeCardImage, HomeCardSkeletons } from "./HomeLoading";
 
 const getFilterIcon = (category) => {
   const value = String(category || "").toLowerCase();
@@ -31,13 +30,11 @@ function JobCard({ job }) {
   return (
     <article className="flex h-full w-full shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)]">
       <div className="relative h-28 w-full">
-        <img
+        <HomeCardImage
           src={job.image}
+          fallback={getJobFallbackImage()}
           alt={job.title}
-          className="h-full w-full object-cover"
-          onError={(event) => {
-            event.currentTarget.src = getJobFallbackImage();
-          }}
+          className="object-cover"
         />
         <button
           type="button"
@@ -230,7 +227,8 @@ export default function JobsSection() {
         </div>
 
         <div
-          className="mt-8 flex items-center gap-2"
+          className="mt-8 flex min-w-0 items-center gap-2"
+          aria-busy={loading}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -246,7 +244,7 @@ export default function JobsSection() {
           )}
 
           {loading ? (
-            <div className="flex flex-1 items-center justify-center py-10 text-sm text-slate-500">Loading jobs...</div>
+            <HomeCardSkeletons compact jobs label="Loading jobs…" />
           ) : visibleJobs.length > 0 ? (
             <div
               ref={trackRef}
@@ -255,7 +253,7 @@ export default function JobsSection() {
               }`}
             >
               {visibleJobs.map((job) => (
-                <JobCard key={job.id} job={job} />
+                <JobCard key={`${activeFilter}-${job.id}`} job={job} />
               ))}
             </div>
           ) : (
