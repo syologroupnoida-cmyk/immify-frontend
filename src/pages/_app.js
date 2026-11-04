@@ -59,7 +59,7 @@ export default function App({ Component, pageProps }) {
   }, [router.asPath]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={`min-h-screen bg-slate-50${useDefaultLayout ? " pt-5" : ""}`}>
       {useDefaultLayout && <Header />}
       {useDefaultLayout && <FloatingQuickActions />}
       <Component {...pageProps} />

@@ -27,8 +27,11 @@ import {
 } from "./vendorMarketplaceData";
 import { fetchCategoryServices, fetchServiceCategories, serviceListingCategories } from "@/util/serviceListings";
 import { fetchVendors, vendorFallbackImage } from "@/util/vendors";
+import { matchesProviderCountry, resolveProviderCategories } from "@/util/providerFilters.mjs";
+import { topCountries } from "@/components/sections/home/homeData";
 
 const vendorsPerPage = 8;
+const providerCountryOptions = [{ slug: "India", title: "India" }, ...topCountries.map((country) => ({ slug: country.name, title: country.name }))];
 const normalizeFilterText = (value) => String(value || "").trim().toLowerCase();
 const getCategoryNeedles = (value) => {
   const normalized = normalizeFilterText(value);
@@ -49,8 +52,11 @@ export default function VendorMarketplaceSection() {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(null);
   const [selectedLocations, setSelectedLocations] = useState(null);
+  const [countryFilter, setCountryFilter] = useState(null);
+  const selectedCountry = countryFilter ?? (typeof router.query.country === "string" ? router.query.country : "");
+  const internationalCountry = Boolean(selectedCountry) && selectedCountry !== "India";
   const [selectedServices, setSelectedServices] = useState([]);
-  const [minimumRating, setMinimumRating] = useState(4.3);
+  const [minimumRating, setMinimumRating] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [apiCategories, setApiCategories] = useState([]);
@@ -80,16 +86,11 @@ export default function VendorMarketplaceSection() {
     };
   }, []);
 
-  const selectedCategoryValues = useMemo(() => (
-    selectedCategories === null
-      ? (typeof router.query.categoryId === "string" ? [router.query.categoryId] : typeof router.query.category === "string" ? [router.query.category] : [])
-      : selectedCategories
-  ), [router.query.category, router.query.categoryId, selectedCategories]);
   const selectedLocationValues = useMemo(() => (
-    selectedLocations === null
+    internationalCountry ? [] : selectedLocations === null
       ? (typeof router.query.location === "string" ? [router.query.location] : [])
       : selectedLocations
-  ), [router.query.location, selectedLocations]);
+  ), [internationalCountry, router.query.location, selectedLocations]);
   const dynamicCategoryOptions = useMemo(() => {
     if (apiCategories.length) {
       return apiCategories
@@ -114,6 +115,13 @@ export default function VendorMarketplaceSection() {
 
     return [...categoryMap.values()].sort((first, second) => first.title.localeCompare(second.title));
   }, [apiCategories]);
+  const selectedCategoryValues = useMemo(() => resolveProviderCategories({
+    selection: selectedCategories,
+    requested: typeof router.query.categoryId === "string" ? router.query.categoryId : typeof router.query.category === "string" ? router.query.category : "",
+    options: dynamicCategoryOptions,
+    loading: categoryLoading,
+  }), [categoryLoading, dynamicCategoryOptions, router.query.category, router.query.categoryId, selectedCategories]);
+
   const dynamicServiceOptions = useMemo(() => {
     if (selectedCategoryValues[0]) {
       return apiServices
@@ -123,28 +131,6 @@ export default function VendorMarketplaceSection() {
 
     return [];
   }, [apiServices, selectedCategoryValues]);
-
-  useEffect(() => {
-    if (!router.isReady || !dynamicCategoryOptions.length || selectedCategories !== null) return;
-
-    const requestedCategory = typeof router.query.categoryId === "string"
-      ? router.query.categoryId
-      : typeof router.query.category === "string"
-        ? router.query.category
-        : "";
-    if (!requestedCategory) return;
-
-    const requestedCategoryText = normalizeFilterText(requestedCategory);
-    const matchedCategory = dynamicCategoryOptions.find((category) => (
-      category.slug === requestedCategory || normalizeFilterText(category.title) === requestedCategoryText
-    ));
-
-    if (matchedCategory) {
-      queueMicrotask(() => {
-        setSelectedCategories([matchedCategory.slug]);
-      });
-    }
-  }, [dynamicCategoryOptions, router.isReady, router.query.category, router.query.categoryId, selectedCategories]);
 
   useEffect(() => {
     let active = true;
@@ -195,7 +181,7 @@ export default function VendorMarketplaceSection() {
     fetchVendors({
       city: selectedLocation?.name || "",
       state: selectedLocation?.state || "",
-      country: selectedLocation ? "India" : "",
+      country: selectedCountry || (selectedLocation ? "India" : ""),
       categoryId: selectedCategoryValues[0] || "",
       serviceId: selectedServices[0] || "",
     })
@@ -218,7 +204,7 @@ export default function VendorMarketplaceSection() {
     return () => {
       active = false;
     };
-  }, [selectedCategoryValues, selectedLocationValues, selectedServices]);
+  }, [selectedCategoryValues, selectedCountry, selectedLocationValues, selectedServices]);
 
   const filteredVendors = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -252,11 +238,11 @@ export default function VendorMarketplaceSection() {
           || textMatchesAny(vendor.specialty, serviceNeedles)
           || (vendor.services || []).some((service) => textMatchesAny(service, serviceNeedles));
       });
-      const matchesRating = vendor.rating >= minimumRating;
+      const matchesRating = minimumRating === 0 || vendor.rating >= minimumRating;
 
-      return matchesSearch && matchesCategory && matchesLocation && matchesService && matchesRating;
+      return matchesSearch && matchesCategory && matchesLocation && matchesService && matchesRating && matchesProviderCountry(vendor, selectedCountry);
     });
-  }, [apiVendors, dynamicCategoryOptions, dynamicServiceOptions, minimumRating, search, selectedCategoryValues, selectedLocationValues, selectedServices, vendorsFetchFailed]);
+  }, [apiVendors, dynamicCategoryOptions, dynamicServiceOptions, minimumRating, search, selectedCategoryValues, selectedCountry, selectedLocationValues, selectedServices, vendorsFetchFailed]);
 
   const totalPages = Math.max(1, Math.ceil(filteredVendors.length / vendorsPerPage));
   const activePage = Math.min(currentPage, totalPages);
@@ -271,10 +257,12 @@ export default function VendorMarketplaceSection() {
     setSearch("");
     setSelectedCategories([]);
     setSelectedLocations([]);
+    setCountryFilter("");
     setSelectedServices([]);
-    setMinimumRating(4.3);
+    setMinimumRating(0);
     setCurrentPage(1);
     setShowFilters(false);
+    void router.replace({ pathname: router.pathname, query: {} }, undefined, { shallow: true, scroll: false });
   };
 
   const toggleValue = (value, setter, currentValues) => {
@@ -284,7 +272,7 @@ export default function VendorMarketplaceSection() {
   };
 
   const applyTopRated = () => {
-    setMinimumRating((rating) => (rating >= 4.8 ? 4.3 : 4.8));
+    setMinimumRating((rating) => (rating >= 4.8 ? 0 : 4.8));
     setCurrentPage(1);
     setShowFilters(false);
   };
@@ -303,22 +291,22 @@ export default function VendorMarketplaceSection() {
   const firstLocation = selectedLocationValues[0]
     ? vendorMarketplaceLocations.find((location) => location.slug === selectedLocationValues[0])
     : null;
-  const locationName = firstLocation?.name || "India";
+  const locationName = firstLocation?.name || selectedCountry || "All locations";
   const firstCategory = selectedCategoryValues[0]
     ? dynamicCategoryOptions.find((category) => category.slug === selectedCategoryValues[0])
     : null;
   const categoryName = firstCategory?.title || "Immigration Vendors";
 
   return (
-    <main className="min-h-screen bg-white pb-12 pt-[88px]">
+    <main className="min-h-screen bg-[#f6f8fb] pb-12 pt-[88px]">
       <PortalHero
-        heading={`Discover Providers for Your Global Plans in ${locationName}`}
+        heading={locationName === "All locations" ? "Discover Providers for Your Global Plans" : `Discover Providers for Your Global Plans in ${locationName}`}
         label="Provider Directory"
-        imageSrc="/images/page-banners/full-width/providers.webp"
-      />
+        description="Find the right expertise for your next chapter. Compare providers by service and location."
+      >
 
-      <section aria-label="Find vendors" className="relative z-10 mx-auto -mt-[70px] grid w-[calc(100%-2rem)] max-w-3xl gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-900/10 sm:-mt-10 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
-            <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
+      <section aria-label="Find vendors" className="grid gap-3 sm:grid-cols-[minmax(0,160px)_minmax(0,1fr)]">
+            <FormControl fullWidth size="small" disabled={internationalCountry} sx={{ minWidth: 0 }}>
               <Select
                 displayEmpty
                 inputProps={{ "aria-label": "Vendor location" }}
@@ -332,7 +320,7 @@ export default function VendorMarketplaceSection() {
                 sx={{ height: 48, borderRadius: 1.5, fontSize: 14, color: "#0f172a", ".MuiOutlinedInput-notchedOutline": { borderColor: "#e2e8f0" } }}
                 MenuProps={{ disableScrollLock: true, slotProps: { paper: { sx: { maxHeight: 320 } } } }}
               >
-                <MenuItem value="">All India</MenuItem>
+                <MenuItem value="">All cities</MenuItem>
                 {vendorMarketplaceLocations.slice(0, 30).map((location) => (
                   <MenuItem key={location.slug} value={location.slug}>{location.name}</MenuItem>
                 ))}
@@ -355,7 +343,9 @@ export default function VendorMarketplaceSection() {
             </div>
       </section>
 
-      <section className="mx-auto max-w-[1800px] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+      </PortalHero>
+
+      <section className="mx-auto max-w-[1344px] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         <div className="text-xs text-slate-600">
           <Link href="/" className="hover:text-blue-700">{locationName}</Link>
           <span className="mx-2 text-slate-400">&gt;</span>
@@ -366,6 +356,7 @@ export default function VendorMarketplaceSection() {
 
         <div className="mt-6 flex flex-wrap items-center gap-3 pb-2">
           <FilterChip label="Sort by" hasArrow />
+          <SelectFilterChip label="Country" value={selectedCountry} onChange={(value) => { setCountryFilter(value); setSelectedLocations([]); setCurrentPage(1); }} options={providerCountryOptions} getValue={(country) => country.slug} getLabel={(country) => country.title} emptyLabel="All countries" minWidth={190} />
           <SelectFilterChip
             label="Category"
             value={selectedCategoryValues[0] || ""}
@@ -388,8 +379,9 @@ export default function VendorMarketplaceSection() {
             disabled={!selectedCategoryValues[0] || serviceLoading}
             minWidth={230}
           />
-          <FilterChip label="Ratings" hasArrow onClick={applyTopRated} />
+          <FilterChip label="Ratings" hasArrow active={minimumRating > 0} onClick={applyTopRated} />
           <FilterChip label="All Filters" icon={<TuneRoundedIcon className="h-5 w-5" />} strong onClick={() => setShowFilters((value) => !value)} />
+          <button type="button" onClick={resetFilters} className="inline-flex min-h-9 items-center px-1 text-xs font-semibold text-blue-700 underline underline-offset-4 hover:text-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Reset all filters</button>
         </div>
 
         {showFilters && (
@@ -412,7 +404,7 @@ export default function VendorMarketplaceSection() {
             />
             <InlineFilter
               title="Popular Cities"
-              values={vendorMarketplaceLocations.slice(0, 10)}
+              values={internationalCountry ? [] : vendorMarketplaceLocations.slice(0, 10)}
               selectedValues={selectedLocationValues}
               getValue={(location) => location.slug}
               getLabel={(location) => location.name}

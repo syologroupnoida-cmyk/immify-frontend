@@ -4,10 +4,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import MessageRoundedIcon from "@mui/icons-material/MessageRounded";
-import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import Swal from "sweetalert2";
 import MainApi from "@/util/MainApi";
-import { getLeadDocumentPayload, leadDocumentTypeOptions, uploadLeadDocument } from "@/util/leadDocuments";
 
 const inquiryTopics = [
   "Visa Services",
@@ -27,11 +25,6 @@ const initialFormState = {
   message: "",
 }
 
-const initialLeadDocument = {
-  file: null,
-  name: "Resume",
-}
-
 function splitName(name) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   return {
@@ -42,7 +35,6 @@ function splitName(name) {
 
 export default function FreeQuoteSection({ appearance = "default" }) {
   const [formState, setFormState] = useState(initialFormState)
-  const [leadDocument, setLeadDocument] = useState(initialLeadDocument)
   const [formErrors, setFormErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
@@ -59,14 +51,6 @@ export default function FreeQuoteSection({ appearance = "default" }) {
 
     setFormState((current) => ({ ...current, [name]: value }))
     setFormErrors((current) => ({ ...current, [name]: "" }))
-  }
-
-  const handleDocumentChange = (event) => {
-    const { name, value, files } = event.target
-    setLeadDocument((current) => ({
-      ...current,
-      [name]: name === "file" ? files?.[0] || null : value,
-    }))
   }
 
   const handleSubmit = async (event) => {
@@ -106,8 +90,6 @@ export default function FreeQuoteSection({ appearance = "default" }) {
 
     try {
       const { firstName, lastName } = splitName(formState.name)
-      const documentUrl = await uploadLeadDocument(leadDocument.file, leadDocument.name)
-      const documentPayload = getLeadDocumentPayload(leadDocument.name, documentUrl)
 
       const payload = {
         firstName,
@@ -121,12 +103,10 @@ export default function FreeQuoteSection({ appearance = "default" }) {
         destinationCountries: [formState.destination.trim()],
         message: formState.message.trim(),
         additionalInformation: formState.message.trim(),
-        ...documentPayload,
         metadata: {
           source: "website-free-quote",
           serviceType: formState.topic.trim(),
           destination: formState.destination.trim(),
-          ...(documentUrl ? { documentName: leadDocument.name } : {}),
         },
       }
 
@@ -143,7 +123,6 @@ export default function FreeQuoteSection({ appearance = "default" }) {
       })
 
       setFormState(initialFormState)
-      setLeadDocument(initialLeadDocument)
     } catch (error) {
       await Swal.fire({
         icon: "error",
@@ -174,7 +153,7 @@ export default function FreeQuoteSection({ appearance = "default" }) {
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-center">
         <div className="relative z-10 max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#1f2a77]">Get Free Quote</p>
-          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl lg:text-3xl">
+          <h2 className="mt-3 text-xl font-bold leading-tight sm:text-2xl">
             Tell Us What You Need Help With
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
@@ -308,44 +287,11 @@ export default function FreeQuoteSection({ appearance = "default" }) {
               sx={fieldSx}
             />
 
-            <TextField
-              select
-              label="Document Name"
-              name="name"
-              value={leadDocument.name}
-              onChange={handleDocumentChange}
-              fullWidth
-              variant="outlined"
-              size="small"
-              sx={fieldSx}
-            >
-              {leadDocumentTypeOptions.map((documentName) => (
-                <MenuItem key={documentName} value={documentName}>
-                  {documentName}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <button
-              type="button"
-              className="inline-flex h-10 cursor-pointer items-center justify-start gap-2 rounded-[5px] border border-slate-300 bg-white px-3 text-sm font-medium text-[#1f2a77] transition hover:border-[#1f2a77]"
-              onClick={(event) => event.currentTarget.querySelector("input")?.click()}
-            >
-              <CloudUploadOutlinedIcon className="h-4 w-4" />
-              <span className="truncate">{leadDocument.file ? leadDocument.file.name : "Upload Document"}</span>
-              <input
-                hidden
-                type="file"
-                name="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onChange={handleDocumentChange}
-              />
-            </button>
           </div>
 
           <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <p className="text-xs leading-6 text-slate-500">
-              By submitting, you agree to be contacted about this enquiry. Include only information needed to describe your request; avoid uploading sensitive identity documents at this stage. Read our <Link href="/privacy-policy" className="font-semibold text-blue-700 underline underline-offset-2">Privacy Policy</Link>.
+              By submitting, you agree to be contacted about this enquiry. Include only information needed to describe your request. Read our <Link href="/privacy-policy" className="font-semibold text-blue-700 underline underline-offset-2">Privacy Policy</Link>.
             </p>
             <button
               type="submit"

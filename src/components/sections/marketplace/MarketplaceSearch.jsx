@@ -10,7 +10,7 @@ export default function MarketplaceSearch({ options, value, loading, onSelect, o
       event.preventDefault();
       if (value && typeof value !== "string" && input === value.label) onSelect(value);
       else onSearch(input);
-    }} className="mx-auto mt-6 flex max-w-2xl items-center gap-1 rounded-xl bg-white p-1 text-left shadow-lg shadow-blue-950/20 ring-4 ring-white/10">
+    }} className="mt-3 flex w-full items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 text-left">
       <Autocomplete
         id="marketplace-service-search"
         size="small"

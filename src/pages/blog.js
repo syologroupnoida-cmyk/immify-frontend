@@ -6,11 +6,11 @@ import content from "@/content/portalContent.json";
 
 const resources = [
   ["Compare providers and service scope", "/providers"],
-  ["Prepare for a visa enquiry", "/services/visa-services"],
-  ["Compare study costs and institutions", "/services/study-abroad-services"],
-  ["Prepare for an international job search", "/services/career-employment-services"],
-  ["Plan your move abroad", "/services/family-relocation-services"],
-  ["Organise application documents", "/services/documentation-services"],
+  ["Prepare for a visa enquiry", "/providers"],
+  ["Compare study costs and institutions", "/providers"],
+  ["Prepare for an international job search", "/providers"],
+  ["Plan your move abroad", "/providers"],
+  ["Organise application documents", "/providers"],
 ];
 
 function BlogPage() {
@@ -21,7 +21,7 @@ function BlogPage() {
       <PortalFeaturePanel title="Start with a practical checklist" label="Planning resources">
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {resources.map(([label, href]) => (
-            <Link key={href} href={href} className="rounded-xl border border-slate-200 p-4 text-sm font-semibold text-blue-700 hover:bg-sky-50">{label}</Link>
+            <Link key={label} href={href} className="rounded-xl border border-slate-200 p-4 text-sm font-semibold text-blue-700 hover:bg-sky-50">{label}</Link>
           ))}
         </div>
       </PortalFeaturePanel>

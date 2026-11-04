@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import universityMarketplaceBanner from "@/images/university-marketplace-banner.png";
+import PortalHero from "@/components/common/PortalHero";
 import UniversityCard from "./UniversityCard";
 import {
   universities,
@@ -87,27 +86,11 @@ export default function UniversityMarketplaceSection() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f6f8ff] px-4 pb-10 pt-24 sm:px-6 lg:px-8">
-      <section className="mx-auto max-w-7xl">
-        <div className="relative isolate min-h-[270px] overflow-hidden rounded-2xl px-5 py-10 text-white sm:min-h-[340px] sm:px-8 lg:px-10">
-          <Image
-            src={universityMarketplaceBanner}
-            alt="Students walking across a modern university campus"
-            fill
-            priority
-            sizes="100vw"
-            className="absolute inset-0 -z-20 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/78 via-slate-950/45 to-slate-950/10" />
-          <div className="flex min-h-[190px] max-w-2xl flex-col justify-center sm:min-h-[260px]">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">University Marketplace</p>
-            <h1 className="mt-3 text-3xl font-bold sm:text-5xl">Find Your Next University</h1>
-            <p className="mt-4 text-sm leading-7 text-white/90 sm:text-base">
-              Browse dummy university profiles with filters for country, course, university type, and yearly tuition.
-            </p>
-          </div>
-        </div>
+    <main className="min-h-screen bg-[#f6f8fb] pb-10 pt-[88px]">
+      <PortalHero heading="Find Your Next University" label="University Marketplace" imageSrc="/images/page-banners/full-width/services.webp" />
+      <section className="mx-auto max-w-[1344px] px-4 sm:px-6 lg:px-8">
 
+        <p className="mt-5 text-sm leading-7 text-slate-600">Browse university profiles and compare countries, courses, university types and yearly tuition.</p>
         <div className="mt-6 grid gap-6 xl:grid-cols-[300px_1fr]">
           <aside className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">

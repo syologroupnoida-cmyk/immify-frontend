@@ -277,7 +277,7 @@ export default function PricingPageSections() {
   const featuredPlanName = useMemo(() => plans.find((plan) => plan.featured)?.name || plans[1]?.name || "the right plan", [plans]);
 
   return (
-    <main className="min-h-screen bg-white pt-[88px]">
+    <main className="min-h-screen bg-[#f6f8fb] pt-[88px]">
       <PortalHero
         heading="Choose a Plan to Grow Your Presence on Immify"
         label="Provider Plans"
@@ -285,7 +285,7 @@ export default function PricingPageSections() {
       />
 
       <section className="bg-white px-4 pt-8 text-left sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
             Select a provider plan that matches your service catalogue, enquiry volume and growth goals. Review exactly what is included before subscribing.
           </p>
@@ -301,7 +301,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-white px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-6xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {trustStats.map((stat) => (
             <div key={stat.label} className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-center">
               <p className="text-2xl font-bold text-slate-950">{stat.value}</p>
@@ -312,7 +312,7 @@ export default function PricingPageSections() {
       </section>
 
       <section id="pricing-plans" className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase text-blue-700">Live subscription plans</p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">Pick the plan that fits your agency</h2>
@@ -353,7 +353,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
               <p className="text-sm font-semibold uppercase text-emerald-700">What plans unlock</p>
@@ -380,7 +380,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-slate-950 px-4 py-14 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase text-sky-200">How it works</p>
@@ -410,7 +410,7 @@ export default function PricingPageSections() {
       </section>
 
       <section className="bg-white px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl space-y-8">
+        <div className="mx-auto max-w-7xl space-y-8">
           <PortalFaqs pageKey="pricing" title="Questions about provider plans" standalone />
           <div className="rounded-lg bg-blue-700 p-7 text-white">
             <RocketLaunchOutlinedIcon className="h-10 w-10" />

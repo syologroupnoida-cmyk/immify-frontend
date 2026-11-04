@@ -32,6 +32,12 @@ html {
   overflow-x: clip;
 }
 
+/* Keep the reserved scrollbar space while locking the page behind these dialogs.
+   MUI's body-padding compensation is disabled on the matching Dialogs. */
+html:has(.study-abroad-enquiry-dialog) {
+  overflow-y: hidden;
+}
+
 html,
 body,
 #__next {
@@ -60,6 +66,39 @@ a:hover {
   display: none;
   width: 0;
   height: 0;
+}
+
+.header-offer-track {
+  display: flex;
+  width: max-content;
+  min-width: 200%;
+  animation: header-offer-scroll 28s linear infinite;
+}
+
+.header-offer-copy {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding-right: 1.5rem;
+  white-space: nowrap;
+}
+
+.header-offer-marquee:hover .header-offer-track,
+.header-offer-marquee:focus .header-offer-track {
+  animation-play-state: paused;
+}
+
+@keyframes header-offer-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-offer-track { animation: none; width: auto; min-width: 0; }
+  .header-offer-copy { display: block; white-space: normal; padding: 0.5rem 0; }
+  .header-offer-copy > span { margin-right: 0.5rem; }
+  .header-offer-copy + .header-offer-copy { display: none; }
 }
 
 .mbbs-marquee {

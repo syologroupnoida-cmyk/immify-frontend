@@ -1,5 +1,7 @@
 import PageSeo from "@/components/common/PageSeo";
 import HowItWorksSection from "@/components/sections/home/HowItWorksSection";
+import AudienceSection from "@/components/sections/home/AudienceSection";
+import GlobalCoverageSection from "@/components/sections/home/GlobalCoverageSection";
 import content from "@/content/portalContent.json";
 import HeroSection from "../components/sections/home/HeroSection";
 import MarketplaceSection from "../components/sections/home/MarketplaceSection";
@@ -18,11 +20,13 @@ function Home() {
       <PageSeo title={content["/"].title} description={content["/"].description} />
       <div className="flex flex-col">
         <HeroSection />
+        <AudienceSection />
         <MarketplaceSection />
         <CountrySection />
         <UniversitySection />
         <ServicesSection />
         <CategorySection />
+        <GlobalCoverageSection />
         <JobsSection />
         <PremiumServicesSection />
         <HowItWorksSection />

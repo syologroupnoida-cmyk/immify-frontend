@@ -6,7 +6,7 @@ export default function ImmigrationVendorsByLocationSection() {
     <section id="immigration-vendors-by-location" className="border-t border-slate-100 bg-white px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">Immigration Vendors by Location</h2>
+          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">Immigration Vendors by Location</h2>
           <p className="mt-5 text-base font-semibold text-slate-800">Popular Cities</p>
         </div>
 

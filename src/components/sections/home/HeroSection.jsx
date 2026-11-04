@@ -113,8 +113,8 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-        <Link href="/services/study-abroad-services" className={`${styles.floatBadge} ${styles.studyBadge}`}><span><SchoolOutlined aria-hidden="true" /></span>Study Abroad</Link>
-        <Link href="/services/visa-services" className={`${styles.floatBadge} ${styles.visaBadge}`}><span><PublicOutlined aria-hidden="true" /></span>Visa Assistance</Link>
+        <Link href="/providers" className={`${styles.floatBadge} ${styles.studyBadge}`}><span><SchoolOutlined aria-hidden="true" /></span>Study Abroad</Link>
+        <Link href="/providers" className={`${styles.floatBadge} ${styles.visaBadge}`}><span><PublicOutlined aria-hidden="true" /></span>Visa Assistance</Link>
         <Link href="/jobs" className={`${styles.floatBadge} ${styles.careerBadge}`}><span><WorkOutlineRounded aria-hidden="true" /></span>Global Careers</Link>
       </div>
 

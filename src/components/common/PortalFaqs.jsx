@@ -6,11 +6,11 @@ export default function PortalFaqs({ pageKey, title = "Frequently asked question
   const questions = getPortalFaqs(pageKey);
   if (!questions.length) return null;
   return (
-    <section aria-labelledby={`${groupId}-heading`} className={`${standalone ? "" : "mt-12 sm:mt-14"} rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-left sm:p-8 lg:p-10`}>
+    <section aria-labelledby={`${groupId}-heading`} className={`${standalone ? "" : "mt-6"} rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 text-left sm:p-6`}>
       <div className="grid items-start gap-7 lg:grid-cols-[0.75fr_1.5fr] lg:gap-10">
         <div className="min-w-0 lg:pr-4">
           <span className="inline-flex items-center rounded-md border border-blue-100 bg-white px-3 py-1.5 text-xs font-bold tracking-wide text-[#1f2a77]">FAQs</span>
-          <h2 id={`${groupId}-heading`} className="mt-4 text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl">{title}</h2>
+          <h2 id={`${groupId}-heading`} className="mt-4 text-xl font-bold leading-tight tracking-tight text-slate-900 sm:text-2xl">{title}</h2>
           <p className="mt-4 text-sm leading-7 text-slate-600">Clear answers about this page, the services available and what to check before taking your next step.</p>
           <div className="mt-5 h-[3px] w-10 rounded-full bg-[#f5c542]" />
         </div>

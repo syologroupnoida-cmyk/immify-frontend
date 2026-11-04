@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ScrollableFilterBar from "@/components/common/ScrollableFilterBar";
 import { HomeCardImage, HomeCardSkeletons } from "./HomeLoading";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -85,22 +86,18 @@ export default function CategorySection() {
   }, [activeCategoryId]);
 
   return (
-    <section id="vendors" className="w-full bg-white py-10 sm:py-12 lg:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="vendors" className="w-full bg-white px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center gap-4 text-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">Explore vendors</p>
-            <h2 className="mt-2 max-w-2xl text-xl font-semibold text-slate-900 sm:text-3xl">
+            <h2 className="mt-2 max-w-2xl text-xl font-bold text-slate-900 sm:text-2xl">
               Discover providers by service and city, then compare the available listing details.
             </h2>
           </div>
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Vendor service categories"
-          className="scrollbar-none mt-7 flex scroll-pl-4 justify-start gap-2 overflow-x-auto border-b border-slate-200 px-1 pb-3"
-        >
+        <ScrollableFilterBar label="Vendor service categories" tabList>
           {vendorTabs.map((category) => {
             const isActive = activeCategory?.id === category.id;
 
@@ -110,7 +107,7 @@ export default function CategorySection() {
                 type="button"
                 role="tab"
                 onClick={() => setActiveCategoryId(category.id)}
-                className={`shrink-0 rounded-md border px-3 py-2 text-sm font-semibold transition ${
+                className={`shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium transition ${
                   isActive
                     ? "border-blue-900 bg-blue-50 text-blue-900"
                     : "border-transparent text-slate-600 hover:bg-slate-100"
@@ -121,13 +118,13 @@ export default function CategorySection() {
               </button>
             );
           })}
-        </div>
+        </ScrollableFilterBar>
 
         <div aria-busy={isLoading} className="relative mt-7 overflow-hidden rounded-[1.6rem] bg-transparent p-0">
           {isLoading ? <HomeCardSkeletons compact label="Loading providers…" /> : (
           <div
             ref={sliderRef}
-            className="mx-auto flex max-w-[1220px] snap-x snap-mandatory justify-start gap-4 overflow-x-auto pb-3 pl-1 pr-1 scrollbar-none scroll-smooth lg:justify-center"
+            className="flex w-full snap-x snap-mandatory justify-start gap-4 overflow-x-auto pb-3 pl-1 pr-1 scrollbar-none scroll-smooth lg:justify-center"
           >
             {!visibleVendorCards.length && (
               <p role="status" className="w-full py-10 text-center text-sm font-semibold text-slate-500">{vendorsFetchFailed ? "Unable to load providers. Please try another category or reload the page." : "No vendors are available for this category right now."}</p>

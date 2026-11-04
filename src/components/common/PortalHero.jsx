@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import styles from "./PortalHero.module.css";
+import styles from "./CompactPortalHero.module.css";
 
 const imagePositions = {
   "about.webp": "50% 35%",
@@ -13,21 +13,22 @@ const imagePositions = {
   "providers.webp": "50% 40%",
 };
 
-export default function PortalHero({ heading, label, imageSrc, imageAlt = "" }) {
+export default function PortalHero({ heading, label, imageSrc, imageAlt = "", description, children }) {
   return (
-    <header className={styles.hero} data-portal-hero>
+    <header className={`${styles.hero} ${children ? styles.withSearch : ""}`} data-portal-hero>
       <div className={styles.heading}>
         <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
           <Link href="/">Home</Link>
           <span aria-hidden="true">/</span>
-          <span>{label}</span>
+          <span aria-current="page">{label}</span>
         </nav>
         <h1 className={styles.title}>{heading}</h1>
+        {description && <p className={styles.description}>{description}</p>}
         <span aria-hidden="true" className={styles.accent} />
       </div>
-      <div className={styles.imagePanel}>
-        <Image src={imageSrc} alt={imageAlt} fill preload sizes="100vw" className={styles.image} style={{ objectPosition: imagePositions[imageSrc.split("/").pop()] || "center" }} />
-      </div>
+      {children ? <div className={styles.searchPanel}>{children}</div> : <div className={styles.imagePanel}>
+        <Image src={imageSrc} alt={imageAlt} fill sizes="(min-width: 768px) 220px, 1px" className={styles.image} style={{ objectPosition: imagePositions[imageSrc.split("/").pop()] || "center" }} />
+      </div>}
     </header>
   );
 }
