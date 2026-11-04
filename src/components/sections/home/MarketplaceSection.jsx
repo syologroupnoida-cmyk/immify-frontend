@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import ScrollableFilterBar from "@/components/common/ScrollableFilterBar";
 import { HomeCardImage, HomeCardSkeletons } from "./HomeLoading";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlined";
@@ -66,14 +67,14 @@ export default function MarketplaceSection() {
           <p className="mt-3 text-sm text-slate-600 sm:text-base">Explore available services from our providers.{location && <span className="mt-2 block font-semibold text-blue-700">Showing results for {location}</span>}</p>
         </div>
 
-        <div className="scrollbar-none mt-7 flex gap-2 overflow-x-auto border-b border-slate-200 pb-3">
+        <ScrollableFilterBar label="Marketplace service categories">
             {serviceListingCategories.map((category) => (
               <button key={category} type="button" onClick={() => { setActiveCategory(category); setSearch(""); }}
-                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition ${activeCategory === category ? "bg-blue-700 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
+                className={`shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${activeCategory === category ? "bg-blue-700 text-white" : "text-slate-600 hover:bg-slate-100"}`}>
                 {category}
               </button>
             ))}
-        </div>
+        </ScrollableFilterBar>
 
         <div aria-busy={isLoading}>
         {isLoading ? <HomeCardSkeletons label="Loading services…" /> : visibleListings.length ? (

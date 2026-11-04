@@ -518,14 +518,16 @@ export const topCities = [
   {
     slug: "jaipur",
     name: "Jaipur",
-    image: "/images/cities/jaipur.svg",
+    image: "/images/cities/jaipur-photo.webp",
+    photoCredit: { author: "Ajit Kumar Majhi", url: "https://commons.wikimedia.org/wiki/File:Hawa_Mahal._Jaipur.jpg" },
     summary: "Affordable visa assistance and document advisory options.",
     highlights: ["Visa advisory", "Affordable counseling", "Document review"],
   },
   {
     slug: "lucknow",
     name: "Lucknow",
-    image: "/images/cities/lucknow.svg",
+    image: "/images/cities/lucknow-photo.webp",
+    photoCredit: { author: "Rumelade", url: "https://commons.wikimedia.org/wiki/File:TheBaraImambara.jpg" },
     summary: "Growing network of immigration and relocation services.",
     highlights: ["Consultant network", "Relocation assistance", "Application guidance"],
   },

@@ -113,7 +113,7 @@ export default function StudyAbroadServiceEnquiryModal({ open, onClose, listing 
   };
 
   const targetCountry = listing?.dynamicData?.country || "To be discussed";
-  return <Dialog open={open} onClose={close} fullWidth maxWidth="lg" slots={{ transition: Slide }} slotProps={{ transition: { direction: "down", timeout: { enter: 420, exit: 280 } }, paper: { sx: { borderRadius: 2, maxWidth: 1000, m: 2, overflow: "hidden" } } }}>
+  return <Dialog open={open} onClose={close} className="study-abroad-enquiry-dialog" disableScrollLock fullWidth maxWidth="lg" slots={{ transition: Slide }} slotProps={{ transition: { direction: "down", timeout: { enter: 420, exit: 280 } }, paper: { sx: { borderRadius: 2, maxWidth: 1000, m: 2, overflow: "hidden" } } }}>
     <Box component="form" onSubmit={submit} sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "46% 54%" } }}>
       <Box sx={{ bgcolor: "#d8fbe0", p: { xs: 2, sm: 4 }, display: { xs: "none", sm: "block" } }}>
         <Box sx={{ position: "relative", width: "100%", aspectRatio: "4 / 3" }}><Image src="/images/university-enquiry-art.png" alt="Study abroad destinations" fill sizes="520px" style={{ objectFit: "contain" }} /></Box>

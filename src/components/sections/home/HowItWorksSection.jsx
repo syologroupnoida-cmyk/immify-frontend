@@ -10,7 +10,7 @@ export default function HowItWorksSection() {
     <section aria-labelledby="how-immify-works" className="bg-[#f8fafc] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
-          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Your journey, step by step</p><h2 id="how-immify-works" className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">How Immify works</h2></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">Your journey, step by step</p><h2 id="how-immify-works" className="mt-3 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">How Immify works</h2></div>
         </div>
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
           {process.items.map((item, index) => {

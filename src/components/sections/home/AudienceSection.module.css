@@ -1,0 +1,44 @@
+.card {
+  min-width: 0;
+  perspective: 1200px;
+}
+
+.inner {
+  display: grid;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 550ms ease;
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.front,
+.back {
+  grid-area: 1 / 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px #0f172a0d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.front {
+  background: #fff;
+}
+
+.back {
+  padding: 16px;
+  background: rgb(219 234 254 / 78%);
+  color: #1e3a8a;
+  border-color: rgb(147 197 253 / 65%);
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner { transition: none; }
+}

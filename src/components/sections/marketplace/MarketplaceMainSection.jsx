@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import Image from "next/image";
+import PortalHero from "@/components/common/PortalHero";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -131,19 +132,14 @@ export default function MarketplaceMainSection() {
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] pb-12 pt-[88px]">
-      <section aria-labelledby="marketplace-heading" className="relative isolate bg-[#111a4f]">
-        <Image src="/images/marketplace-banner.png" alt="" fill preload sizes="100vw" className="-z-20 object-cover object-center opacity-50" />
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-[#101a46]/60 via-[#172454]/40 to-[#111a4f]/90" />
-        <nav aria-label="Breadcrumb" className="mx-auto flex max-w-7xl items-center gap-2 px-4 pt-5 text-xs text-blue-100 sm:px-6 lg:px-8"><Link href="/" className="hover:text-white">Home</Link><span aria-hidden="true">/</span><span aria-current="page" className="font-semibold text-white">Explore Services</span></nav>
-        <div className="mx-auto max-w-4xl px-4 pb-9 pt-6 text-center sm:px-6 sm:pb-10 sm:pt-8">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-blue-200">Support for your next chapter</p>
-          <h1 id="marketplace-heading" className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[42px]">Explore Services</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-blue-100">From your first question to your next move, find services that fit your plans.</p>
+      <PortalHero heading="Explore Services" label="Marketplace" description="Find services that fit your plans. Search by service or use the filters below.">
+      <section aria-label="Search services">
+          <p className="mb-2 text-xs font-semibold text-slate-700">What service are you looking for?</p>
           <MarketplaceSearch key={JSON.stringify([search, categoryValues, serviceValues])} options={bannerOptions} value={bannerValue || null} loading={categoryLoading} onSelect={(option) => updateFilters({ categoryId: undefined, category: option?.category, serviceId: undefined, service: option?.service, q: undefined })} onSearch={(value) => updateFilters({ q: value.trim(), serviceId: undefined, service: undefined })} />
-        </div>
       </section>
+      </PortalHero>
 
-      <div className="mx-auto grid max-w-7xl items-start gap-6 px-4 pt-8 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+      <div className="mx-auto grid max-w-[1344px] items-start gap-6 px-4 pt-8 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
         <aside aria-label="Filter services" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4"><h2 className="flex items-center gap-2 font-semibold text-slate-900"><TuneRoundedIcon aria-hidden="true" sx={{ fontSize: 19, color: "#1f2a77" }} />Filters</h2><button type="button" onClick={reset} className="min-h-9 text-xs font-semibold text-blue-700 hover:text-blue-900">Clear all</button></div>
           <a href="#marketplace-results" className="mt-4 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-50 px-3 text-xs font-semibold text-[#1f2a77] lg:hidden">View matching services<ChevronRightRoundedIcon aria-hidden="true" sx={{ fontSize: 17 }} /></a>

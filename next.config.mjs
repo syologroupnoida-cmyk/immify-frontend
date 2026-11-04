@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  redirects() {
+    return [{ source: "/services/:slug", destination: "/providers", permanent: true }];
+  },
   /* config options here */
   images: {
     remotePatterns: [

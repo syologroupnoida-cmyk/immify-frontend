@@ -1,6 +1,6 @@
 import Link from "next/link";
-import LeadGenerationButton from "../../components/common/LeadGenerationButton";
 import { topCities } from "../../components/sections/home/homeData";
+import DestinationEnquiryCard from "@/components/sections/destinations/DestinationEnquiryCard";
 
 export async function getStaticPaths() {
   const paths = topCities.map((city) => ({ params: { slug: city.slug } }));
@@ -20,6 +20,7 @@ export async function getStaticProps({ params }) {
 }
 
 function CityDetailPage({ city }) {
+  const relatedCities = topCities.filter((item) => item.slug !== city.slug).slice(0, 3);
   const localServices = [
     "Visa application guidance",
     "Document review",
@@ -35,31 +36,27 @@ function CityDetailPage({ city }) {
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 pb-12 pt-[112px] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <Link href="/" className="text-sm font-semibold text-sky-700">
           ← Back to home
         </Link>
 
-        <section className="mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <section className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-stretch">
           <div className="overflow-hidden rounded-[1.5rem] shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
             <img
               src={city.image}
               alt={city.name}
-              className="h-80 w-full object-cover"
+              className="h-64 w-full object-cover sm:h-80 lg:h-full lg:min-h-96"
               onError={(event) => {
                 event.currentTarget.src = "/images/services/service-dummy.svg";
               }}
             />
           </div>
 
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#1f2a77]">State detail</p>
-            <h1 className="mt-3 text-4xl font-semibold text-slate-900">{city.name}</h1>
-            <p className="mt-5 text-lg leading-8 text-slate-600">{city.summary}</p>
-            <LeadGenerationButton label="Get Quote" className="mt-8" />
-          </div>
+          <DestinationEnquiryCard headingAs="h1" eyebrow="National destination" title={city.name} description={city.summary} highlights={city.highlights || ["Visa support", "Documentation", "Consultation"]} action="Get a free quote" />
         </section>
+
 
         <section className="mt-10 border-t border-slate-200 pt-8">
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
@@ -77,7 +74,7 @@ function CityDetailPage({ city }) {
               </p>
             </div>
 
-            <div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#1f2a77]">Local services</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-900">What you can arrange in {city.name}</h2>
               <div className="mt-5 flex flex-wrap gap-2">
@@ -107,16 +104,28 @@ function CityDetailPage({ city }) {
           </div>
         </section>
 
-        <section className="mt-10 bg-[#1f2a77] px-6 py-7 text-white sm:px-8">
-          <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/70">Need local help?</p>
-              <h2 className="mt-2 text-2xl font-semibold">Connect with immigration support in {city.name}</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-white/75">
-                Tell us your destination, service type, and timeline. We will help route your enquiry to the right support path.
-              </p>
-            </div>
-            <LeadGenerationButton label="Start Enquiry" variant="light" />
+        <section aria-labelledby="related-destinations-title" className="mt-10 border-t border-slate-200 pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="related-destinations-title" className="text-xl font-bold text-slate-900">Related destinations</h2>
+            <Link href="/destinations/national" className="inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 hover:underline focus-visible:outline-2 focus-visible:outline-blue-700">Explore all cities <span aria-hidden="true" className="ml-2">→</span></Link>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {relatedCities.map((item) => (
+              <article key={item.slug} className="min-w-0">
+              <Link href={`/cities/${item.slug}`} className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700">
+                <div className="h-40 overflow-hidden bg-blue-50">
+                  <img src={item.image} alt={item.name} width={600} height={360} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none" onError={(event) => {
+                    const fallback = "/images/services/service-detail-dummy.png";
+                    if (!event.currentTarget.src.endsWith(fallback)) event.currentTarget.src = fallback;
+                  }} />
+                </div>
+                <div className="p-4">
+                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-700">{item.name}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.summary}</p>
+                </div>
+              </Link>
+              </article>
+            ))}
           </div>
         </section>
       </div>

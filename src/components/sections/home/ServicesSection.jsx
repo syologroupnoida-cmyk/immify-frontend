@@ -31,12 +31,12 @@ export default function ServicesSection() {
   }, []);
 
   return (
-    <section id="services" className="w-full bg-[#f3f4f6] py-8 sm:py-10 lg:py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="services" className="w-full bg-[#f3f4f6] px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center gap-4 text-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-700">Explore services</p>
-            <h2 className="mt-2 max-w-2xl text-xl font-semibold text-slate-900 sm:text-2xl">
+            <h2 className="mt-2 max-w-2xl text-xl font-bold text-slate-900 sm:text-2xl">
               Explore Services for Your Global Journey
             </h2>
           </div>
@@ -50,7 +50,7 @@ export default function ServicesSection() {
             {loopedCategories.map((category, index) => (
               <Link
                 key={`${category.slug}-${index}`}
-                href={`/services/${category.slug}`}
+                href={{ pathname: "/providers", query: { category: category.name } }}
                 className="w-[min(82vw,260px)] min-w-[230px] snap-center focus:outline-none focus:ring-2 focus:ring-sky-500 sm:min-w-[245px] lg:min-w-[260px]"
               >
                 <div className="group flex h-full min-h-[270px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-transparent transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10 hover:ring-blue-100">

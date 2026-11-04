@@ -5,6 +5,9 @@ import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ImmifyLogo from "@/images/immify-logo.png";
 import { marketplaceTabs } from "../sections/home/homeData";
 import LeadGenerationButton from "./LeadGenerationButton";
@@ -23,19 +26,28 @@ const importantLinks = [
 
 const mainPageLinks = [
   { label: "Home", href: "/" },
-  { label: "Visa Services", href: "/services/visa-services" },
+  { label: "Visa Services", href: "/providers" },
   { label: "Immigration News", href: "/news" },
   { label: "Resources", href: "/blog" },
 
   { label: "About Immify", href: "/about" },
   { label: "Contact Us", href: "/contact" },
   { label: "FAQs", href: "/faq" },
-  { label: "Become a Provider", href: "/become-a-provider" },
+  { label: "Become a Provider", href: "/partner" },
   { label: "Provider Plans", href: "/pricing" },
 ];
 
 export default function Footer() {
   const [openServiceGroups, setOpenServiceGroups] = useState({});
+  const shareOn = (network) => {
+    const url = encodeURIComponent(`${window.location.origin}/`);
+    const destinations = {
+      Facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      LinkedIn: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+      WhatsApp: `https://wa.me/?text=${encodeURIComponent("Explore Immify: ")}${url}`,
+    };
+    window.open(destinations[network], "_blank", "noopener,noreferrer");
+  };
   const serviceGroups = marketplaceTabs.map((tab) => ({
     slug: tab.slug,
     heading: tab.name,
@@ -100,9 +112,16 @@ export default function Footer() {
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <LeadGenerationButton label="Get Quote" variant="light" />
-              <Link href="/marketplace/vendors" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/10">
-                Browse Vendors
-              </Link>
+            </div>
+            <div className="mt-4" aria-label="Share Immify on social media">
+              <p className="text-xs text-white/60">Share Immify</p>
+              <div className="mt-2 flex items-center gap-2">
+                {[["Facebook", FacebookIcon], ["LinkedIn", LinkedInIcon], ["WhatsApp", WhatsAppIcon]].map(([name, Icon]) => (
+                  <button key={name} type="button" onClick={() => shareOn(name)} aria-label={`Share Immify on ${name}`} title={`Share on ${name}`} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/80 transition hover:border-sky-300 hover:bg-white/15 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300">
+                    <Icon sx={{ fontSize: 19 }} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

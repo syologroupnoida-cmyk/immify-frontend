@@ -6,14 +6,11 @@ import {
   AccountCircleOutlined,
   DashboardOutlined,
   HandshakeOutlined,
-  ContactSupportOutlined,
   ForumOutlined,
   KeyboardArrowDown,
   LocationOnOutlined,
-  PaymentsOutlined,
   PersonAddAlt1Outlined,
   SchoolOutlined,
-  SupportAgentOutlined,
   SearchOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
@@ -28,6 +25,7 @@ import {
   universityDegreeLevels,
 } from "@/components/sections/universities/universityData";
 import LogoutButton from "@/components/common/LogoutButton";
+import DestinationMenu from "@/components/common/DestinationMenu";
 import { getDashboardPath, getVendorType, normalizeRole } from "@/util/authRouting";
 import { readStoredUserFromStorage } from "@/util/profileHelpers";
 import { SERVICE_FILTER_EVENT, serviceListingCategories } from "@/util/serviceListings";
@@ -201,19 +199,27 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-[#1f2a77] text-white">
       <div className="border-b border-white/10 bg-[#17215f]">
-        <div className="mx-auto flex min-w-[1120px] w-full items-center justify-end gap-2 px-4 py-1 text-xs font-medium sm:px-6 lg:px-8">
-          <a href="tel:+911234567890" className="text-white/80 transition hover:text-white" aria-label="Call Immify at +91 12345 67890">
-            Call Us: +91 12345 67890
-          </a>
-          <span className="text-white/35">|</span>
-          <Link href="/lead-generation" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Get Free Quote">
+        <div className="mx-auto flex min-h-11 w-full items-center gap-3 px-4 text-xs font-medium sm:gap-5 sm:px-6 lg:px-8">
+          <Link href="/lead-generation" className="header-offer-marquee min-w-0 flex-1 overflow-hidden text-white/90 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            <span className="sr-only">Get a free quote for your global journey. Connect with immigration, visa and study abroad experts today.</span>
+            <span className="header-offer-track" aria-hidden="true">
+              {[0, 1].map((copy) => (
+                <span key={copy} className="header-offer-copy">
+                  <span className="font-bold text-amber-300">Get a FREE quote for your global journey!</span>
+                  <span>Connect with immigration, visa &amp; study abroad experts today.</span>
+                  <span className="text-amber-300">✦</span>
+                </span>
+              ))}
+            </span>
+          </Link>
+          <Link href="/lead-generation" className="hidden shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap text-white/85 transition hover:text-white sm:inline-flex" aria-label="Get Free Quote">
             <ForumOutlined sx={{ fontSize: 14 }} />
             <span>Get Free Quote</span>
           </Link>
-          <span className="text-white/35">|</span>
-          <Link href="/become-a-provider" className="inline-flex cursor-pointer items-center gap-1 text-white/85 transition hover:text-white" aria-label="Become a Service Provider">
+          <span className="hidden text-white/35 sm:inline" aria-hidden="true">|</span>
+          <Link href="/partner" className="inline-flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap text-white/85 transition hover:text-white" aria-label="Become a Partner">
             <HandshakeOutlined sx={{ fontSize: 14 }} />
-            <span>Become a Service Provider</span>
+            <span>Become a Partner</span>
           </Link>
         </div>
       </div>
@@ -346,13 +352,10 @@ export default function Header() {
         </form>
 
         <div className="flex min-w-0 items-center justify-end gap-2">
+          <DestinationMenu />
           <Link href="/jobs" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Jobs">
             <WorkOutlineOutlined sx={{ fontSize: 17 }} />
             <span>Jobs</span>
-          </Link>
-          <Link href="/pricing" className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-medium text-white transition hover:bg-white/10" aria-label="Pricing">
-            <PaymentsOutlined sx={{ fontSize: 17 }} />
-            <span>Pricing</span>
           </Link>
 
           <div className="relative" ref={userRef}>
@@ -388,27 +391,14 @@ export default function Header() {
 
             {userOpen && !authenticatedUser && (
               <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl">
-                <Link href="/user/login" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
+                <Link href="/user/login" onClick={() => setUserOpen(false)} className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
                   <AccountCircleOutlined sx={{ fontSize: 18 }} />
                   Sign In
                 </Link>
-                <Link href="/user/sign-up" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
+                <Link href="/user/sign-up" onClick={() => setUserOpen(false)} className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
                   <PersonAddAlt1Outlined sx={{ fontSize: 18 }} />
                   Register
                 </Link>
-                <Link href="/agent/login" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
-                  <SupportAgentOutlined sx={{ fontSize: 18 }} />
-                  Agent Login
-                </Link>
-                <Link href="/partner/sign-up" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
-                  <HandshakeOutlined sx={{ fontSize: 18 }} />
-                  Become Our Partner
-                </Link>
-                <div className="border-t border-slate-200" />
-                <a href="#" className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100">
-                  <ContactSupportOutlined sx={{ fontSize: 18 }} />
-                  Contact Us
-                </a>
               </div>
             )}
           </div>

@@ -5,12 +5,12 @@ export default function PortalContentSections({ sections = [] }) {
     return (
       <section key={section.heading} className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm">
         <div className="grid lg:grid-cols-[0.75fr_1.65fr]">
-          <div className="border-b border-slate-200 bg-[#f8fafc] p-6 sm:p-8 lg:border-b-0 lg:border-r">
+          <div className="border-b border-slate-200 bg-[#f8fafc] p-5 sm:p-6 lg:border-b-0 lg:border-r">
             <span className="text-xs font-bold tabular-nums tracking-widest text-blue-700" aria-hidden="true">{String(sectionIndex + 1).padStart(2, "0")}</span>
             <h2 className="mt-3 text-xl font-bold leading-snug tracking-tight text-slate-900 sm:text-2xl">{section.heading}</h2>
-            <div className="mt-4 h-[3px] w-10 rounded-full bg-[#f5c542]" />
+            <div className="mt-4 h-[3px] w-10 rounded-full bg-blue-600" />
           </div>
-          <div className="p-6 sm:p-8">
+          <div className="p-5 sm:p-6">
             {section.items.length === 1 ? <p className="max-w-prose text-[15px] leading-8 text-slate-600">{section.items[0]}</p> : (
               <List className={`grid gap-4 ${isProcess ? "" : "sm:grid-cols-2"}`}>
                 {section.items.map((item, index) => {
