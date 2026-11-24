@@ -80,6 +80,10 @@ const menuItems = [
 
         ],
     },
+    { name: 'Credit Pack', icon: <MoneyIcon />, children: [
+        { name: 'Add Credit', path: '/admin/add-credit' },
+        { name: 'Credit List', path: '/admin/credit-packs' },
+    ] },
     {
         name: 'Lead Management',
         icon: <PackagesIcon />,

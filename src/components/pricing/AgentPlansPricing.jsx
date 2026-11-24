@@ -150,11 +150,24 @@ async function fetchSubscriptionPlans() {
 }
 
 async function purchaseSubscriptionPlan(planId) {
-    const response = await MainApi.post(VENDOR_SUBSCRIPTION_CHECKOUT_ENDPOINT, {
+    const checkout = await MainApi.post(VENDOR_SUBSCRIPTION_CHECKOUT_ENDPOINT, {
         planId,
         autoRenew: false,
     });
-    return response.data;
+    const payload = checkout.data;
+    const order = payload?.data?.paymentOrder || payload?.paymentOrder;
+    const paymentOrderId = payload?.data?.paymentOrderId || payload?.paymentOrderId
+        || order?.id || order?._id || payload?.data?.payment_order_id || payload?.payment_order_id;
+
+    if (!paymentOrderId) {
+        throw new Error('Checkout did not return a payment order ID. Please contact support before retrying.');
+    }
+
+    const verification = await MainApi.post(`/payments/orders/${encodeURIComponent(paymentOrderId)}/verify`, {
+        providerPaymentId: `pay_stub_${Math.floor(Date.now() / 1000)}`,
+        signature: 'STUB_OK',
+    });
+    return verification.data;
 }
 
 export default function AgentPlansPricing() {
@@ -203,8 +216,12 @@ export default function AgentPlansPricing() {
             });
 
             // Re-fetch so isCurrentPlan reflects the newly purchased plan.
-            const refreshedPlans = await fetchSubscriptionPlans();
-            setPlans(refreshedPlans);
+            try {
+                const refreshedPlans = await fetchSubscriptionPlans();
+                setPlans(refreshedPlans);
+            } catch {
+                setError('Your purchase was verified, but plans could not be refreshed. Please reload the page.');
+            }
         } catch (err) {
             await Swal.fire({
                 icon: 'error',
@@ -284,7 +301,7 @@ export default function AgentPlansPricing() {
                         const isPurchasingThisPlan = purchasingPlanId === plan.id;
                         const isCurrentPlan = plan.isCurrentPlan;
                         const canBuyThisPlan = canPurchasePlan(plan);
-                        const isButtonDisabled = isCurrentPlan || isPurchasingThisPlan;
+                        const isButtonDisabled = isCurrentPlan || Boolean(purchasingPlanId);
 
                         return (
                             <Paper

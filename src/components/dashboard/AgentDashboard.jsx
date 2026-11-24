@@ -61,10 +61,11 @@ import LogoutButton from '@/components/common/LogoutButton';
 import { getDisplayRoleLabel, getPasswordRoute, getProfileRoute } from '@/util/authRouting';
 import MainApi from '@/util/MainApi';
 
-const AGENT_WALLET_BALANCE_ENDPOINTS = ['/api/v1/vendor/wallet'];
+const AGENT_WALLET_BALANCE_ENDPOINTS = ['/vendor/credits'];
 
 const menuItems = [
     { name: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard/agent' },
+    { name: 'Credit Packs', icon: <WalletIcon />, path: '/agent/credit-packs' },
     {
         name: 'Services', icon: <SupportIcon />, children: [
             { name: 'Add Service', path: '/service/add-service-listing' },
@@ -397,9 +398,11 @@ const DashboardLayout = ({ children }) => {
         };
 
         fetchWalletBalance();
+        window.addEventListener('wallet-balance-changed', fetchWalletBalance);
 
         return () => {
             mounted = false;
+            window.removeEventListener('wallet-balance-changed', fetchWalletBalance);
         };
     }, []);
 
@@ -671,6 +674,9 @@ const DashboardLayout = ({ children }) => {
 
                     <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end" sx={{ ml: 'auto', minWidth: 0, height: '100%' }}>
                         <Chip
+                            component={NextLink}
+                            href="/agent/wallet"
+                            clickable
                             icon={<WalletIcon />}
                             label={walletLoading ? 'Balance: Loading' : `Balance: ${walletBalanceText}`}
                             sx={{
