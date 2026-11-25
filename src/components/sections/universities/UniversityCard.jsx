@@ -6,7 +6,7 @@ import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import universityFallbackCampus from "@/images/university-fallback-campus.png";
 
-export default function UniversityCard({ university }) {
+export default function UniversityCard({ university, compact = false }) {
   const [imageSrc, setImageSrc] = useState(university.image || universityFallbackCampus);
 
   return (
@@ -37,7 +37,7 @@ export default function UniversityCard({ university }) {
           <SchoolOutlinedIcon className="h-3.5 w-3.5" />
           {university.course}
         </p>
-        <h3 className="mt-2 line-clamp-2 min-h-[3.25rem] text-lg font-bold leading-tight text-slate-900">{university.name}</h3>
+        <h3 className={`mt-2 line-clamp-2 font-bold text-slate-900 ${compact ? 'min-h-10 text-sm leading-5' : 'min-h-[3.25rem] text-lg leading-tight'}`}>{university.name}</h3>
         <p className="mt-2 flex items-center gap-1 text-sm text-slate-500">
           <LocationOnOutlinedIcon className="h-4 w-4" />
           {university.city}, {university.country}
