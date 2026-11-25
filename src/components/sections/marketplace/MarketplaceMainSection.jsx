@@ -139,7 +139,7 @@ export default function MarketplaceMainSection() {
       </section>
       </PortalHero>
 
-      <div className="mx-auto grid max-w-[1344px] items-start gap-6 px-4 pt-8 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+      <div className="mx-auto grid max-w-[1344px] items-start gap-6 px-4 pt-8 sm:px-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:px-8">
         <aside aria-label="Filter services" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4"><h2 className="flex items-center gap-2 font-semibold text-slate-900"><TuneRoundedIcon aria-hidden="true" sx={{ fontSize: 19, color: "#1f2a77" }} />Filters</h2><button type="button" onClick={reset} className="min-h-9 text-xs font-semibold text-blue-700 hover:text-blue-900">Clear all</button></div>
           <a href="#marketplace-results" className="mt-4 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-50 px-3 text-xs font-semibold text-[#1f2a77] lg:hidden">View matching services<ChevronRightRoundedIcon aria-hidden="true" sx={{ fontSize: 17 }} /></a>
@@ -153,7 +153,7 @@ export default function MarketplaceMainSection() {
             <legend className="px-1 text-xs font-semibold text-slate-800">Services</legend>
             <label className="sr-only" htmlFor="filter-service-search">Find a service filter</label>
             <input id="filter-service-search" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Find a service…" className={`${inputClass} mb-3`} />
-            <div className="max-h-96 space-y-4 overflow-y-auto pr-1">
+            <div className="space-y-4 pr-1">
               {sidebarGroups.map((group) => {
                 const services = group.services.filter((service) => `${service.name} ${group.name}`.toLowerCase().includes(serviceSearch.trim().toLowerCase()));
                 if (!services.length) return null;

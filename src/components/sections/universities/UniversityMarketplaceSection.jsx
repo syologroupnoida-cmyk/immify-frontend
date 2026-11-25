@@ -189,7 +189,7 @@ export default function UniversityMarketplaceSection() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {paginatedUniversities.map((university) => (
-                <UniversityCard key={university.slug} university={university} />
+                <UniversityCard key={university.slug} university={university} compact />
               ))}
             </div>
 
@@ -197,11 +197,12 @@ export default function UniversityMarketplaceSection() {
               <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
                 <button
                   type="button"
+                  aria-label="Previous page"
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                   disabled={activePage === 1}
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Previous
+                  &lt;
                 </button>
 
                 {visiblePageNumbers.map((pageNumber, index) => (
@@ -225,11 +226,12 @@ export default function UniversityMarketplaceSection() {
 
                 <button
                   type="button"
+                  aria-label="Next page"
                   onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                   disabled={activePage === totalPages}
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Next
+                  &gt;
                 </button>
               </div>
             )}
